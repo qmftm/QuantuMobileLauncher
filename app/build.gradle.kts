@@ -13,8 +13,8 @@ android {
         applicationId = "com.quantumobile.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.4.0"
+        versionCode = 6
+        versionName = "0.4.1"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -26,12 +26,31 @@ android {
         }
     }
 
+    // A fixed key lets users update in place and keep their data; a key generated per CI run would make every
+    // release a "different app" to Android. The key is never committed: CI passes it through the environment
+    // (QML_KEYSTORE = path to the .jks, QML_KEYSTORE_PASSWORD, QML_KEY_ALIAS, QML_KEY_PASSWORD). Without it the
+    // build falls back to the local debug key.
+    val keystorePath = System.getenv("QML_KEYSTORE")
+    if (!keystorePath.isNullOrBlank()) {
+        signingConfigs {
+            create("project") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("QML_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("QML_KEY_ALIAS")
+                keyPassword = System.getenv("QML_KEY_PASSWORD")
+            }
+        }
+    }
+    val projectSigning = signingConfigs.findByName("project") ?: signingConfigs.getByName("debug")
+
     buildTypes {
+        debug {
+            signingConfig = projectSigning
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Debug signing so CI-built release APKs are installable; replace with a real key for distribution.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = projectSigning
         }
     }
 
