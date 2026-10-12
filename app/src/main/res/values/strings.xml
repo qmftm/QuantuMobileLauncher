@@ -138,6 +138,33 @@
     <string name="download_progress_unknown">%1$s · %2$d MB</string>
     <string name="get_java">Get Java %1$d</string>
 
+    <string name="nav_mods">Mods</string>
+    <string name="mods_no_instance">Create an instance to browse mods.</string>
+    <string name="mods_vanilla">This instance has no mod loader. Create a Fabric instance to use mods (resource packs and shaders work on any instance).</string>
+    <string name="mods_target_format">%1$s · %2$s · Minecraft %3$s</string>
+    <string name="mods_browse">Browse</string>
+    <string name="mods_installed">Installed</string>
+    <string name="type_mods">Mods</string>
+    <string name="type_packs">Resource packs</string>
+    <string name="type_shaders">Shaders</string>
+    <string name="search_modrinth">Search Modrinth</string>
+    <string name="mods_none">Nothing found.</string>
+    <string name="mods_installed_empty">Nothing installed yet.</string>
+    <string name="resolving">Finding a compatible version…</string>
+    <string name="install_title">Install %1$s</string>
+    <string name="install_required">required</string>
+    <string name="install_missing">Required but unavailable for this version: %1$s</string>
+    <string name="install">Install</string>
+    <string name="installing_item">Downloading %1$s (%2$d/%3$d)…</string>
+    <string name="installed_count">Installed: %1$d</string>
+    <string name="modrinth_error">Modrinth error: %1$s</string>
+    <string name="check_updates">Check for updates</string>
+    <string name="up_to_date">Everything is up to date</string>
+    <string name="updates_available">Updates available</string>
+    <string name="removed">%1$s removed</string>
+    <string name="powered_by_modrinth">Powered by Modrinth</string>
+    <string name="dependency_badge">dependency</string>
+
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>
         <item>Zink (OSMesa / Vulkan)</item>

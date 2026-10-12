@@ -138,6 +138,33 @@
     <string name="download_progress_unknown">%1$s · %2$d MB</string>
     <string name="get_java">Java %1$d 받기</string>
 
+    <string name="nav_mods">모드</string>
+    <string name="mods_no_instance">인스턴스를 만들면 모드를 찾아볼 수 있어요.</string>
+    <string name="mods_vanilla">이 인스턴스에는 모드 로더가 없어요. 모드를 쓰려면 Fabric 인스턴스를 만드세요 (리소스팩과 셰이더는 어디서나 쓸 수 있어요).</string>
+    <string name="mods_target_format">%1$s · %2$s · 마인크래프트 %3$s</string>
+    <string name="mods_browse">둘러보기</string>
+    <string name="mods_installed">설치됨</string>
+    <string name="type_mods">모드</string>
+    <string name="type_packs">리소스팩</string>
+    <string name="type_shaders">셰이더</string>
+    <string name="search_modrinth">Modrinth 검색</string>
+    <string name="mods_none">결과가 없어요.</string>
+    <string name="mods_installed_empty">아직 설치한 게 없어요.</string>
+    <string name="resolving">맞는 버전을 찾는 중…</string>
+    <string name="install_title">%1$s 설치</string>
+    <string name="install_required">필수</string>
+    <string name="install_missing">이 버전에서 받을 수 없는 필수 요소: %1$s</string>
+    <string name="install">설치</string>
+    <string name="installing_item">%1$s 다운로드 중 (%2$d/%3$d)…</string>
+    <string name="installed_count">%1$d개 설치했어요</string>
+    <string name="modrinth_error">Modrinth 오류: %1$s</string>
+    <string name="check_updates">업데이트 확인</string>
+    <string name="up_to_date">모두 최신이에요</string>
+    <string name="updates_available">업데이트가 있어요</string>
+    <string name="removed">%1$s 삭제했어요</string>
+    <string name="powered_by_modrinth">Modrinth 제공</string>
+    <string name="dependency_badge">의존</string>
+
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>
         <item>Zink (OSMesa / Vulkan)</item>

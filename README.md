@@ -6,6 +6,7 @@
 <p align="center">
   <img src="docs/screenshots/home.png" width="300" alt="홈 화면" />
   <img src="docs/screenshots/instances.png" width="300" alt="인스턴스 화면" />
+  <img src="docs/screenshots/mods.png" width="300" alt="모드 화면" />
 </p>
 
 ## 기능
@@ -34,6 +35,7 @@
 | 홈에서 계정·인스턴스 바로 전환, 스킨 아바타 표시 | ✅ |
 | 처음 실행 체크리스트 (빠진 설정으로 바로 이동) | ✅ |
 | 검색·필터 가능한 버전 선택 (정식/스냅샷/알파·베타/설치됨) | ✅ |
+| **Modrinth 연동**: 모드·리소스팩·셰이더 검색/설치/삭제/업데이트, 선택한 인스턴스의 버전·로더에 맞는 것만 표시, 필수 의존성(Fabric API 등) 자동 설치, SHA-1 검증 | ✅ |
 | 인스턴스 메뉴 (바로 플레이, 이름 변경, 메모리, JVM 인자), 최근 플레이 순 정렬 | ✅ |
 | 로그 색상 강조 (오류/경고), 로그 복사·공유 | ✅ |
 
@@ -52,6 +54,14 @@ Pojav 계열 런처들도 아래 세 가지를 따로 빌드해서 함께 배포
    `app/src/main/jniLibs/<abi>/` 에 넣고 빌드하면 APK 에 포함됩니다.
    GLFW 구현체는 [`qml_bridge.h`](app/src/main/cpp/qml_bridge.h) 의 함수로 안드로이드 창(`ANativeWindow`)과
    입력 이벤트를 받아오고, 커서 잡기 상태를 알려줘야 합니다.
+
+### 모드 설치 (Modrinth)
+
+하단 **모드** 탭에서 현재 선택한 인스턴스에 맞는 모드를 [Modrinth](https://modrinth.com) 에서 찾아 설치합니다.
+Fabric / Quilt(Fabric 모드 겸용) / Forge / NeoForge 인스턴스를 인식하고, 바닐라 인스턴스에서는 리소스팩과 셰이더만 받을 수 있습니다.
+파일은 인스턴스의 `mods`, `resourcepacks`, `shaderpacks` 폴더에 저장되고, 설치 기록은 `qml-mods.json` 에 남습니다.
+다운로드는 Modrinth CDN(`cdn.modrinth.com`)에서만 허용하며 SHA-1 이 맞지 않으면 설치하지 않습니다.
+셰이더는 Iris 같은 셰이더 모드가 따로 필요하고, 모바일 렌더러에서는 동작하지 않을 수 있습니다.
 
 ### 런타임 카탈로그
 

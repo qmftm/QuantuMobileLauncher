@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
                 when (item.itemId) {
                     R.id.nav_accounts -> AccountsFragment()
                     R.id.nav_instances -> InstancesFragment()
+                    R.id.nav_mods -> ModsFragment()
                     R.id.nav_settings -> SettingsFragment()
                     else -> HomeFragment()
                 },

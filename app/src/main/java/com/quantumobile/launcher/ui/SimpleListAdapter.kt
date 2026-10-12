@@ -23,14 +23,24 @@ data class Row(
     val iconTint: Int? = null,
     /** When set, the icon shows this account's skin head instead of [icon]. */
     val avatar: Account? = null,
+    /** Remote icon (e.g. a mod icon); takes precedence over [icon]. */
+    val iconUrl: String? = null,
 )
 
 class SimpleListAdapter(
     private val scope: LifecycleCoroutineScope? = null,
-    private val showMore: Boolean = true,
+    showMore: Boolean = true,
     private val onClick: (Row) -> Unit,
     private val onMore: (Row, View) -> Unit = { _, _ -> },
 ) : ListAdapter<Row, SimpleListAdapter.Holder>(DIFF) {
+
+    var showMore: Boolean = showMore
+        set(value) {
+            if (field == value) return
+            field = value
+            @Suppress("NotifyDataSetChanged")
+            notifyDataSetChanged()
+        }
 
     class Holder(val binding: ItemRowBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -53,7 +63,11 @@ class SimpleListAdapter(
         b.root.setOnClickListener { onClick(row) }
         b.root.setOnLongClickListener { if (showMore) onMore(row, b.more); showMore }
 
-        if (row.avatar != null && scope != null) {
+        if (row.iconUrl != null && scope != null) {
+            b.icon.setPadding(0, 0, 0, 0)
+            b.icon.imageTintList = null
+            RemoteImage.load(b.icon, row.iconUrl, scope, R.drawable.ic_extension, maxAgeHours = 24 * 7)
+        } else if (row.avatar != null && scope != null) {
             b.icon.setPadding(0, 0, 0, 0)
             b.icon.imageTintList = null
             AvatarLoader.load(b.icon, row.avatar, scope)
