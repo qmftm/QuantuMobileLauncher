@@ -219,4 +219,20 @@
     <string name="visual_use_shader">Use this shader</string>
     <string name="visual_shaders_off">Turn shaders off</string>
     <string name="visual_size_folder">Folder</string>
+
+    <string name="controls_edit">Customize controls</string>
+    <string name="controls_edit_summary">Move, resize and rebind on-screen buttons without starting the game</string>
+    <string name="controls_editor_hint">Drag a button to move it.\nTap it to change key, size or label.</string>
+    <string name="controls_add">Add button</string>
+    <string name="controls_reset">Reset</string>
+    <string name="controls_done">Done</string>
+    <string name="controls_reset_confirm">Restore the default button layout?</string>
+    <string name="controls_edit_button">Edit button</string>
+    <string name="controls_label">Label</string>
+    <string name="controls_action">Key / action</string>
+    <string name="controls_size">Size</string>
+    <string name="controls_toggle">Toggle (tap on / tap off)</string>
+    <string name="controls_in_menus">Show in menus too</string>
+    <string name="controls_delete">Delete</string>
+    <string name="controls_save">OK</string>
 </resources>

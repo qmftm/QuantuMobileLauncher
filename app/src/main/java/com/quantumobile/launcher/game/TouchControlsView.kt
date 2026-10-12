@@ -19,24 +19,15 @@ import kotlin.math.hypot
  */
 class TouchControlsView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs) {
 
-    private enum class Kind { KEY, MOUSE, SCROLL_UP, SCROLL_DOWN, KEYBOARD }
-
-    private class Button(
-        val label: String,
-        val kind: Kind,
-        val code: Int = 0,
-        val toggle: Boolean = false,
-        val showInMenus: Boolean = false,
-        /** Position in units of the button size, measured from the given corner. */
-        val col: Float,
-        val row: Float,
-        val fromRight: Boolean = false,
-        val fromBottom: Boolean = false,
-        val scale: Float = 1f,
-    ) {
+    /** A spec plus its live touch state and pixel rectangle. */
+    private class Button(val spec: ControlSpec) {
         val rect = RectF()
         var pressed = false
         var pointerId = -1
+        val kind get() = spec.kind
+        val code get() = spec.code
+        val toggle get() = spec.toggle
+        val label get() = spec.label
     }
 
     var opacity: Float = 0.6f
@@ -47,29 +38,15 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     var onShowKeyboard: () -> Unit = {}
 
     private val density = resources.displayMetrics.density
-    private val buttons = listOf(
-        // Movement pad (bottom-left)
-        Button("W", Kind.KEY, Glfw.KEY_W, col = 1f, row = 2f, fromBottom = true),
-        Button("A", Kind.KEY, Glfw.KEY_A, col = 0f, row = 1f, fromBottom = true),
-        Button("S", Kind.KEY, Glfw.KEY_S, col = 1f, row = 0f, fromBottom = true),
-        Button("D", Kind.KEY, Glfw.KEY_D, col = 2f, row = 1f, fromBottom = true),
-        Button("⇩", Kind.KEY, Glfw.KEY_LEFT_SHIFT, toggle = true, col = 1f, row = 1f, fromBottom = true),
-        // Actions (bottom-right)
-        Button("⤒", Kind.KEY, Glfw.KEY_SPACE, col = 0f, row = 0f, fromRight = true, fromBottom = true, scale = 1.3f),
-        Button("⚔", Kind.MOUSE, Glfw.MOUSE_LEFT, col = 0f, row = 1.4f, fromRight = true, fromBottom = true),
-        Button("✋", Kind.MOUSE, Glfw.MOUSE_RIGHT, col = 1.2f, row = 0f, fromRight = true, fromBottom = true),
-        Button("Run", Kind.KEY, Glfw.KEY_LEFT_CONTROL, toggle = true, col = 1.2f, row = 1.4f, fromRight = true, fromBottom = true),
-        // Top row
-        Button("Esc", Kind.KEY, Glfw.KEY_ESCAPE, showInMenus = true, col = 0f, row = 0f),
-        Button("⌨", Kind.KEYBOARD, showInMenus = true, col = 1f, row = 0f),
-        Button("T", Kind.KEY, Glfw.KEY_T, col = 2f, row = 0f),
-        Button("E", Kind.KEY, Glfw.KEY_E, showInMenus = true, col = 3f, row = 0f),
-        Button("Q", Kind.KEY, Glfw.KEY_Q, col = 4f, row = 0f),
-        Button("F5", Kind.KEY, Glfw.KEY_F5, col = 0f, row = 0f, fromRight = true),
-        Button("F3", Kind.KEY, Glfw.KEY_F3, col = 1f, row = 0f, fromRight = true),
-        Button("◀", Kind.SCROLL_UP, col = 3f, row = 0f, fromRight = true),
-        Button("▶", Kind.SCROLL_DOWN, col = 2f, row = 0f, fromRight = true),
-    )
+    private var buttons: List<Button> = emptyList()
+
+    /** (Re)reads the user's saved layout. */
+    fun reloadLayout() {
+        releaseAll()
+        buttons = ControlLayoutStore.forContext(context).load().map(::Button)
+        layoutButtons()
+        invalidate()
+    }
 
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -115,6 +92,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        if (buttons.isEmpty()) reloadLayout()
         post(pollGrab)
     }
 
@@ -123,18 +101,14 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         super.onDetachedFromWindow()
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        val size = 56 * density
-        val margin = 16 * density
-        for (b in buttons) {
-            val s = size * b.scale
-            val x = if (b.fromRight) w - margin - b.col * size - s else margin + b.col * size
-            val y = if (b.fromBottom) h - margin - b.row * size - s else margin + b.row * size
-            b.rect.set(x + 3 * density, y + 3 * density, x + s - 3 * density, y + s - 3 * density)
-        }
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = layoutButtons()
+
+    private fun layoutButtons() {
+        if (width == 0) return
+        for (b in buttons) b.spec.rect(width, height, density, b.rect)
     }
 
-    private fun visible(b: Button) = grabbed || b.showInMenus
+    private fun visible(b: Button) = grabbed || b.spec.showInMenus
 
     override fun onDraw(canvas: Canvas) {
         val alpha = (opacity * 255).toInt()
@@ -179,10 +153,10 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     private fun pressButton(b: Button, pointer: Int) {
         performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
         when (b.kind) {
-            Kind.KEYBOARD -> onShowKeyboard()
-            Kind.SCROLL_UP -> NativeBridge.sendScroll(0.0, 1.0)
-            Kind.SCROLL_DOWN -> NativeBridge.sendScroll(0.0, -1.0)
-            Kind.KEY, Kind.MOUSE -> {
+            ControlKind.KEYBOARD -> onShowKeyboard()
+            ControlKind.SCROLL_UP -> NativeBridge.sendScroll(0.0, 1.0)
+            ControlKind.SCROLL_DOWN -> NativeBridge.sendScroll(0.0, -1.0)
+            ControlKind.KEY, ControlKind.MOUSE -> {
                 if (b.toggle) {
                     b.pressed = !b.pressed
                     send(b, if (b.pressed) Glfw.PRESS else Glfw.RELEASE)
@@ -203,7 +177,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     }
 
     private fun send(b: Button, action: Int) {
-        if (b.kind == Kind.MOUSE) NativeBridge.sendMouseButton(b.code, action, 0)
+        if (b.kind == ControlKind.MOUSE) NativeBridge.sendMouseButton(b.code, action, 0)
         else NativeBridge.sendKey(b.code, 0, action, 0)
     }
 

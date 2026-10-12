@@ -60,6 +60,12 @@
                 android:value="Runs the Minecraft Java process while the launcher is in the background" />
         </service>
 
+        <activity
+            android:name=".ui.ControlsEditorActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Quantum" />
+
         <!-- The JVM runs inside this process and owns it until the game exits. -->
         <activity
             android:name=".game.GameActivity"

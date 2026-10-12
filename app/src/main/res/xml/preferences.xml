@@ -56,6 +56,12 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cat_controls" app:iconSpaceReserved="false">
+        <Preference
+            app:key="edit_controls"
+            app:title="@string/controls_edit"
+            app:summary="@string/controls_edit_summary"
+            app:icon="@drawable/ic_palette"
+            app:iconSpaceReserved="true" />
         <SeekBarPreference
             app:key="controls_opacity"
             app:title="@string/controls_opacity"

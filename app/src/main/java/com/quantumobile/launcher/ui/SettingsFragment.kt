@@ -35,6 +35,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<SeekBarPreference>(Settings.KEY_MEMORY)?.apply {
             if (!preferenceManager.sharedPreferences!!.contains(Settings.KEY_MEMORY)) value = Settings.defaultMemoryMb(requireContext())
         }
+        findPreference<Preference>("edit_controls")?.setOnPreferenceClickListener {
+            startActivity(android.content.Intent(requireContext(), ControlsEditorActivity::class.java))
+            true
+        }
         findPreference<Preference>("download_runtime")?.setOnPreferenceClickListener {
             RuntimeInstallUi.show(this) { updateSummaries() }
             true

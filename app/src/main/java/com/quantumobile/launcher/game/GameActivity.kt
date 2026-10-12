@@ -46,6 +46,7 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
         binding.surface.framebufferScale = scale
         binding.surface.sensitivity = sensitivity
         binding.surface.holder.addCallback(this)
+        binding.controls.reloadLayout()
         binding.controls.apply {
             opacity = settings.controlsOpacity / 100f
             this.sensitivity = sensitivity
