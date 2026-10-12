@@ -68,6 +68,7 @@ JNIEXPORT void JNICALL JNI_FN(setSurface)(JNIEnv *env, jclass clazz, jobject sur
     g_height = height;
     if (old) ANativeWindow_release(old);
     if (g_window) push_event((QmlEvent){.type = QML_EVENT_FRAMEBUFFER, .i1 = width, .i2 = height});
+    else push_event((QmlEvent){.type = QML_EVENT_WINDOW_LOST}); /* app went to the background */
 }
 
 JNIEXPORT void JNICALL JNI_FN(sendKey)(JNIEnv *env, jclass clazz, jint key, jint scancode, jint action, jint mods) {

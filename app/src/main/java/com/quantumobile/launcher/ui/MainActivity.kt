@@ -30,6 +30,19 @@ class MainActivity : AppCompatActivity() {
             true
         }
         if (savedInstanceState == null) binding.bottomNav.selectedItemId = R.id.nav_home
+        askNotificationPermission()
+    }
+
+    private val notificationPermission =
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+
+    /** Progress and "ready to play" notifications need this on Android 13+; asked once. */
+    private fun askNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT < 33 || com.quantumobile.launcher.service.Notifications.canNotify(this)) return
+        val prefs = getSharedPreferences("launcher", MODE_PRIVATE)
+        if (prefs.getBoolean("asked_notifications", false)) return
+        prefs.edit().putBoolean("asked_notifications", true).apply()
+        notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
     }
 
     /** Switches tabs from inside a fragment (e.g. the setup checklist on Home). */

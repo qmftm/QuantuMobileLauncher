@@ -12,10 +12,10 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.R
+import com.quantumobile.launcher.service.Notifications
 import com.quantumobile.launcher.core.runtime.RuntimeCatalog
 import com.quantumobile.launcher.core.runtime.RuntimeDownloader
 import com.quantumobile.launcher.core.runtime.RuntimeSource
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -80,6 +80,7 @@ object RuntimeInstallUi {
 
     private fun download(fragment: Fragment, app: QuantumApp, source: RuntimeSource, onDone: () -> Unit) {
         val ctx = fragment.requireContext()
+        val appCtx = ctx.applicationContext
         val label = TextView(ctx).apply { text = ctx.getString(R.string.downloading_runtime, source.fileName) }
         val bar = LinearProgressIndicator(ctx).apply { isIndeterminate = true; max = 100 }
         val content = LinearLayout(ctx).apply {
@@ -87,44 +88,53 @@ object RuntimeInstallUi {
             addView(label)
             addView(bar, LinearLayout.LayoutParams(-1, -2).apply { topMargin = (12 * resources.displayMetrics.density).toInt() })
         }
+        val title = appCtx.getString(R.string.downloading_runtime, source.fileName)
         var job: Job? = null
         val dialog = MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.download_runtime)
             .setView(content.withPadding())
             .setCancelable(false)
             .setNegativeButton(android.R.string.cancel) { _, _ -> job?.cancel() }
+            .setNeutralButton(R.string.run_in_background, null) // closes the dialog; the download carries on
             .show()
 
-        job = fragment.lifecycleScope.launch {
-            try {
-                val runtime = RuntimeDownloader(app.runtimes, app.paths.cacheDir).install(source) { done, total ->
+        // Owned by the app (not the fragment) so it survives leaving this screen or the app going to the background.
+        job = app.tasks.launch(
+            title,
+            block = { reporter ->
+                RuntimeDownloader(app.runtimes, app.paths.cacheDir).install(source) { done, total ->
+                    val mb = done / 1_048_576
+                    val message = if (total > 0) appCtx.getString(R.string.download_progress, source.fileName, mb, total / 1_048_576)
+                    else appCtx.getString(R.string.download_progress_unknown, source.fileName, mb)
+                    reporter.report(message, if (total > 0) (done * 100 / total).toInt() else -1)
                     bar.post {
-                        if (total > 0) {
-                            bar.isIndeterminate = false
-                            bar.setProgressCompat((done * 100 / total).toInt(), true)
-                            label.text = ctx.getString(R.string.download_progress, source.fileName, done / 1_048_576, total / 1_048_576)
-                        } else {
-                            label.text = ctx.getString(R.string.download_progress_unknown, source.fileName, done / 1_048_576)
-                        }
+                        if (!dialog.isShowing) return@post
+                        label.text = message
+                        if (total > 0) { bar.isIndeterminate = false; bar.setProgressCompat((done * 100 / total).toInt(), true) }
                     }
                 }
-                dialog.dismiss()
-                fragment.view?.let {
-                    Snackbar.make(it, ctx.getString(R.string.runtime_installed, runtime.fullVersion), Snackbar.LENGTH_LONG).show()
+            },
+            onResult = { result ->
+                if (dialog.isShowing) dialog.dismiss()
+                result.onSuccess { runtime ->
+                    val text = appCtx.getString(R.string.runtime_installed, runtime.fullVersion)
+                    if (fragment.isAdded && fragment.view != null) {
+                        Snackbar.make(fragment.requireView(), text, Snackbar.LENGTH_LONG).show()
+                        onDone()
+                    }
+                    if (!app.isForeground) Notifications.done(appCtx, title, text)
+                }.onFailure { e ->
+                    if (fragment.isAdded && app.isForeground) {
+                        MaterialAlertDialogBuilder(fragment.requireContext())
+                            .setTitle(R.string.import_failed)
+                            .setMessage(e.message)
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show()
+                    } else {
+                        Notifications.done(appCtx, appCtx.getString(R.string.import_failed), e.message)
+                    }
                 }
-                onDone()
-            } catch (e: CancellationException) {
-                dialog.dismiss()
-                throw e
-            } catch (e: Exception) {
-                dialog.dismiss()
-                MaterialAlertDialogBuilder(ctx)
-                    .setTitle(R.string.import_failed)
-                    .setMessage(e.message)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show()
-            }
-        }
+            },
+        )
     }
-
 }

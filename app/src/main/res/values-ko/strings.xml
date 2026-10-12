@@ -49,6 +49,7 @@
 
     <string name="cat_game">게임</string>
     <string name="cat_controls">조작</string>
+    <string name="cat_background">백그라운드</string>
     <string name="cat_runtime">Java 및 라이브러리</string>
     <string name="memory">메모리 (MB)</string>
     <string name="renderer">렌더러</string>
@@ -164,6 +165,21 @@
     <string name="removed">%1$s 삭제했어요</string>
     <string name="powered_by_modrinth">Modrinth 제공</string>
     <string name="dependency_badge">의존</string>
+
+    <string name="channel_tasks">설치 및 다운로드</string>
+    <string name="channel_game">실행 중인 게임</string>
+    <string name="channel_done">완료된 작업</string>
+    <string name="tasks_running">작업 %1$d개 진행 중</string>
+    <string name="preparing_game">%1$s 준비 중</string>
+    <string name="installing_mods">%1$s 설치 중</string>
+    <string name="ready_to_play">플레이할 준비가 됐어요</string>
+    <string name="tap_to_play">눌러서 게임 시작</string>
+    <string name="game_running">마인크래프트 실행 중</string>
+    <string name="tap_to_return">눌러서 게임으로 돌아가기</string>
+    <string name="quit_game">게임 종료</string>
+    <string name="run_in_background">백그라운드로 실행</string>
+    <string name="background_title">백그라운드 실행</string>
+    <string name="background_summary">배터리 사용 제한을 풀어서 화면이 꺼져도 다운로드와 게임이 계속되게 해요</string>
 
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>

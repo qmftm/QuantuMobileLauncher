@@ -30,7 +30,8 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        launch = intentLaunch(intent) ?: run { finish(); return }
+        launch = intentLaunch(intent) ?: GameSession.launch ?: run { finish(); return }
+        GameSession.launch = launch
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -74,15 +75,17 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     private fun startJvmOnce() {
-        if (jvmStarted) return
-        jvmStarted = true
+        if (GameSession.started) return
+        GameSession.started = true
+        GameService.start(applicationContext)
         val l = launch
         // A big stack: the JVM's main thread runs on this thread and Minecraft recurses deeply.
         Thread(null, {
             val rc = NativeBridge.launchJvm(l.javaHome, l.args.toTypedArray(), l.env.toTypedArray(), l.gameDir, l.logPath)
             Log.i(TAG, "JVM exited with $rc")
-            runOnUiThread {
-                finishAndRemoveTask()
+            // Do not rely on this activity still being alive: the user may have left to the home screen.
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                runCatching { finishAndRemoveTask() }
                 exitProcess(rc)
             }
         }, "Minecraft-Main", 64L * 1024 * 1024).start()
@@ -124,7 +127,14 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) hideSystemBars()
+        if (hasFocus) hideSystemBars() else binding.controls.releaseAll()
+    }
+
+    override fun onPause() {
+        // Held keys/buttons would otherwise stay "pressed" in the game while it runs unseen in the background.
+        binding.controls.releaseAll()
+        getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(binding.surface.windowToken, 0)
+        super.onPause()
     }
 
     private fun hideSystemBars() {
@@ -138,9 +148,6 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
     companion object {
         private const val TAG = "GameActivity"
         private const val EXTRA_LAUNCH = "launch"
-
-        /** The JVM can only be started once per process. */
-        @Volatile private var jvmStarted = false
 
         fun intent(context: Context, launch: GameLaunch) =
             Intent(context, GameActivity::class.java).putExtra(EXTRA_LAUNCH, launch)

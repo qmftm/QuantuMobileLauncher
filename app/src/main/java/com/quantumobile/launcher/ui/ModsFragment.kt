@@ -27,6 +27,7 @@ import com.quantumobile.launcher.core.mods.ProjectType
 import com.quantumobile.launcher.core.parseJsonObject
 import com.quantumobile.launcher.core.str
 import com.quantumobile.launcher.databinding.FragmentModsBinding
+import com.quantumobile.launcher.service.Notifications
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -256,22 +257,39 @@ class ModsFragment : Fragment() {
 
     private fun apply(plan: InstallPlan) {
         val inst = installer ?: return
-        val progress = MaterialAlertDialogBuilder(requireContext()).setMessage(R.string.preparing).setCancelable(false).show()
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val done = inst.apply(plan) { i, n, name ->
-                    progress.setMessage(getString(R.string.installing_item, name, minOf(i + 1, n), n))
+        val app = app
+        val ctx = requireContext().applicationContext
+        val title = getString(R.string.installing_mods, plan.items.first().title)
+        val progress = MaterialAlertDialogBuilder(requireContext())
+            .setMessage(R.string.preparing)
+            .setCancelable(false)
+            .setNegativeButton(R.string.run_in_background, null) // just closes the dialog; the install carries on
+            .show()
+        // The work belongs to the app, not this screen: it keeps running if the user leaves or backgrounds the app.
+        app.tasks.launch(
+            title,
+            block = { reporter ->
+                inst.apply(plan) { i, n, name ->
+                    val message = ctx.getString(R.string.installing_item, name, minOf(i + 1, n), n)
+                    reporter.report(message, i * 100 / n)
+                    if (progress.isShowing) progress.setMessage(message)
                 }
-                Snackbar.make(binding.root, getString(R.string.installed_count, done.size), Snackbar.LENGTH_LONG).show()
-                if (installedMode) showInstalled()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                showError(e)
-            } finally {
-                progress.dismiss()
-            }
-        }
+            },
+            onResult = { result ->
+                if (progress.isShowing) progress.dismiss()
+                result.onSuccess { done ->
+                    val text = ctx.getString(R.string.installed_count, done.size)
+                    if (_binding != null) {
+                        Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).show()
+                        if (installedMode) showInstalled()
+                    }
+                    if (!app.isForeground) Notifications.done(ctx, title, text)
+                }.onFailure { e ->
+                    if (_binding != null && app.isForeground) showError(e as? Exception ?: Exception(e))
+                    else Notifications.done(ctx, title, e.message)
+                }
+            },
+        )
     }
 
     private fun checkUpdates() {

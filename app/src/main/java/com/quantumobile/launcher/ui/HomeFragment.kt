@@ -20,6 +20,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.quantumobile.launcher.BuildConfig
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.R
+import com.quantumobile.launcher.core.LaunchStages
+import com.quantumobile.launcher.core.LaunchState
 import com.quantumobile.launcher.core.auth.AccountType
 import com.quantumobile.launcher.core.instance.Instance
 import com.quantumobile.launcher.databinding.FragmentHomeBinding
@@ -218,17 +220,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun stageLabel(stage: String): String = getString(
-        when (stage) {
-            "Account" -> R.string.stage_account
-            "Version" -> R.string.stage_version
-            "Client" -> R.string.stage_client
-            "Libraries" -> R.string.stage_libraries
-            "Assets" -> R.string.stage_assets
-            "Starting", "Done" -> R.string.stage_starting
-            else -> R.string.preparing
-        }
-    )
+    private fun stageLabel(stage: String): String = getString(LaunchStages.label(stage))
 
     private fun snack(res: Int) = Snackbar.make(binding.root, res, Snackbar.LENGTH_SHORT).show()
 

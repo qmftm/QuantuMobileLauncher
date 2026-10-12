@@ -24,7 +24,9 @@ enum {
     QML_EVENT_CURSOR_POS = 3,   /* d1=x, d2=y */
     QML_EVENT_MOUSE_BUTTON = 4, /* i1=button, i3=action, i4=mods */
     QML_EVENT_SCROLL = 5,       /* d1=xoffset, d2=yoffset */
-    QML_EVENT_FRAMEBUFFER = 6,  /* i1=width, i2=height */
+    QML_EVENT_FRAMEBUFFER = 6,  /* i1=width, i2=height: a window is available (again) — recreate the EGL surface */
+    QML_EVENT_WINDOW_LOST = 7,  /* the window is gone (app in background): stop rendering and destroy the EGL surface,
+                                   but keep the game running; a FRAMEBUFFER event follows when the user returns */
 };
 
 typedef struct {

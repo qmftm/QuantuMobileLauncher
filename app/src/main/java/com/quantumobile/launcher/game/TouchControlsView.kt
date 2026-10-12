@@ -202,7 +202,8 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         else NativeBridge.sendKey(b.code, 0, action, 0)
     }
 
-    private fun releaseAll() {
+    /** Releases every pressed on-screen button and the camera finger (used when the screen goes to the background). */
+    fun releaseAll() {
         buttons.forEach { b ->
             if (b.pressed) send(b, Glfw.RELEASE)
             b.pressed = false

@@ -4,6 +4,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -37,6 +42,23 @@
             android:name=".ui.LogActivity"
             android:exported="false"
             android:label="@string/game_log" />
+
+        <!-- Keeps installs and downloads running when the app is in the background. -->
+        <service
+            android:name=".service.TaskService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- Keeps the game process alive in the background (same process as GameActivity). -->
+        <service
+            android:name=".game.GameService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:process=":game">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Runs the Minecraft Java process while the launcher is in the background" />
+        </service>
 
         <!-- The JVM runs inside this process and owns it until the game exits. -->
         <activity

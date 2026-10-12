@@ -49,6 +49,7 @@
 
     <string name="cat_game">Game</string>
     <string name="cat_controls">Controls</string>
+    <string name="cat_background">Background</string>
     <string name="cat_runtime">Java &amp; libraries</string>
     <string name="memory">Memory (MB)</string>
     <string name="renderer">Renderer</string>
@@ -164,6 +165,21 @@
     <string name="removed">%1$s removed</string>
     <string name="powered_by_modrinth">Powered by Modrinth</string>
     <string name="dependency_badge">dependency</string>
+
+    <string name="channel_tasks">Installs and downloads</string>
+    <string name="channel_game">Running game</string>
+    <string name="channel_done">Finished tasks</string>
+    <string name="tasks_running">Running tasks: %1$d</string>
+    <string name="preparing_game">Preparing %1$s</string>
+    <string name="installing_mods">Installing %1$s</string>
+    <string name="ready_to_play">Ready to play</string>
+    <string name="tap_to_play">Tap to start the game</string>
+    <string name="game_running">Minecraft is running</string>
+    <string name="tap_to_return">Tap to return to the game</string>
+    <string name="quit_game">Quit game</string>
+    <string name="run_in_background">Run in background</string>
+    <string name="background_title">Run in background</string>
+    <string name="background_summary">Allow unrestricted battery use so downloads and the game keep running with the screen off</string>
 
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>

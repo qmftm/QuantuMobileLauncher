@@ -75,6 +75,15 @@
             app:iconSpaceReserved="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/cat_background" app:iconSpaceReserved="false">
+        <Preference
+            app:key="background_run"
+            app:title="@string/background_title"
+            app:summary="@string/background_summary"
+            app:icon="@drawable/ic_speed"
+            app:iconSpaceReserved="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/cat_runtime" app:iconSpaceReserved="false">
         <Preference
             app:key="download_runtime"

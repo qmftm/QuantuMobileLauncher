@@ -13,6 +13,7 @@ import androidx.preference.SeekBarPreference
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.R
 import com.quantumobile.launcher.core.Settings
+import com.quantumobile.launcher.service.Notifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,6 +37,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
         findPreference<Preference>("download_runtime")?.setOnPreferenceClickListener {
             RuntimeInstallUi.show(this) { updateSummaries() }
+            true
+        }
+        findPreference<Preference>("background_run")?.setOnPreferenceClickListener {
+            // The system screen for battery optimisation; the user picks "Unrestricted" for this app.
+            runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
             true
         }
         findPreference<Preference>("import_runtime")?.setOnPreferenceClickListener {
@@ -71,21 +77,34 @@ class SettingsFragment : PreferenceFragmentCompat() {
             name.endsWith(".gz") || name.endsWith(".tgz") -> "gz"
             else -> "tar"
         }
-        val progress = AlertDialog.Builder(requireContext()).setMessage(getString(R.string.importing, name)).setCancelable(false).show()
-        lifecycleScope.launch {
-            try {
-                val runtime = withContext(Dispatchers.IO) {
-                    requireContext().contentResolver.openInputStream(uri)!!.use { app.runtimes.install(name, it, compression) }
+        val ctx = requireContext().applicationContext
+        val title = ctx.getString(R.string.importing, name)
+        val progress = AlertDialog.Builder(requireContext()).setMessage(title).setCancelable(false)
+            .setNegativeButton(R.string.run_in_background, null).show()
+        app.tasks.launch(
+            title,
+            block = {
+                withContext(Dispatchers.IO) {
+                    ctx.contentResolver.openInputStream(uri)!!.use { app.runtimes.install(name, it, compression) }
                 }
-                Toast.makeText(requireContext(), getString(R.string.runtime_installed, runtime.fullVersion), Toast.LENGTH_LONG).show()
-            } catch (e: Exception) {
-                AlertDialog.Builder(requireContext()).setTitle(R.string.import_failed).setMessage(e.message)
-                    .setPositiveButton(android.R.string.ok, null).show()
-            } finally {
-                progress.dismiss()
-                updateSummaries()
-            }
-        }
+            },
+            onResult = { result ->
+                if (progress.isShowing) progress.dismiss()
+                if (isAdded) updateSummaries()
+                result.onSuccess { runtime ->
+                    val text = ctx.getString(R.string.runtime_installed, runtime.fullVersion)
+                    if (isAdded) Toast.makeText(ctx, text, Toast.LENGTH_LONG).show()
+                    if (!app.isForeground) Notifications.done(ctx, title, text)
+                }.onFailure { e ->
+                    if (isAdded && app.isForeground) {
+                        AlertDialog.Builder(requireContext()).setTitle(R.string.import_failed).setMessage(e.message)
+                            .setPositiveButton(android.R.string.ok, null).show()
+                    } else {
+                        Notifications.done(ctx, ctx.getString(R.string.import_failed), e.message)
+                    }
+                }
+            },
+        )
     }
 
     private fun importLwjgl(uris: List<Uri>) {
