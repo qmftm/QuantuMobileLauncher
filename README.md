@@ -26,6 +26,7 @@
 | 실행 인자 생성 (신규 `arguments` 포맷 + 구버전 `minecraftArguments`, rule 평가) | ✅ |
 | 필요한 Java 버전 자동 선택 (8 / 17 / 21) | ✅ |
 | Java 런타임 가져오기 (`.tar.xz` / `.tar.gz`) | ✅ |
+| **Java 런타임 자동 다운로드**: 게임에 필요한 Java 가 없으면 시작 전에 알아서 받아서 설치 (Java 17 / 21 / 25, arm64·arm32·x86_64) | ✅ |
 | 앱 안에서 Java 런타임 다운로드 (카탈로그 선택 또는 링크 입력, SHA-256 검증, 진행률) | ✅ |
 | 필요한 Java 가 없을 때 오류 창에서 바로 "Java N 받기" | ✅ |
 | JNI 브릿지: `JLI_Launch` 로 JVM 실행, stdout/stderr → 로그 파일 | ✅ |
@@ -50,7 +51,8 @@ Pojav 계열 런처들도 아래 세 가지를 따로 빌드해서 함께 배포
 1. **안드로이드용 Java 런타임**
    예: [PojavLauncherTeam/android-openjdk-build-multiarch](https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch) 의
    `jre8-*.tar.xz`, `jre17-*.tar.xz`, `jre21-*.tar.xz`.
-   앱의 **설정 → Java 런타임 다운로드** (카탈로그 또는 링크 입력) 또는 **Java 런타임 가져오기** (파일 선택) 로 설치합니다. 1.16.5 이하는 Java 8, 1.17~1.20.4 는 17, 1.20.5 이상은 21 이 필요합니다.
+   기본은 자동으로 받습니다 (아래 "Java 런타임" 참고). 직접 설치하려면 **설정 → Java 런타임 다운로드** (카탈로그 또는 링크 입력) 또는
+   **Java 런타임 가져오기** (파일 선택) 를 쓰세요. 1.16.5 이하는 Java 8, 1.17~1.20.4 는 17, 1.20.5~1.21.x 는 21, 26.x 는 25 가 필요합니다.
 2. **안드로이드용 LWJGL 3 jar** (예: PojavLauncher 의 lwjgl3 포크 빌드)
    **설정 → LWJGL jar 가져오기** 로 넣으면 모장의 LWJGL 대신 클래스패스에 들어갑니다.
 3. **네이티브 라이브러리**: `liblwjgl.so`, GLFW 구현체, 렌더러 (`libgl4es_114.so` 또는 `libOSMesa.so` 등)
@@ -77,19 +79,23 @@ Fabric / Quilt(Fabric 모드 겸용) / Forge / NeoForge 인스턴스를 인식�
 다운로드는 Modrinth CDN(`cdn.modrinth.com`)에서만 허용하며 SHA-1 이 맞지 않으면 설치하지 않습니다.
 셰이더는 Iris 같은 셰이더 모드가 따로 필요하고, 모바일 렌더러에서는 동작하지 않을 수 있습니다.
 
-### 런타임 카탈로그
+### Java 런타임 (자동 다운로드)
 
-**Java 런타임 다운로드** 는 [`runtimes.json`](runtimes.json) 을 읽어 기기 CPU(ABI)에 맞는 항목만 보여줍니다.
-주소는 설정의 "런타임 목록 주소"에서 바꿀 수 있어서, 직접 호스팅한 목록도 쓸 수 있습니다.
-기본 목록은 비어 있으므로, 믿을 수 있는 빌드의 주소를 확인해서 아래 형식으로 채워 주세요 (https 만 허용).
+플레이를 누르면 런처가 필요한 Java 버전을 확인하고, 없으면 **자동으로 받아서 설치한 뒤** 게임을 시작합니다
+(설정 → "Java 자동 다운로드" 로 끌 수 있습니다). 직접 고르고 싶으면 설정의 **Java 런타임 다운로드** 를 쓰세요.
 
-```json
-{"runtimes": [
-  {"name": "My JRE", "java": 25, "abi": "arm64-v8a", "url": "https://…/jre25-aarch64.tar.xz", "sha256": "…", "sizeMb": 60}
-]}
-```
-
-목록에 없는 런타임은 **링크 입력** 으로 직접 받을 수 있습니다. 받은 파일은 `sha256` 이 있으면 검증한 뒤 설치합니다.
+- **기본 카탈로그**: 앱에 내장된 [`runtimes.json`](app/src/main/assets/runtimes.json) — [ZalithLauncher](https://github.com/ZalithLauncher/ZalithLauncher)
+  프로젝트가 배포하는 안드로이드용 OpenJDK **17 / 21 / 25** (arm64-v8a, armeabi-v7a, x86_64, Java 25 는 x86 제외).
+  각 런타임은 "공통 부분 + CPU별 부분" 두 파일로 나뉘어 있고, 받아서 한 폴더에 합쳐 풉니다.
+  주소는 특정 커밋에 고정되어 있고 모든 파일을 SHA-256 으로 검증합니다 (OpenJDK 는 GPLv2 + Classpath Exception).
+- **기기에 맞는 것만**: CPU(ABI)에 맞는 항목만 보여주고, 필요한 버전이 정확히 있으면 그것을, 없으면 그보다 높은 가장 낮은 버전을 고릅니다.
+- **직접 만든 목록**: 설정의 "런타임 목록 주소"에 https 주소를 넣으면 내장 목록 대신 그 목록을 씁니다.
+  형식은 `{"runtimes":[{"name","java","abi","parts":[{"url","sha256","size"}],"sizeMb"}]}` 입니다 (파일 하나면 `url`/`sha256` 만 써도 됩니다).
+- 목록에 없는 런타임은 **링크 입력** 으로 직접 받을 수 있습니다.
+- ⚠️ **Java 8 은 아직 지원하지 않습니다.** Java 8 런타임의 라이브러리는 Pack200 으로 압축돼 있고(`rt.jar.pack` 등), 이를 풀려면
+  OpenJDK 의 네이티브 `unpack200` 이 필요합니다 (Pojav 계열 런처는 앱에 `libunpack200.so` 를 넣어 둡니다). 아직 이 앱에는 없어서
+  Java 8 이 필요한 구버전(1.16.5 이하)은 자동으로 더 높은 Java 로 실행을 시도하며, 오래된 버전은 실패할 수 있습니다.
+  Java 8 런타임을 직접 가져오면 이유를 설명하는 오류가 납니다.
 
 위 파일들은 대부분 LGPL/GPL 계열 라이선스이므로, 함께 배포할 때는 각 라이선스를 지켜야 합니다.
 

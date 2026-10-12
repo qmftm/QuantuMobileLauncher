@@ -85,6 +85,13 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cat_runtime" app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            app:key="auto_runtime"
+            app:title="@string/auto_runtime"
+            app:summary="@string/auto_runtime_summary"
+            app:defaultValue="true"
+            app:icon="@drawable/ic_download"
+            app:iconSpaceReserved="true" />
         <Preference
             app:key="download_runtime"
             app:title="@string/download_runtime"

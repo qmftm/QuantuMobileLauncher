@@ -30,7 +30,7 @@ object RuntimeInstallUi {
         val loading = MaterialAlertDialogBuilder(ctx).setMessage(R.string.loading_runtimes).setCancelable(false).show()
         fragment.lifecycleScope.launch {
             val catalog = try {
-                RuntimeCatalog.forDevice(RuntimeCatalog.fetch(app.settings.runtimeCatalogUrl), Build.SUPPORTED_ABIS.toList())
+                RuntimeCatalog.forDevice(RuntimeCatalog.load(ctx, app.settings.runtimeCatalogUrl), Build.SUPPORTED_ABIS.toList())
             } catch (e: Exception) {
                 emptyList()
             } finally {
@@ -88,7 +88,7 @@ object RuntimeInstallUi {
             addView(label)
             addView(bar, LinearLayout.LayoutParams(-1, -2).apply { topMargin = (12 * resources.displayMetrics.density).toInt() })
         }
-        val title = appCtx.getString(R.string.downloading_runtime, source.fileName)
+        val title = appCtx.getString(R.string.downloading_runtime, source.name.takeIf { source.java > 0 } ?: source.fileName)
         var job: Job? = null
         val dialog = MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.download_runtime)

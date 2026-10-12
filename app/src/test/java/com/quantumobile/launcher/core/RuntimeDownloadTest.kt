@@ -149,4 +149,152 @@ class RuntimeDownloadTest {
         assertNull(RuntimeCatalog.forDevice(all, listOf("x86")).firstOrNull { it.abi == "arm64-v8a" })
         assertTrue(RuntimeCatalog.parse("""{"runtimes":[]}""").isEmpty())
     }
+
+    @Test
+    fun bestPicksExactThenLowestNewer() {
+        fun src(n: String, j: Int) = RuntimeSource(n, j, null, "https://x/$n.tar.xz")
+        val all = listOf(src("j8", 8), src("j21", 21), src("j17", 17), src("j25", 25))
+        assertEquals("j17", RuntimeCatalog.best(all, 17)!!.name)
+        assertEquals("j21", RuntimeCatalog.best(all, 18)!!.name) // newer JRE runs older games
+        assertEquals("j25", RuntimeCatalog.best(all, 25)!!.name)
+        assertNull(RuntimeCatalog.best(all, 26))
+        assertNull(RuntimeCatalog.best(emptyList(), 8))
+    }
+
+    private fun tar(vararg files: Pair<String, ByteArray>): ByteArray {
+        val out = ByteArrayOutputStream()
+        TarArchiveOutputStream(XZCompressorOutputStream(out)).use { t ->
+            for ((name, bytes) in files) {
+                t.putArchiveEntry(TarArchiveEntry(name).apply { size = bytes.size.toLong(); mode = 493 })
+                t.write(bytes); t.closeArchiveEntry()
+            }
+        }
+        return out.toByteArray()
+    }
+
+    private fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
+
+    @Test
+    fun installsMultiPartRuntimeIntoOneDirectory() = runBlocking {
+        val universal = tar("lib/modules" to "modules".toByteArray(), "conf/x" to "c".toByteArray())
+        val bin = tar("release" to "JAVA_VERSION=\"21.0.1\"\n".toByteArray(), "bin/java" to "#!/bin/sh".toByteArray(), "lib/server/libjvm.so" to "jvm".toByteArray())
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = when (request.path) {
+                "/universal.tar.xz" -> MockResponse().setBody(Buffer().write(universal))
+                "/bin-arm64.tar.xz" -> MockResponse().setBody(Buffer().write(bin))
+                else -> MockResponse().setResponseCode(404)
+            }
+        }
+        val source = RuntimeSource(
+            "OpenJDK 21", 21, "arm64-v8a",
+            listOf(
+                com.quantumobile.launcher.core.runtime.RuntimePart("$base/universal.tar.xz", sha(universal), universal.size.toLong()),
+                com.quantumobile.launcher.core.runtime.RuntimePart("$base/bin-arm64.tar.xz", sha(bin), bin.size.toLong()),
+            ),
+        )
+        val manager = RuntimeManager(File(root, "runtimes"))
+        var last = 0L; var total = 0L
+        val rt = downloader(manager).install(source) { d, t -> last = d; total = t }
+
+        assertEquals("jre21-arm64-v8a", rt.home.name)
+        assertEquals(21, rt.majorVersion)
+        for (f in listOf("release", "bin/java", "lib/server/libjvm.so", "lib/modules", "conf/x")) assertTrue(f, File(rt.home, f).exists())
+        assertEquals(total, last) // smooth progress across both parts
+        assertEquals((universal.size + bin.size).toLong(), total)
+        assertTrue(File(rt.home, "bin/java").canExecute())
+    }
+
+    @Test
+    fun badChecksumInSecondPartInstallsNothing() = runBlocking {
+        val universal = tar("lib/modules" to "m".toByteArray())
+        val bin = tar("release" to "JAVA_VERSION=\"17.0.1\"\n".toByteArray())
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = when (request.path) {
+                "/u.tar.xz" -> MockResponse().setBody(Buffer().write(universal))
+                "/b.tar.xz" -> MockResponse().setBody(Buffer().write(bin))
+                else -> MockResponse().setResponseCode(404)
+            }
+        }
+        val source = RuntimeSource("x", 17, null, listOf(
+            com.quantumobile.launcher.core.runtime.RuntimePart("$base/u.tar.xz", sha(universal)),
+            com.quantumobile.launcher.core.runtime.RuntimePart("$base/b.tar.xz", "0".repeat(64)),
+        ))
+        val manager = RuntimeManager(File(root, "runtimes"))
+        try { downloader(manager).install(source); fail("expected checksum failure") } catch (e: IOException) {
+            assertTrue(e.message!!, e.message!!.contains("b.tar.xz"))
+        }
+        assertTrue(manager.list().isEmpty())
+        assertTrue(File(root, "cache").listFiles().orEmpty().isEmpty()) // every temp part removed
+    }
+
+    private fun fixture(name: String) = javaClass.classLoader!!.getResourceAsStream("pack200/$name")!!.readBytes()
+
+    @Test
+    fun unpacksResourceOnlyPack200JarsFromARealJdk8() {
+        // lib/security/policy/unlimited/local_policy.jar.pack taken from a real Android JDK 8 build.
+        val archive = tar(
+            "release" to "JAVA_VERSION=\"17.0.1\"\n".toByteArray(),
+            "lib/security/local_policy.jar.pack" to fixture("local_policy.jar.pack"),
+        )
+        val rt = RuntimeManager(File(root, "runtimes")).install("jre-pack", archive.inputStream(), "xz")
+        assertFalse(File(rt.home, "lib/security/local_policy.jar.pack").exists())
+        java.util.zip.ZipFile(File(rt.home, "lib/security/local_policy.jar")).use { z ->
+            assertTrue(z.getInputStream(z.getEntry("default_local.policy")).readBytes().decodeToString().contains("CryptoAllPermission"))
+        }
+    }
+
+    @Test
+    fun runtimesNeedingNativeUnpackFailClearlyAndInstallNothing() {
+        // Class jars in the newer Pack200 format (as in JDK 8's rt.jar.pack) cannot be expanded here.
+        val archive = tar(
+            "release" to "JAVA_VERSION=\"1.8.0_442\"\n".toByteArray(),
+            "lib/rt.jar.pack" to fixture("jdk8_rt_header.bin"), // first bytes of a real JDK 8 rt.jar.pack
+        )
+        val manager = RuntimeManager(File(root, "runtimes"))
+        try {
+            manager.install("jre8", archive.inputStream(), "xz")
+            fail("expected IOException")
+        } catch (e: IOException) {
+            assertTrue(e.message!!, e.message!!.contains("Java 8 runtimes are not supported"))
+        }
+        assertTrue(manager.list().isEmpty())
+        assertTrue(File(root, "runtimes").listFiles().orEmpty().none { it.isDirectory }) // staging cleaned up
+    }
+
+    @Test
+    fun catalogAcceptsPartsAndRejectsInsecureParts() {
+        val all = RuntimeCatalog.parse(
+            """{"runtimes":[
+              {"name":"Split","java":17,"abi":"arm64-v8a","parts":[{"url":"https://x/u.tar.xz","sha256":"AB","size":10},{"url":"https://x/b.tar.xz","size":5}],"sizeMb":1},
+              {"name":"HalfInsecure","java":17,"parts":[{"url":"https://x/u.tar.xz"},{"url":"http://x/b.tar.xz"}]},
+              {"name":"NoParts","java":17,"parts":[]}]}"""
+        )
+        assertEquals(listOf("Split"), all.map { it.name })
+        assertEquals(listOf("ab", null), all[0].parts.map { it.sha256 })
+        assertEquals(15L, all[0].parts.sumOf { it.size })
+        assertEquals("jre17-arm64-v8a", all[0].installName)
+    }
+
+    @Test
+    fun bundledCatalogIsWellFormed() {
+        val text = File("src/main/assets/runtimes.json").readText()
+        val all = RuntimeCatalog.parse(text)
+        assertEquals(11, all.size) // Java 25 has no x86 build
+        for (java in listOf(17, 21, 25)) {
+            for (abi in listOf("arm64-v8a", "armeabi-v7a", "x86_64")) { // every common CPU
+                assertNotNull("Java $java for $abi", all.firstOrNull { it.java == java && it.abi == abi })
+            }
+        }
+        for (s in all) {
+            assertEquals(2, s.parts.size) // universal + per-CPU
+            for (p in s.parts) {
+                assertTrue(p.url, p.url.startsWith("https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/"))
+                assertTrue(p.sha256!!, Regex("[0-9a-f]{64}").matches(p.sha256!!))
+                assertTrue(p.size > 1_000_000)
+            }
+        }
+        // A device with an arm64 CPU that can also run 32-bit gets the 64-bit build first.
+        val best = RuntimeCatalog.best(RuntimeCatalog.forDevice(all, listOf("arm64-v8a", "armeabi-v7a")), 25)!!
+        assertEquals("arm64-v8a", best.abi)
+    }
 }

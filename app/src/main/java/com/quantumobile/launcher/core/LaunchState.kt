@@ -14,6 +14,7 @@ object LaunchStages {
     @StringRes
     fun label(stage: String): Int = when (stage) {
         "Account" -> R.string.stage_account
+        "Runtime" -> R.string.stage_runtime
         "Version" -> R.string.stage_version
         "Client" -> R.string.stage_client
         "Libraries" -> R.string.stage_libraries

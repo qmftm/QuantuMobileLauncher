@@ -1,5 +1,6 @@
 package com.quantumobile.launcher.core
 
+import android.os.Build
 import com.quantumobile.launcher.BuildConfig
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.core.auth.Account
@@ -10,6 +11,8 @@ import com.quantumobile.launcher.core.mc.LaunchArgs
 import com.quantumobile.launcher.core.mc.LaunchSpec
 import com.quantumobile.launcher.core.mc.ProgressListener
 import com.quantumobile.launcher.core.mc.RuleEnv
+import com.quantumobile.launcher.core.runtime.RuntimeCatalog
+import com.quantumobile.launcher.core.runtime.RuntimeDownloader
 import java.io.File
 import java.io.Serializable
 
@@ -44,7 +47,11 @@ class LaunchPreparer(private val app: QuantumApp) {
         GameInstaller(paths).install(version, gameDir, listener)
 
         val runtime = app.runtimes.pick(version.javaMajorVersion)
-            ?: throw MissingRuntimeException(version.javaMajorVersion, missingRuntimeMessage(version.id, version.javaMajorVersion, app.runtimes.list().map { it.majorVersion }))
+            ?: installRuntimeAutomatically(version.javaMajorVersion, listener)
+            ?: throw MissingRuntimeException(
+                version.javaMajorVersion,
+                missingRuntimeMessage(version.id, version.javaMajorVersion, app.runtimes.list().map { it.majorVersion }),
+            )
 
         val lwjglOverride = GameInstaller.hasLwjglOverride(paths)
         val classpath = buildList {
@@ -120,6 +127,24 @@ class LaunchPreparer(private val app: QuantumApp) {
             env = env,
             logPath = paths.latestLog.absolutePath,
         )
+    }
+
+    /**
+     * Downloads the right Java runtime from the catalog when the user has none, so the first launch "just works".
+     * Returns null (and lets the caller show the normal error) when the setting is off, the catalog is unreachable
+     * or has nothing for this device.
+     */
+    private suspend fun installRuntimeAutomatically(required: Int, listener: ProgressListener): com.quantumobile.launcher.core.runtime.JavaRuntime? {
+        if (!app.settings.autoRuntime) return null
+        listener.onProgress("Runtime", 0, 100)
+        val sources = runCatching {
+            RuntimeCatalog.forDevice(RuntimeCatalog.load(app, app.settings.runtimeCatalogUrl), Build.SUPPORTED_ABIS.toList())
+        }.getOrNull() ?: return null
+        val source = RuntimeCatalog.best(sources, required) ?: return null
+        RuntimeDownloader(app.runtimes, app.paths.cacheDir).install(source) { done, total ->
+            listener.onProgress("Runtime", if (total > 0) (done * 100 / total).toInt() else 0, 100)
+        }
+        return app.runtimes.pick(required)
     }
 
     private suspend fun refreshedAccount(): Account {

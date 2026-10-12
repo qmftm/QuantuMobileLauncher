@@ -1,0 +1,203 @@
+{
+  "_comment": "Default runtime catalog bundled with the app. Android-built OpenJDK 17/21/25 from the ZalithLauncher project (Pojav-family builds, GPLv2 + Classpath Exception), each split into a universal part and a per-CPU part that are extracted into one directory. URLs are pinned to commit ed8a5c873b25f19d08aef5bdfc1084fd9aff836c and every part is verified by SHA-256. Java 8 is intentionally absent: its jars are Pack200-compressed and need a native unpack200 helper this app does not include yet. Format: {name, java, abi, parts:[{url, sha256, size}], sizeMb}; a single {url, sha256} is also accepted.",
+  "runtimes": [
+    {
+      "name": "OpenJDK 17 (Android build)",
+      "java": 17,
+      "abi": "arm64-v8a",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/universal.tar.xz",
+          "sha256": "d14ffda3b15b93a7000de26be864dd81b15f7eae8dbebe5ee71074973492a73b",
+          "size": 17070632
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/bin-arm64.tar.xz",
+          "sha256": "67f4510b0fa9c64ed851f4af924a5a8898538ada453f66d64542b72a0f04f92d",
+          "size": 4640448
+        }
+      ],
+      "sizeMb": 21
+    },
+    {
+      "name": "OpenJDK 17 (Android build)",
+      "java": 17,
+      "abi": "armeabi-v7a",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/universal.tar.xz",
+          "sha256": "d14ffda3b15b93a7000de26be864dd81b15f7eae8dbebe5ee71074973492a73b",
+          "size": 17070632
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/bin-arm.tar.xz",
+          "sha256": "c50ae258586a6fb286ba45f311b8b5a5ed4a51aae7f7325d114945c7ad3c2e38",
+          "size": 5558048
+        }
+      ],
+      "sizeMb": 22
+    },
+    {
+      "name": "OpenJDK 17 (Android build)",
+      "java": 17,
+      "abi": "x86_64",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/universal.tar.xz",
+          "sha256": "d14ffda3b15b93a7000de26be864dd81b15f7eae8dbebe5ee71074973492a73b",
+          "size": 17070632
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/bin-x86_64.tar.xz",
+          "sha256": "725587381bf043c66bb0f494abca4d4c5b1f67ff791ad0370e8252bd9257c7e6",
+          "size": 6088424
+        }
+      ],
+      "sizeMb": 22
+    },
+    {
+      "name": "OpenJDK 17 (Android build)",
+      "java": 17,
+      "abi": "x86",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/universal.tar.xz",
+          "sha256": "d14ffda3b15b93a7000de26be864dd81b15f7eae8dbebe5ee71074973492a73b",
+          "size": 17070632
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-17/bin-x86.tar.xz",
+          "sha256": "6eacf05adbc9b5d59ad7a72170a0fccd781b38a364aec39815049cb4ecd29212",
+          "size": 4986636
+        }
+      ],
+      "sizeMb": 21
+    },
+    {
+      "name": "OpenJDK 21 (Android build)",
+      "java": 21,
+      "abi": "arm64-v8a",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/universal.tar.xz",
+          "sha256": "57bd118b3696d572257c5f4be1762379eb6a81361a17da1c4b0b9f7131dd6d7c",
+          "size": 18974588
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/bin-arm64.tar.xz",
+          "sha256": "9889de6d0526e0c9708ea18c6e7e41a7c3d5ae366a02524ae3a392274d3462b5",
+          "size": 6847128
+        }
+      ],
+      "sizeMb": 25
+    },
+    {
+      "name": "OpenJDK 21 (Android build)",
+      "java": 21,
+      "abi": "armeabi-v7a",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/universal.tar.xz",
+          "sha256": "57bd118b3696d572257c5f4be1762379eb6a81361a17da1c4b0b9f7131dd6d7c",
+          "size": 18974588
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/bin-arm.tar.xz",
+          "sha256": "c782b17aabaa2be510144c464b5aa4784f984d2a07cfc4c3cd13a86ee399798e",
+          "size": 5710624
+        }
+      ],
+      "sizeMb": 24
+    },
+    {
+      "name": "OpenJDK 21 (Android build)",
+      "java": 21,
+      "abi": "x86_64",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/universal.tar.xz",
+          "sha256": "57bd118b3696d572257c5f4be1762379eb6a81361a17da1c4b0b9f7131dd6d7c",
+          "size": 18974588
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/bin-x86_64.tar.xz",
+          "sha256": "1e1ccc34dd24f56efd2440aa80e658df5ac6efa2e3d866d8be0345d31284bef6",
+          "size": 7847856
+        }
+      ],
+      "sizeMb": 26
+    },
+    {
+      "name": "OpenJDK 21 (Android build)",
+      "java": 21,
+      "abi": "x86",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/universal.tar.xz",
+          "sha256": "57bd118b3696d572257c5f4be1762379eb6a81361a17da1c4b0b9f7131dd6d7c",
+          "size": 18974588
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-21/bin-x86.tar.xz",
+          "sha256": "12d3784ac1525c32b423559557dad380639d5c1433196cc9917a7f682a7eb7e0",
+          "size": 6892112
+        }
+      ],
+      "sizeMb": 25
+    },
+    {
+      "name": "OpenJDK 25 (Android build)",
+      "java": 25,
+      "abi": "arm64-v8a",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-25/universal.tar.xz",
+          "sha256": "6eadfff7ac7da1677ed1c5f7f6e92b08d0ae7e7ef97c190fd6593d97dddd8058",
+          "size": 32837316
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-25/bin-arm64.tar.xz",
+          "sha256": "ba5628b01434d97c48279ee8738150d87ab9ed9198b8c75a6946fadd7d68fafd",
+          "size": 5400880
+        }
+      ],
+      "sizeMb": 36
+    },
+    {
+      "name": "OpenJDK 25 (Android build)",
+      "java": 25,
+      "abi": "armeabi-v7a",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-25/universal.tar.xz",
+          "sha256": "6eadfff7ac7da1677ed1c5f7f6e92b08d0ae7e7ef97c190fd6593d97dddd8058",
+          "size": 32837316
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-25/bin-arm.tar.xz",
+          "sha256": "5c1fc4631b7dfd32603c32977be10089e462e09d2242d29c48ac02c3b7ad9b0f",
+          "size": 4175888
+        }
+      ],
+      "sizeMb": 35
+    },
+    {
+      "name": "OpenJDK 25 (Android build)",
+      "java": 25,
+      "abi": "x86_64",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-25/universal.tar.xz",
+          "sha256": "6eadfff7ac7da1677ed1c5f7f6e92b08d0ae7e7ef97c190fd6593d97dddd8058",
+          "size": 32837316
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ZalithLauncher/ZalithLauncher/ed8a5c873b25f19d08aef5bdfc1084fd9aff836c/ZalithLauncher/src/main/assets/components/jre-25/bin-x86_64.tar.xz",
+          "sha256": "cc2530be904398cfc6ae7d457bfe8ae333199fbb68b530dba17ecc3d89bea247",
+          "size": 6429388
+        }
+      ],
+      "sizeMb": 37
+    }
+  ]
+}

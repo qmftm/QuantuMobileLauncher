@@ -181,6 +181,10 @@
     <string name="background_title">Run in background</string>
     <string name="background_summary">Allow unrestricted battery use so downloads and the game keep running with the screen off</string>
 
+    <string name="auto_runtime">Download Java automatically</string>
+    <string name="auto_runtime_summary">When a game needs a Java version you do not have, download it from the catalog before starting</string>
+    <string name="stage_runtime">Downloading Java…</string>
+
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>
         <item>Zink (OSMesa / Vulkan)</item>

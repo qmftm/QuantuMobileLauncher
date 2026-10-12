@@ -1,6 +1,7 @@
 package com.quantumobile.launcher.core.runtime
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.harmony.unpack200.Archive
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import java.io.BufferedInputStream
@@ -29,27 +30,58 @@ class RuntimeManager(private val root: File) {
     fun delete(name: String) = File(root, name).deleteRecursively()
 
     /** Extracts a `.tar.xz` / `.tar.gz` / `.tar` JRE archive. Returns the installed runtime. */
-    fun install(name: String, archive: InputStream, compression: String): JavaRuntime {
+    fun install(name: String, archive: InputStream, compression: String): JavaRuntime =
+        install(name, listOf(archive to compression))
+
+    /** Extracts several archives into one runtime directory (e.g. a universal part plus a per-CPU part). */
+    fun install(name: String, archives: List<Pair<InputStream, String>>): JavaRuntime {
         val staging = File(root, ".staging-${System.nanoTime()}")
         try {
             staging.mkdirs()
-            val raw = BufferedInputStream(archive)
-            val decompressed: InputStream = when (compression) {
-                "xz" -> XZCompressorInputStream(raw)
-                "gz" -> GzipCompressorInputStream(raw)
-                else -> raw
+            for ((archive, compression) in archives) {
+                val raw = BufferedInputStream(archive)
+                val decompressed: InputStream = when (compression) {
+                    "xz" -> XZCompressorInputStream(raw)
+                    "gz" -> GzipCompressorInputStream(raw)
+                    else -> raw
+                }
+                TarArchiveInputStream(decompressed).use { extractTar(it, staging) }
             }
-            TarArchiveInputStream(decompressed).use { extractTar(it, staging) }
 
             // Accept both flat archives and archives with a single top-level directory.
             val home = findHome(staging) ?: throw IOException("Archive does not look like a Java runtime (no 'release' file)")
+            // Java 8 builds ship their jars Pack200-compressed; the JVM cannot start without rt.jar.
+            unpackPackedJars(home)
             val info = describe(home) ?: throw IOException("Could not read Java version from runtime")
-            val target = File(root, "${sanitize(name)}-${info.majorVersion}")
+            val base = sanitize(name)
+            val target = File(root, if (info.majorVersion.toString() in base) base else "$base-${info.majorVersion}")
             target.deleteRecursively()
             if (!home.renameTo(target)) throw IOException("Failed to move runtime into place")
             return describe(target)!!
         } finally {
             staging.deleteRecursively()
+        }
+    }
+
+    /**
+     * Expands every `*.jar.pack` next to where it lies (pure-Java Pack200, so it also works on Android).
+     * This implementation only reads older Pack200 versions: it handles resource-only jars but not the class jars
+     * of a JDK 8 runtime (`rt.jar.pack` …), which need the native `unpack200` tool — those fail here with a clear error
+     * instead of leaving a runtime that can never start.
+     */
+    private fun unpackPackedJars(home: File) {
+        val packed = home.walkTopDown().filter { it.isFile && it.name.endsWith(".jar.pack") }.toList()
+        for (pack in packed) {
+            val out = File(pack.parentFile, pack.name.removeSuffix(".pack"))
+            try {
+                Archive(pack.absolutePath, out.absolutePath).apply { setQuiet(true) }.unpack()
+            } catch (e: Exception) {
+                throw IOException(
+                    "This runtime stores its libraries in Pack200 format (${pack.name}), which the launcher cannot expand yet. " +
+                        "Java 8 runtimes are not supported; use Java 17 or newer. (${e.message})", e,
+                )
+            }
+            pack.delete()
         }
     }
 

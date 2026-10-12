@@ -181,6 +181,10 @@
     <string name="background_title">백그라운드 실행</string>
     <string name="background_summary">배터리 사용 제한을 풀어서 화면이 꺼져도 다운로드와 게임이 계속되게 해요</string>
 
+    <string name="auto_runtime">Java 자동 다운로드</string>
+    <string name="auto_runtime_summary">필요한 Java 버전이 없으면 게임을 시작하기 전에 목록에서 자동으로 받아요</string>
+    <string name="stage_runtime">Java 다운로드 중…</string>
+
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>
         <item>Zink (OSMesa / Vulkan)</item>
