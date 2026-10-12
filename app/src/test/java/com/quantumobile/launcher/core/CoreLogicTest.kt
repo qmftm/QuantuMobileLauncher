@@ -172,4 +172,12 @@ class CoreLogicTest {
         assertEquals(listOf("-Xss4M", "-Dfoo=a b", "-Dx="), LaunchPreparer.splitArgs("""  -Xss4M "-Dfoo=a b"   -Dx= """))
         assertEquals(emptyList<String>(), LaunchPreparer.splitArgs("   "))
     }
+
+    @Test
+    fun missingRuntimeMessageNamesRequirementAndInstalled() {
+        val msg = LaunchPreparer.missingRuntimeMessage("fabric-loader-0.19.5-26.3", 25, listOf(8, 21))
+        assertTrue(msg.contains("Java 25"))
+        assertTrue(msg.contains("Java 8, Java 21"))
+        assertTrue(LaunchPreparer.missingRuntimeMessage("x", 17, emptyList()).contains("none"))
+    }
 }

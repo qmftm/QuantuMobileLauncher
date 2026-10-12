@@ -41,9 +41,7 @@ class LaunchPreparer(private val app: QuantumApp) {
         GameInstaller(paths).install(version, gameDir, listener)
 
         val runtime = app.runtimes.pick(version.javaMajorVersion)
-            ?: throw LaunchException(
-                "Minecraft ${version.id} needs Java ${version.javaMajorVersion}. Import a matching Android JRE in Settings."
-            )
+            ?: throw LaunchException(missingRuntimeMessage(version.id, version.javaMajorVersion, app.runtimes.list().map { it.majorVersion }))
 
         val lwjglOverride = GameInstaller.hasLwjglOverride(paths)
         val classpath = buildList {
@@ -128,6 +126,13 @@ class LaunchPreparer(private val app: QuantumApp) {
     }
 
     companion object {
+        fun missingRuntimeMessage(versionId: String, required: Int, installed: List<Int>): String {
+            val have = if (installed.isEmpty()) "none" else installed.joinToString { "Java $it" }
+            return "$versionId needs Java $required or newer, but the installed runtimes are: $have.\n\n" +
+                "Import an Android-built Java $required runtime (.tar.xz) in Settings → Import Java runtime. " +
+                "Desktop JDKs do not work on Android. Java 25 builds are new, so you may need a recent or self-built JRE."
+        }
+
         /** Splits a user-entered argument string on whitespace, honouring double quotes. */
         fun splitArgs(input: String): List<String> {
             val out = ArrayList<String>()
