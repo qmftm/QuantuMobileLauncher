@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.core.GameLaunch
 import com.quantumobile.launcher.core.LaunchPreparer
+import com.quantumobile.launcher.core.MissingRuntimeException
 import com.quantumobile.launcher.core.instance.Instance
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -17,7 +18,7 @@ sealed interface LaunchState {
     data object Idle : LaunchState
     data class Working(val stage: String, val done: Int, val total: Int) : LaunchState
     data class Ready(val launch: GameLaunch) : LaunchState
-    data class Failed(val message: String) : LaunchState
+    data class Failed(val message: String, val missingJava: Int? = null) : LaunchState
 }
 
 class LaunchViewModel(app: Application) : AndroidViewModel(app) {
@@ -36,6 +37,8 @@ class LaunchViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: CancellationException) {
                 _state.value = LaunchState.Idle
                 throw e
+            } catch (e: MissingRuntimeException) {
+                _state.value = LaunchState.Failed(e.message.orEmpty(), e.required)
             } catch (e: Exception) {
                 _state.value = LaunchState.Failed(e.message ?: e.javaClass.simpleName)
             }

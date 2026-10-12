@@ -68,6 +68,11 @@
 
     <PreferenceCategory app:title="@string/cat_runtime" app:iconSpaceReserved="false">
         <Preference
+            app:key="download_runtime"
+            app:title="@string/download_runtime"
+            app:summary="@string/download_runtime_summary"
+            app:iconSpaceReserved="false" />
+        <Preference
             app:key="import_runtime"
             app:title="@string/import_runtime"
             app:summary="@string/import_runtime_summary"
@@ -75,6 +80,11 @@
         <Preference
             app:key="manage_runtimes"
             app:title="@string/manage_runtimes"
+            app:iconSpaceReserved="false" />
+        <EditTextPreference
+            app:key="runtime_catalog_url"
+            app:title="@string/catalog_url"
+            app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <Preference
             app:key="import_lwjgl"

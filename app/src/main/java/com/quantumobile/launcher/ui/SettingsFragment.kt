@@ -34,6 +34,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<SeekBarPreference>(Settings.KEY_MEMORY)?.apply {
             if (!preferenceManager.sharedPreferences!!.contains(Settings.KEY_MEMORY)) value = Settings.defaultMemoryMb(requireContext())
         }
+        findPreference<Preference>("download_runtime")?.setOnPreferenceClickListener {
+            RuntimeInstallUi.show(this) { updateSummaries() }
+            true
+        }
         findPreference<Preference>("import_runtime")?.setOnPreferenceClickListener {
             pickRuntime.launch(arrayOf("application/x-xz", "application/x-tar", "application/gzip", "application/octet-stream", "*/*"))
             true

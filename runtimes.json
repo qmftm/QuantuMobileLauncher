@@ -1,0 +1,4 @@
+{
+  "_comment": "Catalog of Android-built Java runtimes shown under Settings > Download Java runtime. Add entries as {name, java, abi, url (https .tar.xz/.tar.gz), sha256, sizeMb}.",
+  "runtimes": []
+}

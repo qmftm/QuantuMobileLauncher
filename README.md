@@ -23,6 +23,8 @@
 | 실행 인자 생성 (신규 `arguments` 포맷 + 구버전 `minecraftArguments`, rule 평가) | ✅ |
 | 필요한 Java 버전 자동 선택 (8 / 17 / 21) | ✅ |
 | Java 런타임 가져오기 (`.tar.xz` / `.tar.gz`) | ✅ |
+| 앱 안에서 Java 런타임 다운로드 (카탈로그 선택 또는 링크 입력, SHA-256 검증, 진행률) | ✅ |
+| 필요한 Java 가 없을 때 오류 창에서 바로 "Java N 받기" | ✅ |
 | JNI 브릿지: `JLI_Launch` 로 JVM 실행, stdout/stderr → 로그 파일 | ✅ |
 | 터치 컨트롤 (이동 패드, 점프/웅크리기/달리기, 공격/사용, 단축키, 핫바 스크롤) | ✅ |
 | 화면 드래그로 시점 조작, 탭 = 사용, 길게 누르기 = 부수기, 메뉴에서는 마우스 포인터 | ✅ |
@@ -43,13 +45,27 @@ Pojav 계열 런처들도 아래 세 가지를 따로 빌드해서 함께 배포
 1. **안드로이드용 Java 런타임**
    예: [PojavLauncherTeam/android-openjdk-build-multiarch](https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch) 의
    `jre8-*.tar.xz`, `jre17-*.tar.xz`, `jre21-*.tar.xz`.
-   앱의 **설정 → Java 런타임 가져오기** 에서 설치합니다. 1.16.5 이하는 Java 8, 1.17~1.20.4 는 17, 1.20.5 이상은 21 이 필요합니다.
+   앱의 **설정 → Java 런타임 다운로드** (카탈로그 또는 링크 입력) 또는 **Java 런타임 가져오기** (파일 선택) 로 설치합니다. 1.16.5 이하는 Java 8, 1.17~1.20.4 는 17, 1.20.5 이상은 21 이 필요합니다.
 2. **안드로이드용 LWJGL 3 jar** (예: PojavLauncher 의 lwjgl3 포크 빌드)
    **설정 → LWJGL jar 가져오기** 로 넣으면 모장의 LWJGL 대신 클래스패스에 들어갑니다.
 3. **네이티브 라이브러리**: `liblwjgl.so`, GLFW 구현체, 렌더러 (`libgl4es_114.so` 또는 `libOSMesa.so` 등)
    `app/src/main/jniLibs/<abi>/` 에 넣고 빌드하면 APK 에 포함됩니다.
    GLFW 구현체는 [`qml_bridge.h`](app/src/main/cpp/qml_bridge.h) 의 함수로 안드로이드 창(`ANativeWindow`)과
    입력 이벤트를 받아오고, 커서 잡기 상태를 알려줘야 합니다.
+
+### 런타임 카탈로그
+
+**Java 런타임 다운로드** 는 [`runtimes.json`](runtimes.json) 을 읽어 기기 CPU(ABI)에 맞는 항목만 보여줍니다.
+주소는 설정의 "런타임 목록 주소"에서 바꿀 수 있어서, 직접 호스팅한 목록도 쓸 수 있습니다.
+기본 목록은 비어 있으므로, 믿을 수 있는 빌드의 주소를 확인해서 아래 형식으로 채워 주세요 (https 만 허용).
+
+```json
+{"runtimes": [
+  {"name": "My JRE", "java": 25, "abi": "arm64-v8a", "url": "https://…/jre25-aarch64.tar.xz", "sha256": "…", "sizeMb": 60}
+]}
+```
+
+목록에 없는 런타임은 **링크 입력** 으로 직접 받을 수 있습니다. 받은 파일은 `sha256` 이 있으면 검증한 뒤 설치합니다.
 
 위 파일들은 대부분 LGPL/GPL 계열 라이선스이므로, 함께 배포할 때는 각 라이선스를 지켜야 합니다.
 

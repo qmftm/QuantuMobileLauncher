@@ -122,6 +122,22 @@
     <string name="filter_installed">설치됨</string>
     <string name="instance_created">%1$s 만들었어요</string>
 
+    <string name="download_runtime">Java 런타임 다운로드</string>
+    <string name="download_runtime_summary">목록에서 고르거나 링크를 붙여넣어 받아요</string>
+    <string name="catalog_url">런타임 목록 주소 (비우면 기본값)</string>
+    <string name="loading_runtimes">런타임 목록 불러오는 중…</string>
+    <string name="recommended">필요함</string>
+    <string name="enter_link">링크 직접 입력</string>
+    <string name="enter_link_hint">안드로이드용 JRE(.tar.xz / .tar.gz) 직접 링크 (https)</string>
+    <string name="runtime_link">런타임 링크 (https://…)</string>
+    <string name="runtime_link_warning">믿을 수 있는 곳의 링크만 사용하세요.</string>
+    <string name="link_must_be_https">https:// 로 시작하는 전체 링크를 입력하세요</string>
+    <string name="download">다운로드</string>
+    <string name="downloading_runtime">%1$s 다운로드 중…</string>
+    <string name="download_progress">%1$s · %2$d / %3$d MB</string>
+    <string name="download_progress_unknown">%1$s · %2$d MB</string>
+    <string name="get_java">Java %1$d 받기</string>
+
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>
         <item>Zink (OSMesa / Vulkan)</item>

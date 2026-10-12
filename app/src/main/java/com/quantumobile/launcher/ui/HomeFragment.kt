@@ -201,12 +201,18 @@ class HomeFragment : Fragment() {
             }
             is LaunchState.Failed -> {
                 vm.consumed()
-                MaterialAlertDialogBuilder(requireContext())
+                val dialog = MaterialAlertDialogBuilder(requireContext())
                     .setTitle(R.string.launch_failed)
                     .setMessage(state.message)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .setNeutralButton(R.string.game_log) { _, _ -> startActivity(Intent(requireContext(), LogActivity::class.java)) }
-                    .show()
+                if (state.missingJava != null) {
+                    dialog.setPositiveButton(getString(R.string.get_java, state.missingJava)) { _, _ ->
+                        RuntimeInstallUi.show(this, state.missingJava) { refresh() }
+                    }.setNegativeButton(android.R.string.cancel, null)
+                } else {
+                    dialog.setPositiveButton(android.R.string.ok, null)
+                        .setNeutralButton(R.string.game_log) { _, _ -> startActivity(Intent(requireContext(), LogActivity::class.java)) }
+                }
+                dialog.show()
             }
             LaunchState.Idle -> Unit
         }

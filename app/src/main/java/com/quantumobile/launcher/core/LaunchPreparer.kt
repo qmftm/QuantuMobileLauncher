@@ -22,7 +22,10 @@ data class GameLaunch(
     val logPath: String,
 ) : Serializable
 
-class LaunchException(message: String) : Exception(message)
+open class LaunchException(message: String) : Exception(message)
+
+/** No installed runtime satisfies [required]; the UI offers to download one. */
+class MissingRuntimeException(val required: Int, message: String) : LaunchException(message)
 
 /** Runs in the launcher process: authenticates, installs files and builds the command line. */
 class LaunchPreparer(private val app: QuantumApp) {
@@ -41,7 +44,7 @@ class LaunchPreparer(private val app: QuantumApp) {
         GameInstaller(paths).install(version, gameDir, listener)
 
         val runtime = app.runtimes.pick(version.javaMajorVersion)
-            ?: throw LaunchException(missingRuntimeMessage(version.id, version.javaMajorVersion, app.runtimes.list().map { it.majorVersion }))
+            ?: throw MissingRuntimeException(version.javaMajorVersion, missingRuntimeMessage(version.id, version.javaMajorVersion, app.runtimes.list().map { it.majorVersion }))
 
         val lwjglOverride = GameInstaller.hasLwjglOverride(paths)
         val classpath = buildList {

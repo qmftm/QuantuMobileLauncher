@@ -122,6 +122,22 @@
     <string name="filter_installed">Installed</string>
     <string name="instance_created">Created %1$s</string>
 
+    <string name="download_runtime">Download Java runtime</string>
+    <string name="download_runtime_summary">Pick a runtime from the catalog or paste a link</string>
+    <string name="catalog_url">Runtime catalog URL (blank = default)</string>
+    <string name="loading_runtimes">Loading runtime list…</string>
+    <string name="recommended">Needed</string>
+    <string name="enter_link">Enter a link</string>
+    <string name="enter_link_hint">Direct https link to a .tar.xz / .tar.gz Android JRE</string>
+    <string name="runtime_link">Runtime link (https://…)</string>
+    <string name="runtime_link_warning">Only use links from sources you trust.</string>
+    <string name="link_must_be_https">Enter a full https:// link</string>
+    <string name="download">Download</string>
+    <string name="downloading_runtime">Downloading %1$s…</string>
+    <string name="download_progress">%1$s · %2$d / %3$d MB</string>
+    <string name="download_progress_unknown">%1$s · %2$d MB</string>
+    <string name="get_java">Get Java %1$d</string>
+
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>
         <item>Zink (OSMesa / Vulkan)</item>
