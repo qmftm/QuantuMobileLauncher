@@ -31,6 +31,11 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) binding.bottomNav.selectedItemId = R.id.nav_home
     }
 
+    /** Switches tabs from inside a fragment (e.g. the setup checklist on Home). */
+    fun navigateTo(itemId: Int) {
+        binding.bottomNav.selectedItemId = itemId
+    }
+
     private fun show(fragment: Fragment, title: CharSequence?) {
         supportActionBar?.title = title
         supportFragmentManager.commit { replace(R.id.content, fragment) }

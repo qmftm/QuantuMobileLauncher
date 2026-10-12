@@ -22,7 +22,6 @@
     <string name="account_offline">오프라인 계정</string>
     <string name="no_runtime">설치된 Java 런타임이 없습니다 — 설정에서 가져오세요</string>
     <string name="runtimes_installed">런타임: %1$s</string>
-    <string name="progress_format">%1$s (%2$d/%3$d)</string>
     <string name="launch_failed">실행 실패</string>
 
     <string name="accounts_empty">계정이 없습니다.</string>
@@ -70,6 +69,58 @@
     <string name="runtime_installed">Java %1$s 설치 완료</string>
     <string name="import_failed">가져오기 실패</string>
     <string name="tap_to_delete">눌러서 삭제</string>
+
+    <string name="switch_account">계정 전환</string>
+    <string name="switch_instance">인스턴스 전환</string>
+    <string name="manage_accounts">계정 관리</string>
+    <string name="setup_title">시작하기</string>
+    <string name="setup_subtitle">처음 실행하기 전에 아래 항목이 필요해요</string>
+    <string name="setup_account">계정 추가</string>
+    <string name="setup_instance">인스턴스 만들기</string>
+    <string name="setup_runtime">Java 런타임 가져오기</string>
+    <string name="setup_lwjgl">안드로이드용 LWJGL jar 가져오기</string>
+    <string name="add">추가</string>
+    <string name="go_settings">설정</string>
+    <string name="game_folder">게임 폴더</string>
+    <string name="game_folder_hint">파일 관리자로 이 폴더에 모드, 리소스팩, 월드를 넣을 수 있어요:\n\n%1$s</string>
+    <string name="copy_action">복사</string>
+    <string name="path_copied">경로를 복사했어요</string>
+    <string name="log_copied">로그를 복사했어요</string>
+    <string name="player">플레이어</string>
+    <string name="tap_to_add">눌러서 설정하기</string>
+    <string name="never_played">아직 플레이 안 함</string>
+    <string name="greeting_morning">좋은 아침이에요, %1$s님</string>
+    <string name="greeting_afternoon">좋은 오후예요, %1$s님</string>
+    <string name="greeting_evening">좋은 저녁이에요, %1$s님</string>
+    <string name="hero_subtitle">마인크래프트 자바 에디션 · v%1$s</string>
+    <string name="preparing">준비 중…</string>
+    <string name="percent_format">%1$d%% · %2$d/%3$d</string>
+    <string name="stage_account">계정 확인 중…</string>
+    <string name="stage_version">버전 정보 읽는 중…</string>
+    <string name="stage_client">게임 다운로드 중…</string>
+    <string name="stage_libraries">라이브러리 다운로드 중…</string>
+    <string name="stage_assets">리소스 다운로드 중…</string>
+    <string name="stage_starting">게임 시작 중…</string>
+    <string name="more">더 보기</string>
+    <string name="search">검색</string>
+    <string name="no_results">결과가 없어요</string>
+    <string name="account_selected">%1$s 선택됨</string>
+    <string name="select">선택</string>
+    <string name="name_rules">영문, 숫자, _ 로 3~16자</string>
+    <string name="welcome">환영해요, %1$s님!</string>
+    <string name="play_now">바로 플레이</string>
+    <string name="rename">이름 변경</string>
+    <string name="memory_override">메모리</string>
+    <string name="save">저장</string>
+    <string name="use_global">전역</string>
+    <string name="use_global_value">전역 설정 사용 (%1$d MB)</string>
+    <string name="installed_profile">설치된 프로필</string>
+    <string name="choose_version">버전 선택</string>
+    <string name="filter_release">정식</string>
+    <string name="filter_snapshot">스냅샷</string>
+    <string name="filter_old">알파/베타</string>
+    <string name="filter_installed">설치됨</string>
+    <string name="instance_created">%1$s 만들었어요</string>
 
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>

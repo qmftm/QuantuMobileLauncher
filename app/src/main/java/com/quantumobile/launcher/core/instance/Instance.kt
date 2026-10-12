@@ -18,6 +18,8 @@ data class Instance(
     /** Overrides the global memory setting when > 0. */
     val memoryMb: Int = 0,
     val extraJvmArgs: String = "",
+    /** Epoch millis of the last launch, 0 if never played. */
+    val lastPlayed: Long = 0,
 ) {
     fun gameDir(paths: LauncherPaths): File =
         if (isolated) File(paths.instances, id.take(8) + "-" + name.replace(Regex("[^A-Za-z0-9._-]"), "_"))
@@ -39,6 +41,16 @@ class InstanceStore(private val file: File) {
 
     @Synchronized
     fun select(id: String) = save(data.copy(selected = id))
+
+    @Synchronized
+    fun update(instance: Instance) = save(data.copy(instances = data.instances.map { if (it.id == instance.id) instance else it }))
+
+    fun markPlayed(id: String) {
+        data.instances.firstOrNull { it.id == id }?.let { update(it.copy(lastPlayed = System.currentTimeMillis())) }
+    }
+
+    /** Most recently played first, never-played instances after in creation order. */
+    val sorted: List<Instance> get() = data.instances.sortedByDescending { it.lastPlayed }
 
     @Synchronized
     fun remove(id: String) = save(InstanceFile(data.selected.takeUnless { it == id }, data.instances.filterNot { it.id == id }))

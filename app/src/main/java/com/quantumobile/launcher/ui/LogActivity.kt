@@ -38,7 +38,7 @@ class LogActivity : AppCompatActivity() {
                 String(bytes)
             }
         }
-        binding.log.text = text
+        binding.log.text = colorize(text)
         binding.scroll.post { binding.scroll.fullScroll(android.view.View.FOCUS_DOWN) }
     }
 
@@ -50,12 +50,41 @@ class LogActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         android.R.id.home -> { finish(); true }
         R.id.refresh -> { load(); true }
+        R.id.copy -> {
+            getSystemService(android.content.ClipboardManager::class.java)
+                .setPrimaryClip(android.content.ClipData.newPlainText("log", binding.log.text.toString().takeLast(100_000)))
+            com.google.android.material.snackbar.Snackbar.make(binding.root, R.string.log_copied, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show()
+            true
+        }
         R.id.share -> {
             startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
                 .putExtra(Intent.EXTRA_TEXT, binding.log.text.toString().takeLast(100_000)), null))
             true
         }
         else -> super.onOptionsItemSelected(item)
+    }
+
+    /** Highlights errors, warnings and stack traces so crashes stand out. */
+    private fun colorize(text: String): CharSequence {
+        val out = android.text.SpannableStringBuilder(text)
+        val error = getColor(R.color.error)
+        val warn = getColor(R.color.warning)
+        val dim = getColor(R.color.text_secondary)
+        var start = 0
+        for (line in text.split('\n')) {
+            val color = when {
+                line.contains("ERROR") || line.contains("FATAL") || line.contains("Exception") || line.startsWith("Caused by") -> error
+                line.trimStart().startsWith("at ") -> error
+                line.contains("WARN") -> warn
+                line.startsWith("[QML]") -> dim
+                else -> null
+            }
+            if (color != null) {
+                out.setSpan(android.text.style.ForegroundColorSpan(color), start, start + line.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            start += line.length + 1
+        }
+        return out
     }
 
     companion object {
