@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accounts is opened from the toolbar and Home rather than from the bottom bar. -->
+    <item name="nav_accounts" type="id" />
+</resources>

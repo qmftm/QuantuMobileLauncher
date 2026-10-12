@@ -199,4 +199,24 @@
         <item>Zink (OSMesa / Vulkan)</item>
         <item>사용자 지정</item>
     </string-array>
+
+    <string name="nav_visual">비주얼</string>
+    <string name="visual_resourcepacks">리소스팩</string>
+    <string name="visual_shaders">셰이더</string>
+    <string name="visual_add">기기에서 추가</string>
+    <string name="visual_added">%1$s 추가됨</string>
+    <string name="visual_add_failed">파일을 추가하지 못했어요: %1$s</string>
+    <string name="visual_empty_packs">리소스팩이 없어요. .zip 을 추가하거나 둘러보기에서 받아 보세요.</string>
+    <string name="visual_empty_shaders">셰이더팩이 없어요. .zip 을 추가하거나 둘러보기에서 받아 보세요.</string>
+    <string name="visual_shader_hint">셰이더는 인스턴스에 Iris 모드(Fabric) 또는 OptiFine 이 있어야 해요. 모드 탭에서 Iris 를 먼저 설치하세요.</string>
+    <string name="visual_rp_hint">위에 있는 팩이 우선이에요. 변경은 다음 게임 시작부터 적용돼요.</string>
+    <string name="visual_enabled_badge">사용 중</string>
+    <string name="visual_active_badge">적용됨</string>
+    <string name="visual_enable">켜기</string>
+    <string name="visual_disable">끄기</string>
+    <string name="visual_move_up">우선순위 올리기</string>
+    <string name="visual_move_down">우선순위 내리기</string>
+    <string name="visual_use_shader">이 셰이더 사용</string>
+    <string name="visual_shaders_off">셰이더 끄기</string>
+    <string name="visual_size_folder">폴더</string>
 </resources>

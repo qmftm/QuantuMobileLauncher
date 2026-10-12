@@ -15,13 +15,17 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+        binding.toolbar.inflateMenu(R.menu.main_toolbar)
+        binding.toolbar.setOnMenuItemClickListener {
+            if (it.itemId == R.id.action_accounts) { navigateTo(R.id.nav_accounts); true } else false
+        }
 
         binding.bottomNav.setOnItemSelectedListener { item ->
             show(
                 when (item.itemId) {
-                    R.id.nav_accounts -> AccountsFragment()
                     R.id.nav_instances -> InstancesFragment()
                     R.id.nav_mods -> ModsFragment()
+                    R.id.nav_visual -> VisualFragment()
                     R.id.nav_settings -> SettingsFragment()
                     else -> HomeFragment()
                 },
@@ -48,7 +52,19 @@ class MainActivity : AppCompatActivity() {
 
     /** Switches tabs from inside a fragment (e.g. the setup checklist on Home). */
     fun navigateTo(itemId: Int) {
+        if (itemId == R.id.nav_accounts) return showAccounts()
+        binding.toolbar.navigationIcon = null
         binding.bottomNav.selectedItemId = itemId
+    }
+
+    /** Accounts is not a bottom tab (the bar holds five); it opens from the toolbar and from Home. */
+    private fun showAccounts() {
+        binding.bottomNav.menu.setGroupCheckable(0, true, false) // no tab highlighted while Accounts is open
+        for (i in 0 until binding.bottomNav.menu.size()) binding.bottomNav.menu.getItem(i).isChecked = false
+        binding.bottomNav.menu.setGroupCheckable(0, true, true)
+        binding.toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
+        binding.toolbar.setNavigationOnClickListener { navigateTo(R.id.nav_home) }
+        show(AccountsFragment(), getString(R.string.nav_accounts))
     }
 
     private fun show(fragment: Fragment, title: CharSequence?) {

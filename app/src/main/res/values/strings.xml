@@ -199,4 +199,24 @@
         <item>Zink (OSMesa / Vulkan)</item>
         <item>Custom</item>
     </string-array>
+
+    <string name="nav_visual">Visual</string>
+    <string name="visual_resourcepacks">Resource packs</string>
+    <string name="visual_shaders">Shaders</string>
+    <string name="visual_add">Add from device</string>
+    <string name="visual_added">Added %1$s</string>
+    <string name="visual_add_failed">Could not add the file: %1$s</string>
+    <string name="visual_empty_packs">No resource packs yet. Add a .zip or download one from Browse.</string>
+    <string name="visual_empty_shaders">No shader packs yet. Add a .zip or download one from Browse.</string>
+    <string name="visual_shader_hint">Shaders need the Iris mod (Fabric) or OptiFine in the instance. Install Iris from the Mods tab first.</string>
+    <string name="visual_rp_hint">Packs listed higher have priority. Changes apply the next time the game starts.</string>
+    <string name="visual_enabled_badge">On</string>
+    <string name="visual_active_badge">Active</string>
+    <string name="visual_enable">Enable</string>
+    <string name="visual_disable">Disable</string>
+    <string name="visual_move_up">Higher priority</string>
+    <string name="visual_move_down">Lower priority</string>
+    <string name="visual_use_shader">Use this shader</string>
+    <string name="visual_shaders_off">Turn shaders off</string>
+    <string name="visual_size_folder">Folder</string>
 </resources>
