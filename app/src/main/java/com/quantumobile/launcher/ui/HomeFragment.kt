@@ -104,8 +104,8 @@ class HomeFragment : Fragment() {
         val steps = listOf(
             Step(app.accounts.selected != null, R.string.setup_account, R.string.add) { pickAccount() },
             Step(app.instances.selected != null, R.string.setup_instance, R.string.create) { navigate(R.id.nav_instances) },
-            Step(app.runtimes.list().isNotEmpty(), R.string.setup_runtime, R.string.go_settings) { navigate(R.id.nav_settings) },
-            Step(app.paths.lwjgl.listFiles()?.isNotEmpty() == true, R.string.setup_lwjgl, R.string.go_settings) { navigate(R.id.nav_settings) },
+            Step(app.runtimes.list().isNotEmpty(), R.string.setup_runtime, R.string.download) { RuntimeInstallUi.show(this) { refresh() } },
+            Step(app.isLwjglInstalled() || app.paths.lwjgl.listFiles()?.isNotEmpty() == true, R.string.setup_lwjgl, R.string.install) { installLwjgl() },
         )
         binding.setupCard.isVisible = steps.any { !it.done }
         binding.setupSteps.removeAllViews()
@@ -117,6 +117,19 @@ class HomeFragment : Fragment() {
             row.action.isVisible = !step.done
             row.action.setText(step.action)
             row.action.setOnClickListener { step.run() }
+        }
+    }
+
+    /** Starts the download in the background; the checklist refreshes when it finishes. */
+    private fun installLwjgl() {
+        snack(R.string.installing_lwjgl)
+        app.installLwjgl { result ->
+            if (_binding == null) return@installLwjgl
+            result.onSuccess { snack(R.string.lwjgl_done); refresh() }
+                .onFailure { e ->
+                    MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.lwjgl_failed)
+                        .setMessage(e.message).setPositiveButton(android.R.string.ok, null).show()
+                }
         }
     }
 

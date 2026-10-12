@@ -18,6 +18,8 @@ class Settings(private val context: Context) {
     val runtimeCatalogUrl: String get() = prefs.getString(KEY_CATALOG_URL, "").orEmpty()
     /** Download a missing Java runtime automatically when a game needs it. */
     val autoRuntime: Boolean get() = prefs.getBoolean(KEY_AUTO_RUNTIME, true)
+    /** Download the Android LWJGL build automatically before the first launch. */
+    val autoLwjgl: Boolean get() = prefs.getBoolean(KEY_AUTO_LWJGL, true)
     val showSnapshots: Boolean get() = prefs.getBoolean(KEY_SNAPSHOTS, false)
 
     /** Shared object passed to LWJGL as the OpenGL implementation. */
@@ -36,6 +38,7 @@ class Settings(private val context: Context) {
         const val KEY_RESOLUTION = "resolution_percent"
         const val KEY_CONTROLS_OPACITY = "controls_opacity"
         const val KEY_SENSITIVITY = "mouse_sensitivity"
+        const val KEY_AUTO_LWJGL = "auto_lwjgl"
         const val KEY_AUTO_RUNTIME = "auto_runtime"
         const val KEY_CATALOG_URL = "runtime_catalog_url"
         const val KEY_SNAPSHOTS = "show_snapshots"

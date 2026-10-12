@@ -79,9 +79,8 @@
     <string name="setup_account">계정 추가</string>
     <string name="setup_instance">인스턴스 만들기</string>
     <string name="setup_runtime">Java 런타임 가져오기</string>
-    <string name="setup_lwjgl">안드로이드용 LWJGL jar 가져오기</string>
+    <string name="setup_lwjgl">안드로이드용 LWJGL(그래픽·입력) 설치</string>
     <string name="add">추가</string>
-    <string name="go_settings">설정</string>
     <string name="game_folder">게임 폴더</string>
     <string name="game_folder_hint">파일 관리자로 이 폴더에 모드, 리소스팩, 월드를 넣을 수 있어요:\n\n%1$s</string>
     <string name="copy_action">복사</string>
@@ -184,6 +183,16 @@
     <string name="auto_runtime">Java 자동 다운로드</string>
     <string name="auto_runtime_summary">필요한 Java 버전이 없으면 게임을 시작하기 전에 목록에서 자동으로 받아요</string>
     <string name="stage_runtime">Java 다운로드 중…</string>
+
+    <string name="stage_lwjgl">LWJGL 다운로드 중…</string>
+    <string name="installing_lwjgl">LWJGL 설치 중</string>
+    <string name="lwjgl_installed_summary">설치됨 (%1$s) — 눌러서 다시 설치/업데이트</string>
+    <string name="lwjgl_not_installed_summary">설치 안 됨 — 눌러서 받기 (약 %1$d MB)</string>
+    <string name="lwjgl_install_title">안드로이드용 LWJGL 설치</string>
+    <string name="lwjgl_done">LWJGL 설치 완료</string>
+    <string name="lwjgl_failed">LWJGL을 설치하지 못했어요</string>
+    <string name="auto_lwjgl">LWJGL 자동 설치</string>
+    <string name="auto_lwjgl_summary">처음 실행하기 전에 안드로이드용 LWJGL 라이브러리를 자동으로 받아요</string>
 
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>

@@ -15,6 +15,7 @@ object LaunchStages {
     fun label(stage: String): Int = when (stage) {
         "Account" -> R.string.stage_account
         "Runtime" -> R.string.stage_runtime
+        "LWJGL" -> R.string.stage_lwjgl
         "Version" -> R.string.stage_version
         "Client" -> R.string.stage_client
         "Libraries" -> R.string.stage_libraries

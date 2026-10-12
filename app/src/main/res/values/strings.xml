@@ -79,9 +79,8 @@
     <string name="setup_account">Add an account</string>
     <string name="setup_instance">Create an instance</string>
     <string name="setup_runtime">Import a Java runtime</string>
-    <string name="setup_lwjgl">Import Android LWJGL jars</string>
+    <string name="setup_lwjgl">Install Android LWJGL (graphics and input)</string>
     <string name="add">Add</string>
-    <string name="go_settings">Settings</string>
     <string name="game_folder">Game folder</string>
     <string name="game_folder_hint">Put mods, resource packs and worlds here with a file manager:\n\n%1$s</string>
     <string name="copy_action">Copy</string>
@@ -184,6 +183,16 @@
     <string name="auto_runtime">Download Java automatically</string>
     <string name="auto_runtime_summary">When a game needs a Java version you do not have, download it from the catalog before starting</string>
     <string name="stage_runtime">Downloading Java…</string>
+
+    <string name="stage_lwjgl">Downloading LWJGL…</string>
+    <string name="installing_lwjgl">Installing LWJGL</string>
+    <string name="lwjgl_installed_summary">Installed (%1$s) — tap to reinstall or update</string>
+    <string name="lwjgl_not_installed_summary">Not installed — tap to download (about %1$d MB)</string>
+    <string name="lwjgl_install_title">Install Android LWJGL</string>
+    <string name="lwjgl_done">LWJGL is installed</string>
+    <string name="lwjgl_failed">Could not install LWJGL</string>
+    <string name="auto_lwjgl">Install LWJGL automatically</string>
+    <string name="auto_lwjgl_summary">Download the Android LWJGL libraries before the first launch</string>
 
     <string-array name="renderer_entries">
         <item>GL4ES (OpenGL → GLES)</item>

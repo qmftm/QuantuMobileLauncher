@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         }
         if (savedInstanceState == null) binding.bottomNav.selectedItemId = R.id.nav_home
         askNotificationPermission()
+        if (savedInstanceState == null) (application as com.quantumobile.launcher.QuantumApp).prefetchComponents()
     }
 
     private val notificationPermission =

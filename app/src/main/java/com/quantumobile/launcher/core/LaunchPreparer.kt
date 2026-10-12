@@ -6,6 +6,8 @@ import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.core.auth.Account
 import com.quantumobile.launcher.core.auth.MicrosoftAuth
 import com.quantumobile.launcher.core.instance.Instance
+import com.quantumobile.launcher.core.lwjgl.LwjglInstaller
+import com.quantumobile.launcher.core.lwjgl.LwjglPackage
 import com.quantumobile.launcher.core.mc.GameInstaller
 import com.quantumobile.launcher.core.mc.LaunchArgs
 import com.quantumobile.launcher.core.mc.LaunchSpec
@@ -40,6 +42,8 @@ class LaunchPreparer(private val app: QuantumApp) {
         listener.onProgress("Account", 0, 1)
         val account = refreshedAccount()
 
+        val lwjgl = ensureLwjgl(listener)
+
         listener.onProgress("Version", 0, 1)
         val version = app.versions.resolve(instance.versionId)
         val gameDir = instance.gameDir(paths).apply { mkdirs() }
@@ -72,8 +76,17 @@ class LaunchPreparer(private val app: QuantumApp) {
             add("-Djava.io.tmpdir=${tmpDir.absolutePath}")
             add("-Duser.home=${paths.gameRoot.parent}")
             add("-Dos.name=Linux")
-            add("-Dorg.lwjgl.librarypath=${paths.nativeLibDir}")
-            add("-Dorg.lwjgl.opengl.libname=${settings.rendererLibrary}")
+            val nativesDir = lwjgl?.let { LwjglInstaller(paths).nativesDir(it.abi) }
+            if (nativesDir != null) {
+                add("-Dorg.lwjgl.librarypath=${nativesDir.absolutePath}")
+                add("-Dorg.lwjgl.freetype.libname=${File(nativesDir, "libfreetype.so").absolutePath}")
+                add("-Djna.boot.library.path=${nativesDir.absolutePath}")
+                val gl = File(nativesDir, settings.rendererLibrary)
+                add("-Dorg.lwjgl.opengl.libname=${if (gl.isFile) gl.absolutePath else settings.rendererLibrary}")
+            } else {
+                add("-Dorg.lwjgl.librarypath=${paths.nativeLibDir}")
+                add("-Dorg.lwjgl.opengl.libname=${settings.rendererLibrary}")
+            }
             add("-Dorg.lwjgl.util.NoChecks=true")
             add("-Dfml.earlyprogresswindow=false")
             add("-Dfml.earlyWindowControl=false")
@@ -107,7 +120,7 @@ class LaunchPreparer(private val app: QuantumApp) {
             "JAVA_HOME=${runtime.home.absolutePath}",
             "HOME=${paths.gameRoot.parent}",
             "TMPDIR=${tmpDir.absolutePath}",
-            "LD_LIBRARY_PATH=${paths.nativeLibDir}",
+            "LD_LIBRARY_PATH=" + listOfNotNull(lwjgl?.let { LwjglInstaller(paths).nativesDir(it.abi).absolutePath }, paths.nativeLibDir).joinToString(":"),
             "QML_RENDERER=${settings.renderer}",
             "LIBGL_MIPMAP=3",
             "LIBGL_NOINTOVLHACK=1",
@@ -127,6 +140,33 @@ class LaunchPreparer(private val app: QuantumApp) {
             env = env,
             logPath = paths.latestLog.absolutePath,
         )
+    }
+
+    /** The LWJGL build in use: which ABI's natives are installed. Null when the user manages LWJGL jars manually. */
+    private class LwjglInUse(val abi: String)
+
+    /**
+     * Makes sure the Android LWJGL build is installed (downloading it when the setting allows). Without it the game
+     * would run on Mojang's desktop LWJGL, whose x86/glibc natives cannot load on Android.
+     */
+    private suspend fun ensureLwjgl(listener: ProgressListener): LwjglInUse? {
+        val pkg = LwjglPackage.loadBundled(app)
+        val abi = pkg.abiFor(Build.SUPPORTED_ABIS.toList()) ?: return null
+        val installer = LwjglInstaller(app.paths)
+        if (!installer.isInstalled(pkg, abi)) {
+            if (!app.settings.autoLwjgl) {
+                // Honour manually imported jars; otherwise the launch cannot work, so say so clearly.
+                if (GameInstaller.hasLwjglOverride(app.paths)) return null
+                throw LaunchException("The Android LWJGL libraries are not installed. Install them from Settings, or turn on automatic installation.")
+            }
+            listener.onProgress("LWJGL", 0, 100)
+            try {
+                installer.install(pkg, abi) { done, total -> listener.onProgress("LWJGL", if (total > 0) done * 100 / total else 0, 100) }
+            } catch (e: java.io.IOException) {
+                throw LaunchException("Could not download the LWJGL libraries: ${e.message}")
+            }
+        }
+        return LwjglInUse(abi)
     }
 
     /**

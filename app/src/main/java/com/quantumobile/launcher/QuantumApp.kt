@@ -2,6 +2,7 @@ package com.quantumobile.launcher
 
 import android.app.Activity
 import android.app.Application
+import android.os.Build
 import android.os.Bundle
 import com.quantumobile.launcher.core.LaunchPreparer
 import com.quantumobile.launcher.core.LaunchStages
@@ -12,7 +13,11 @@ import com.quantumobile.launcher.core.Settings
 import com.quantumobile.launcher.core.auth.AccountStore
 import com.quantumobile.launcher.core.instance.Instance
 import com.quantumobile.launcher.core.instance.InstanceStore
+import com.quantumobile.launcher.core.lwjgl.LwjglInstaller
+import com.quantumobile.launcher.core.lwjgl.LwjglPackage
 import com.quantumobile.launcher.core.mc.VersionRepository
+import com.quantumobile.launcher.core.runtime.RuntimeCatalog
+import com.quantumobile.launcher.core.runtime.RuntimeDownloader
 import com.quantumobile.launcher.core.runtime.RuntimeManager
 import com.quantumobile.launcher.core.tasks.TaskRunner
 import com.quantumobile.launcher.service.Notifications
@@ -87,6 +92,59 @@ class QuantumApp : Application() {
                 }
             },
         )
+    }
+
+    /** True when the Android LWJGL build is installed for this device's ABI. */
+    fun isLwjglInstalled(): Boolean {
+        val pkg = LwjglPackage.loadBundled(this)
+        val abi = pkg.abiFor(Build.SUPPORTED_ABIS.toList()) ?: return false
+        return LwjglInstaller(paths).isInstalled(pkg, abi)
+    }
+
+    /** Downloads and installs the Android LWJGL build in the background; [onDone] runs on the main thread. */
+    fun installLwjgl(onDone: (Result<Unit>) -> Unit = {}) {
+        val pkg = LwjglPackage.loadBundled(this)
+        val abi = pkg.abiFor(Build.SUPPORTED_ABIS.toList())
+            ?: return onDone(Result.failure(IllegalStateException("No LWJGL build for ${Build.SUPPORTED_ABIS.joinToString()}")))
+        val title = getString(R.string.installing_lwjgl)
+        tasks.launch(
+            title,
+            block = { reporter ->
+                LwjglInstaller(paths).install(pkg, abi) { done, total -> reporter.report(title, if (total > 0) done * 100 / total else -1) }
+            },
+            onResult = { result ->
+                if (!isForeground) {
+                    result.onSuccess { Notifications.done(this, title, getString(R.string.lwjgl_done)) }
+                        .onFailure { Notifications.done(this, getString(R.string.lwjgl_failed), it.message) }
+                }
+                onDone(result)
+            },
+        )
+    }
+
+    private var prefetching = false
+
+    /**
+     * Called when the launcher opens: fetches what the game needs in the background so the first Play is quick.
+     * Quiet on failure (the same downloads are retried, with errors shown, when the user presses Play).
+     */
+    fun prefetchComponents() {
+        if (prefetching) return
+        prefetching = true
+        if (settings.autoLwjgl && !isLwjglInstalled()) installLwjgl { prefetching = false }
+        else prefetching = false
+
+        // A default Java so the most common modern versions start immediately; other versions are fetched on demand.
+        if (settings.autoRuntime && runtimes.list().isEmpty()) {
+            val title = getString(R.string.downloading_runtime, "Java 21")
+            tasks.launch(title, block = { reporter ->
+                val sources = RuntimeCatalog.forDevice(RuntimeCatalog.load(this, settings.runtimeCatalogUrl), Build.SUPPORTED_ABIS.toList())
+                val source = RuntimeCatalog.best(sources, 21) ?: return@launch null
+                RuntimeDownloader(runtimes, paths.cacheDir).install(source) { done, total ->
+                    reporter.report(title, if (total > 0) (done * 100 / total).toInt() else -1)
+                }
+            })
+        }
     }
 
     fun cancelLaunch() {

@@ -48,6 +48,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
             pickRuntime.launch(arrayOf("application/x-xz", "application/x-tar", "application/gzip", "application/octet-stream", "*/*"))
             true
         }
+        findPreference<Preference>("install_lwjgl")?.setOnPreferenceClickListener {
+            app.installLwjgl { result ->
+                if (!isAdded) return@installLwjgl
+                updateSummaries()
+                result.onSuccess { Toast.makeText(requireContext(), R.string.lwjgl_done, Toast.LENGTH_SHORT).show() }
+                    .onFailure { e -> AlertDialog.Builder(requireContext()).setTitle(R.string.lwjgl_failed).setMessage(e.message)
+                        .setPositiveButton(android.R.string.ok, null).show() }
+            }
+            Toast.makeText(requireContext(), R.string.installing_lwjgl, Toast.LENGTH_SHORT).show()
+            true
+        }
         findPreference<Preference>("import_lwjgl")?.setOnPreferenceClickListener {
             pickLwjgl.launch(arrayOf("application/java-archive", "application/octet-stream", "*/*"))
             true
@@ -61,6 +72,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("manage_runtimes")?.summary = app.runtimes.list()
             .joinToString("\n") { "${it.name} (Java ${it.fullVersion})" }
             .ifEmpty { getString(R.string.no_runtime) }
+        findPreference<Preference>("install_lwjgl")?.summary = run {
+            val pkg = com.quantumobile.launcher.core.lwjgl.LwjglPackage.loadBundled(requireContext())
+            val abi = pkg.abiFor(android.os.Build.SUPPORTED_ABIS.toList())
+            if (abi != null && app.isLwjglInstalled()) getString(R.string.lwjgl_installed_summary, abi)
+            else getString(R.string.lwjgl_not_installed_summary, ((abi?.let { pkg.totalBytes(it) } ?: 0L) / 1_048_576).toInt())
+        }
         findPreference<Preference>("import_lwjgl")?.summary = app.paths.lwjgl.listFiles()?.size?.takeIf { it > 0 }
             ?.let { getString(R.string.lwjgl_count, it) } ?: getString(R.string.lwjgl_summary)
     }

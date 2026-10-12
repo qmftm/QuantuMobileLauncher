@@ -23,6 +23,7 @@ class LauncherPaths(
     val logs = File(gameRoot.parentFile ?: gameRoot, "logs")
     val runtimes = File(internalRoot, "runtimes")
     val lwjgl = File(internalRoot, "lwjgl3")
+    val lwjglNatives = File(internalRoot, "lwjgl-natives")
     val accountsFile = File(internalRoot, "accounts.json")
     val instancesFile = File(internalRoot, "instances.json")
     val latestLog get() = File(logs, "latest.log")

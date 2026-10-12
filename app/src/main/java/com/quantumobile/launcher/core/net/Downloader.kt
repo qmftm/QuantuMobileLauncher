@@ -22,6 +22,7 @@ data class DownloadTask(
     val dest: File,
     val sha1: String? = null,
     val size: Long = -1,
+    val sha256: String? = null,
 )
 
 class Downloader(private val client: OkHttpClient = Http.client) {
@@ -45,7 +46,7 @@ class Downloader(private val client: OkHttpClient = Http.client) {
     }
 
     suspend fun download(task: DownloadTask) = withContext(Dispatchers.IO) {
-        if (isValid(task.dest, task.sha1, task.size)) return@withContext
+        if (isValid(task.dest, task.sha1, task.size, task.sha256)) return@withContext
         var lastError: Exception? = null
         repeat(MAX_ATTEMPTS) { attempt ->
             coroutineContext.ensureActive()
@@ -75,6 +76,13 @@ class Downloader(private val client: OkHttpClient = Http.client) {
                 throw IOException("SHA-1 mismatch for ${task.url}: expected ${task.sha1}, got $actual")
             }
         }
+        if (task.sha256 != null) {
+            val actual = digest(tmp, "SHA-256")
+            if (!actual.equals(task.sha256, ignoreCase = true)) {
+                tmp.delete()
+                throw IOException("SHA-256 mismatch for ${task.url}: expected ${task.sha256}, got $actual")
+            }
+        }
         if (!tmp.renameTo(task.dest)) {
             task.dest.delete()
             if (!tmp.renameTo(task.dest)) throw IOException("Cannot move ${tmp.path} to ${task.dest.path}")
@@ -84,15 +92,18 @@ class Downloader(private val client: OkHttpClient = Http.client) {
     companion object {
         private const val MAX_ATTEMPTS = 3
 
-        fun isValid(file: File, sha1: String?, size: Long): Boolean {
+        fun isValid(file: File, sha1: String?, size: Long, sha256: String? = null): Boolean {
             if (!file.isFile) return false
             if (size >= 0 && file.length() != size) return false
+            if (sha256 != null && !digest(file, "SHA-256").equals(sha256, ignoreCase = true)) return false
             if (sha1 != null) return sha1(file).equals(sha1, ignoreCase = true)
             return file.length() > 0
         }
 
-        fun sha1(file: File): String {
-            val digest = MessageDigest.getInstance("SHA-1")
+        fun sha1(file: File): String = digest(file, "SHA-1")
+
+        fun digest(file: File, algorithm: String): String {
+            val digest = MessageDigest.getInstance(algorithm)
             file.inputStream().use { input ->
                 val buf = ByteArray(64 * 1024)
                 while (true) {
