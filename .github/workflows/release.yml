@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Install NDK and CMake
+        run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
+      - name: Test
+        run: ./gradlew testDebugUnitTest
+      - name: Build APKs
+        run: ./gradlew assembleRelease assembleDebug
+      - name: Rename APKs
+        run: |
+          mkdir dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/QuantuMobileLauncher-${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/QuantuMobileLauncher-${GITHUB_REF_NAME}-debug.apk"
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: QuantuMobileLauncher ${{ github.ref_name }}
+          prerelease: true
+          files: dist/*.apk
+          body: |
+            안드로이드용 마인크래프트 자바 에디션 런처 첫 프리릴리즈입니다.
+
+            **포함된 기능**
+            - 마이크로소프트 / 오프라인 계정
+            - 바닐라·스냅샷 버전, Fabric 원클릭 설치, 인스턴스
+            - 클라이언트·라이브러리·에셋 다운로드 (SHA-1 검증)
+            - Java 런타임(.tar.xz) 가져오기, 버전별 Java 자동 선택
+            - 터치 컨트롤, 키보드·마우스 지원, 한국어/영어 UI
+
+            **주의**
+            - 게임 화면을 띄우려면 안드로이드용 JRE, 안드로이드용 LWJGL 3, GLFW 구현체와 렌더러(.so)가 별도로 필요합니다. README를 참고하세요.
+            - 아직 실기기 테스트 전인 프리릴리즈입니다.
+            - APK는 디버그 키로 서명되어 있습니다.
