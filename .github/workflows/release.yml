@@ -1,18 +1,32 @@
 name: Release
 
+# Runs for pushed "v*" tags, or for any branch push whose commit message contains "[release]"
+# (the tag is then created from versionName in app/build.gradle.kts).
 on:
   push:
     tags:
       - "v*"
+    branches:
+      - "**"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -27,11 +41,13 @@ jobs:
       - name: Rename APKs
         run: |
           mkdir dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/QuantuMobileLauncher-${GITHUB_REF_NAME}.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "dist/QuantuMobileLauncher-${GITHUB_REF_NAME}-debug.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}-debug.apk"
       - uses: softprops/action-gh-release@v2
         with:
-          name: QuantuMobileLauncher ${{ github.ref_name }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: QuantuMobileLauncher ${{ steps.version.outputs.tag }}
           prerelease: true
           files: dist/*.apk
           body: |
