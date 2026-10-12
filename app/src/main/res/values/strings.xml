@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QuantuMobile Launcher</string>
+    <string name="nav_home">Play</string>
+    <string name="nav_accounts">Accounts</string>
+    <string name="nav_instances">Instances</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="play">Play</string>
+    <string name="cancel">Cancel</string>
+    <string name="game_log">Game log</string>
+    <string name="refresh">Refresh</string>
+    <string name="share">Share</string>
+    <string name="no_log">No log yet. Launch the game first.</string>
+    <string name="account">Account</string>
+    <string name="instance">Instance</string>
+    <string name="no_account">No account</string>
+    <string name="no_instance">No instance</string>
+    <string name="add_account_hint">Add an account in the Accounts tab</string>
+    <string name="create_instance_hint">Create an instance in the Instances tab</string>
+    <string name="account_microsoft">Microsoft account</string>
+    <string name="account_offline">Offline account</string>
+    <string name="no_runtime">No Java runtime installed — import one in Settings</string>
+    <string name="runtimes_installed">Runtimes: %1$s</string>
+    <string name="progress_format">%1$s (%2$d/%3$d)</string>
+    <string name="launch_failed">Launch failed</string>
+
+    <string name="accounts_empty">No accounts yet.</string>
+    <string name="add_microsoft">Microsoft login</string>
+    <string name="add_offline">Offline account</string>
+    <string name="player_name">Player name</string>
+    <string name="invalid_name">Names must be 3–16 characters: letters, digits or _</string>
+    <string name="signing_in">Signing in…</string>
+    <string name="login_failed">Login failed</string>
+    <string name="remove">Remove</string>
+    <string name="confirm_remove">Remove %1$s?</string>
+    <string name="confirm_remove_instance">Remove instance %1$s? Game files are kept.</string>
+
+    <string name="instances_empty">No instances yet.</string>
+    <string name="new_instance">New instance</string>
+    <string name="instance_name">Name (optional)</string>
+    <string name="version">Version</string>
+    <string name="loader">Mod loader</string>
+    <string name="loader_vanilla">Vanilla</string>
+    <string name="loader_fabric">Fabric</string>
+    <string name="show_snapshots">Show snapshots</string>
+    <string name="isolated_dir">Separate game folder (mods, saves)</string>
+    <string name="create">Create</string>
+    <string name="manifest_failed">Could not load versions: %1$s</string>
+
+    <string name="cat_game">Game</string>
+    <string name="cat_controls">Controls</string>
+    <string name="cat_runtime">Java &amp; libraries</string>
+    <string name="memory">Memory (MB)</string>
+    <string name="renderer">Renderer</string>
+    <string name="renderer_lib">Custom renderer library</string>
+    <string name="resolution">Resolution scale (%)</string>
+    <string name="jvm_args">Extra JVM arguments</string>
+    <string name="controls_opacity">On-screen controls opacity (%)</string>
+    <string name="sensitivity">Camera sensitivity (%)</string>
+    <string name="import_runtime">Import Java runtime</string>
+    <string name="import_runtime_summary">Android-built JRE (.tar.xz). Java 8, 17 and 21 cover all versions.</string>
+    <string name="manage_runtimes">Installed runtimes</string>
+    <string name="import_lwjgl">Import LWJGL jars</string>
+    <string name="lwjgl_summary">Android build of LWJGL 3 — replaces the desktop LWJGL from Mojang</string>
+    <string name="lwjgl_count">%1$d LWJGL jar(s) installed</string>
+    <string name="clear_lwjgl">Remove imported LWJGL jars</string>
+    <string name="game_dir">Game directory</string>
+    <string name="importing">Importing %1$s…</string>
+    <string name="runtime_installed">Installed Java %1$s</string>
+    <string name="import_failed">Import failed</string>
+    <string name="tap_to_delete">Tap to delete</string>
+
+    <string-array name="renderer_entries">
+        <item>GL4ES (OpenGL → GLES)</item>
+        <item>Zink (OSMesa / Vulkan)</item>
+        <item>Custom</item>
+    </string-array>
+</resources>

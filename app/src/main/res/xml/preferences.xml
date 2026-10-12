@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/cat_game" app:iconSpaceReserved="false">
+        <SeekBarPreference
+            app:key="memory_mb"
+            app:title="@string/memory"
+            app:min="512"
+            android:max="8192"
+            app:seekBarIncrement="256"
+            app:showSeekBarValue="true"
+            app:iconSpaceReserved="false" />
+        <ListPreference
+            app:key="renderer"
+            app:title="@string/renderer"
+            app:entries="@array/renderer_entries"
+            app:entryValues="@array/renderer_values"
+            app:defaultValue="gl4es"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+        <EditTextPreference
+            app:key="renderer_lib"
+            app:title="@string/renderer_lib"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+        <SeekBarPreference
+            app:key="resolution_percent"
+            app:title="@string/resolution"
+            app:min="25"
+            android:max="100"
+            app:defaultValue="100"
+            app:showSeekBarValue="true"
+            app:iconSpaceReserved="false" />
+        <EditTextPreference
+            app:key="jvm_args"
+            app:title="@string/jvm_args"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            app:key="show_snapshots"
+            app:title="@string/show_snapshots"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+        <Preference
+            app:key="game_dir"
+            app:title="@string/game_dir"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_controls" app:iconSpaceReserved="false">
+        <SeekBarPreference
+            app:key="controls_opacity"
+            app:title="@string/controls_opacity"
+            android:max="100"
+            app:defaultValue="60"
+            app:showSeekBarValue="true"
+            app:iconSpaceReserved="false" />
+        <SeekBarPreference
+            app:key="mouse_sensitivity"
+            app:title="@string/sensitivity"
+            app:min="10"
+            android:max="300"
+            app:defaultValue="100"
+            app:showSeekBarValue="true"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_runtime" app:iconSpaceReserved="false">
+        <Preference
+            app:key="import_runtime"
+            app:title="@string/import_runtime"
+            app:summary="@string/import_runtime_summary"
+            app:iconSpaceReserved="false" />
+        <Preference
+            app:key="manage_runtimes"
+            app:title="@string/manage_runtimes"
+            app:iconSpaceReserved="false" />
+        <Preference
+            app:key="import_lwjgl"
+            app:title="@string/import_lwjgl"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+</PreferenceScreen>

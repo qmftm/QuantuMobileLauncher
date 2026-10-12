@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">퀀텀모바일 런처</string>
+    <string name="nav_home">플레이</string>
+    <string name="nav_accounts">계정</string>
+    <string name="nav_instances">인스턴스</string>
+    <string name="nav_settings">설정</string>
+
+    <string name="play">플레이</string>
+    <string name="cancel">취소</string>
+    <string name="game_log">게임 로그</string>
+    <string name="refresh">새로고침</string>
+    <string name="share">공유</string>
+    <string name="no_log">아직 로그가 없습니다. 먼저 게임을 실행하세요.</string>
+    <string name="account">계정</string>
+    <string name="instance">인스턴스</string>
+    <string name="no_account">계정 없음</string>
+    <string name="no_instance">인스턴스 없음</string>
+    <string name="add_account_hint">계정 탭에서 계정을 추가하세요</string>
+    <string name="create_instance_hint">인스턴스 탭에서 인스턴스를 만드세요</string>
+    <string name="account_microsoft">마이크로소프트 계정</string>
+    <string name="account_offline">오프라인 계정</string>
+    <string name="no_runtime">설치된 Java 런타임이 없습니다 — 설정에서 가져오세요</string>
+    <string name="runtimes_installed">런타임: %1$s</string>
+    <string name="progress_format">%1$s (%2$d/%3$d)</string>
+    <string name="launch_failed">실행 실패</string>
+
+    <string name="accounts_empty">계정이 없습니다.</string>
+    <string name="add_microsoft">마이크로소프트 로그인</string>
+    <string name="add_offline">오프라인 계정</string>
+    <string name="player_name">플레이어 이름</string>
+    <string name="invalid_name">이름은 영문, 숫자, _ 로 3~16자여야 합니다</string>
+    <string name="signing_in">로그인 중…</string>
+    <string name="login_failed">로그인 실패</string>
+    <string name="remove">삭제</string>
+    <string name="confirm_remove">%1$s 을(를) 삭제할까요?</string>
+    <string name="confirm_remove_instance">인스턴스 %1$s 을(를) 삭제할까요? 게임 파일은 유지됩니다.</string>
+
+    <string name="instances_empty">인스턴스가 없습니다.</string>
+    <string name="new_instance">새 인스턴스</string>
+    <string name="instance_name">이름 (선택)</string>
+    <string name="version">버전</string>
+    <string name="loader">모드 로더</string>
+    <string name="loader_vanilla">바닐라</string>
+    <string name="loader_fabric">Fabric</string>
+    <string name="show_snapshots">스냅샷 표시</string>
+    <string name="isolated_dir">별도 게임 폴더 사용 (모드, 월드)</string>
+    <string name="create">만들기</string>
+    <string name="manifest_failed">버전 목록을 불러오지 못했습니다: %1$s</string>
+
+    <string name="cat_game">게임</string>
+    <string name="cat_controls">조작</string>
+    <string name="cat_runtime">Java 및 라이브러리</string>
+    <string name="memory">메모리 (MB)</string>
+    <string name="renderer">렌더러</string>
+    <string name="renderer_lib">사용자 지정 렌더러 라이브러리</string>
+    <string name="resolution">해상도 배율 (%)</string>
+    <string name="jvm_args">추가 JVM 인자</string>
+    <string name="controls_opacity">화면 버튼 불투명도 (%)</string>
+    <string name="sensitivity">카메라 감도 (%)</string>
+    <string name="import_runtime">Java 런타임 가져오기</string>
+    <string name="import_runtime_summary">안드로이드용 JRE (.tar.xz). Java 8, 17, 21 이면 모든 버전을 실행할 수 있습니다.</string>
+    <string name="manage_runtimes">설치된 런타임</string>
+    <string name="import_lwjgl">LWJGL jar 가져오기</string>
+    <string name="lwjgl_summary">안드로이드용 LWJGL 3 — 모장의 데스크톱 LWJGL을 대체합니다</string>
+    <string name="lwjgl_count">LWJGL jar %1$d개 설치됨</string>
+    <string name="clear_lwjgl">가져온 LWJGL jar 삭제</string>
+    <string name="game_dir">게임 폴더</string>
+    <string name="importing">%1$s 가져오는 중…</string>
+    <string name="runtime_installed">Java %1$s 설치 완료</string>
+    <string name="import_failed">가져오기 실패</string>
+    <string name="tap_to_delete">눌러서 삭제</string>
+
+    <string-array name="renderer_entries">
+        <item>GL4ES (OpenGL → GLES)</item>
+        <item>Zink (OSMesa / Vulkan)</item>
+        <item>사용자 지정</item>
+    </string-array>
+</resources>
