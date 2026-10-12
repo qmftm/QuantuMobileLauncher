@@ -50,10 +50,11 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
           name: QuantuMobileLauncher ${{ steps.version.outputs.tag }}
-          prerelease: true
+          prerelease: false
+          make_latest: true
           files: dist/*.apk
           body: |
-            안드로이드용 마인크래프트 자바 에디션 런처 첫 프리릴리즈입니다.
+            안드로이드용 마인크래프트 자바 에디션 런처 첫 릴리즈입니다.
 
             **포함된 기능**
             - 마이크로소프트 / 오프라인 계정
@@ -64,5 +65,5 @@ jobs:
 
             **주의**
             - 게임 화면을 띄우려면 안드로이드용 JRE, 안드로이드용 LWJGL 3, GLFW 구현체와 렌더러(.so)가 별도로 필요합니다. README를 참고하세요.
-            - 아직 실기기 테스트 전인 프리릴리즈입니다.
+            - 아직 실기기 테스트 전입니다.
             - APK는 디버그 키로 서명되어 있습니다.
