@@ -1,5 +1,7 @@
 # QuantuMobileLauncher
 
+<p align="center"><img src="docs/screenshots/icon.png" width="360" alt="앱 아이콘" /></p>
+
 안드로이드용 **마인크래프트 자바 에디션** 런처입니다. PojavLauncher / MojoLauncher 와 같은 방식으로,
 안드로이드용으로 빌드된 OpenJDK 를 앱 프로세스 안에서 직접 실행해 게임을 구동합니다.
 

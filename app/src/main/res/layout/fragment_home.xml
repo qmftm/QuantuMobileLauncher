@@ -21,11 +21,13 @@
             android:padding="20dp">
 
             <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_launcher_foreground"
-                android:scaleType="centerCrop" />
+                android:scaleType="fitCenter"
+                android:scaleX="1.5"
+                android:scaleY="1.5"
+                android:src="@drawable/ic_launcher_foreground" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -218,10 +220,14 @@
             android:layout_width="match_parent"
             android:layout_height="72dp"
             android:layout_marginTop="20dp"
+            android:background="@drawable/bg_play_selector"
             android:text="@string/play"
+            android:textColor="@color/on_brand"
             android:textSize="22sp"
             android:textStyle="bold"
+            app:backgroundTint="@null"
             app:cornerRadius="22dp"
+            app:iconTint="@color/on_brand"
             app:icon="@drawable/ic_play"
             app:iconGravity="textStart"
             app:iconSize="28dp" />

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Launchers look best dark, so the theme is dark regardless of system setting. -->
-    <style name="Theme.Quantum" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Theme.Quantum.Base" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/brand</item>
         <item name="colorOnPrimary">@color/on_brand</item>
         <item name="colorPrimaryContainer">@color/brand_deep</item>
@@ -26,6 +26,20 @@
         <item name="android:navigationBarColor">@color/surface</item>
         <item name="materialCardViewStyle">@style/Widget.Quantum.Card</item>
         <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Quantum.BottomSheet</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.Quantum</item>
+        <item name="android:windowBackground">@color/bg</item>
+    </style>
+
+    <style name="Theme.Quantum" parent="Theme.Quantum.Base" />
+
+    <style name="PreferenceThemeOverlay.Quantum" parent="PreferenceThemeOverlay">
+        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.Quantum.Category</item>
+    </style>
+
+    <style name="TextAppearance.Quantum.Category" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textColor">@color/accent</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="Widget.Quantum.Card" parent="Widget.Material3.CardView.Filled">

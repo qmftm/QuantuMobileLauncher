@@ -10,7 +10,8 @@
             android:max="8192"
             app:seekBarIncrement="256"
             app:showSeekBarValue="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_memory"
+            app:iconSpaceReserved="true" />
         <ListPreference
             app:key="renderer"
             app:title="@string/renderer"
@@ -18,12 +19,14 @@
             app:entryValues="@array/renderer_values"
             app:defaultValue="gl4es"
             app:useSimpleSummaryProvider="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_brush"
+            app:iconSpaceReserved="true" />
         <EditTextPreference
             app:key="renderer_lib"
             app:title="@string/renderer_lib"
             app:useSimpleSummaryProvider="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_code"
+            app:iconSpaceReserved="true" />
         <SeekBarPreference
             app:key="resolution_percent"
             app:title="@string/resolution"
@@ -31,21 +34,25 @@
             android:max="100"
             app:defaultValue="100"
             app:showSeekBarValue="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_aspect"
+            app:iconSpaceReserved="true" />
         <EditTextPreference
             app:key="jvm_args"
             app:title="@string/jvm_args"
             app:useSimpleSummaryProvider="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_code"
+            app:iconSpaceReserved="true" />
         <SwitchPreferenceCompat
             app:key="show_snapshots"
             app:title="@string/show_snapshots"
             app:defaultValue="false"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_history"
+            app:iconSpaceReserved="true" />
         <Preference
             app:key="game_dir"
             app:title="@string/game_dir"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_folder_brand"
+            app:iconSpaceReserved="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cat_controls" app:iconSpaceReserved="false">
@@ -55,7 +62,8 @@
             android:max="100"
             app:defaultValue="60"
             app:showSeekBarValue="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_opacity"
+            app:iconSpaceReserved="true" />
         <SeekBarPreference
             app:key="mouse_sensitivity"
             app:title="@string/sensitivity"
@@ -63,7 +71,8 @@
             android:max="300"
             app:defaultValue="100"
             app:showSeekBarValue="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_speed"
+            app:iconSpaceReserved="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cat_runtime" app:iconSpaceReserved="false">
@@ -71,24 +80,29 @@
             app:key="download_runtime"
             app:title="@string/download_runtime"
             app:summary="@string/download_runtime_summary"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_download"
+            app:iconSpaceReserved="true" />
         <Preference
             app:key="import_runtime"
             app:title="@string/import_runtime"
             app:summary="@string/import_runtime_summary"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_upload"
+            app:iconSpaceReserved="true" />
         <Preference
             app:key="manage_runtimes"
             app:title="@string/manage_runtimes"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_java"
+            app:iconSpaceReserved="true" />
         <EditTextPreference
             app:key="runtime_catalog_url"
             app:title="@string/catalog_url"
             app:useSimpleSummaryProvider="true"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_link"
+            app:iconSpaceReserved="true" />
         <Preference
             app:key="import_lwjgl"
             app:title="@string/import_lwjgl"
-            app:iconSpaceReserved="false" />
+            app:icon="@drawable/ic_upload"
+            app:iconSpaceReserved="true" />
     </PreferenceCategory>
 </PreferenceScreen>

@@ -39,6 +39,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun show(fragment: Fragment, title: CharSequence?) {
         supportActionBar?.title = title
-        supportFragmentManager.commit { replace(R.id.content, fragment) }
+        supportFragmentManager.commit {
+            setTransition(androidx.fragment.app.FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+            replace(R.id.content, fragment)
+        }
     }
 }
