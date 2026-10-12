@@ -25,7 +25,14 @@ data class GameLaunch(
     val gameDir: String,
     val env: ArrayList<String>,
     val logPath: String,
+    /** The app's own native library directory (libpojavexec, libopenal ...). */
+    val nativeLibDir: String,
+    /** Extra directories for the dynamic linker (the downloaded LWJGL natives). */
+    val libraryPaths: ArrayList<String>,
 ) : Serializable
+
+/** The only renderer the bridge supports: GL4ES on top of GLES 2/3. */
+private const val RENDERER_LIB = "libgl4es_114.so"
 
 open class LaunchException(message: String) : Exception(message)
 
@@ -76,16 +83,24 @@ class LaunchPreparer(private val app: QuantumApp) {
             add("-Djava.io.tmpdir=${tmpDir.absolutePath}")
             add("-Duser.home=${paths.gameRoot.parent}")
             add("-Dos.name=Linux")
+            add("-Djava.home=${runtime.home.absolutePath}")
+            add("-Dglfwstub.windowWidth=$width")
+            add("-Dglfwstub.windowHeight=$height")
+            add("-Dglfwstub.initEgl=false")
+            add("-Dorg.lwjgl.vulkan.libname=libvulkan.so")
+            add("-Djdk.lang.Process.launchMechanism=FORK")
+            add("-Dnet.minecraft.clientmodname=QuantuMobileLauncher")
+            add("-XX:ActiveProcessorCount=${Runtime.getRuntime().availableProcessors()}")
             val nativesDir = lwjgl?.let { LwjglInstaller(paths).nativesDir(it.abi) }
             if (nativesDir != null) {
                 add("-Dorg.lwjgl.librarypath=${nativesDir.absolutePath}")
                 add("-Dorg.lwjgl.freetype.libname=${File(nativesDir, "libfreetype.so").absolutePath}")
                 add("-Djna.boot.library.path=${nativesDir.absolutePath}")
-                val gl = File(nativesDir, settings.rendererLibrary)
-                add("-Dorg.lwjgl.opengl.libname=${if (gl.isFile) gl.absolutePath else settings.rendererLibrary}")
+                val gl = File(nativesDir, RENDERER_LIB)
+                add("-Dorg.lwjgl.opengl.libname=${if (gl.isFile) gl.absolutePath else RENDERER_LIB}")
             } else {
                 add("-Dorg.lwjgl.librarypath=${paths.nativeLibDir}")
-                add("-Dorg.lwjgl.opengl.libname=${settings.rendererLibrary}")
+                add("-Dorg.lwjgl.opengl.libname=${RENDERER_LIB}")
             }
             add("-Dorg.lwjgl.util.NoChecks=true")
             add("-Dfml.earlyprogresswindow=false")
@@ -116,20 +131,27 @@ class LaunchPreparer(private val app: QuantumApp) {
             loggingConfigPath = version.logging?.let { File(paths.assets, "log_configs/${it.id}").absolutePath },
         )
 
+        val nativesPath = lwjgl?.let { LwjglInstaller(paths).nativesDir(it.abi).absolutePath }
+        val libraryPaths = arrayListOf<String>().apply {
+            if (nativesPath != null) add(nativesPath)
+            add(paths.nativeLibDir)
+        }
         val env = arrayListOf(
+            "POJAV_NATIVEDIR=${paths.nativeLibDir}",
             "JAVA_HOME=${runtime.home.absolutePath}",
             "HOME=${paths.gameRoot.parent}",
             "TMPDIR=${tmpDir.absolutePath}",
-            "LD_LIBRARY_PATH=" + listOfNotNull(lwjgl?.let { LwjglInstaller(paths).nativesDir(it.abi).absolutePath }, paths.nativeLibDir).joinToString(":"),
-            "QML_RENDERER=${settings.renderer}",
             "LIBGL_MIPMAP=3",
+            "LIBGL_NOERROR=1",
             "LIBGL_NOINTOVLHACK=1",
             "LIBGL_NORMALIZE=1",
+            "LIBGL_ES=2",
+            "FORCE_VSYNC=false",
+            "MESA_GLSL_CACHE_DIR=${paths.cacheDir.absolutePath}",
+            "POJAV_RENDERER=opengles2",
+            "AWTSTUB_WIDTH=$width",
+            "AWTSTUB_HEIGHT=$height",
         )
-        if (settings.renderer == com.quantumobile.launcher.core.Settings.RENDERER_ZINK) {
-            env += "GALLIUM_DRIVER=zink"
-            env += "MESA_GL_VERSION_OVERRIDE=4.6"
-        }
 
         paths.logs.mkdirs()
         listener.onProgress("Starting", 1, 1)
@@ -139,6 +161,8 @@ class LaunchPreparer(private val app: QuantumApp) {
             gameDir = gameDir.absolutePath,
             env = env,
             logPath = paths.latestLog.absolutePath,
+            nativeLibDir = paths.nativeLibDir,
+            libraryPaths = libraryPaths,
         )
     }
 

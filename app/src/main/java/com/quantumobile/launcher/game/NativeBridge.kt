@@ -1,22 +1,22 @@
 package com.quantumobile.launcher.game
 
-import android.view.Surface
+import org.lwjgl.glfw.CallbackBridge
 
-/** JNI surface of libqmlbridge.so (see app/src/main/cpp/qml_bridge.h). Only used in the :game process. */
+/** Input/log facade over the Pojav native layer (see org.lwjgl.glfw.CallbackBridge) and libqmlnative. Used in `:game`. */
 object NativeBridge {
     init {
-        System.loadLibrary("qmlbridge")
+        System.loadLibrary("qmlnative")
+        CallbackBridge.ensureLoaded()
     }
 
-    @JvmStatic external fun launchJvm(javaHome: String, args: Array<String>, env: Array<String>, workDir: String, logPath: String): Int
-    @JvmStatic external fun setSurface(surface: Surface?, width: Int, height: Int)
-    @JvmStatic external fun sendKey(key: Int, scancode: Int, action: Int, mods: Int)
-    @JvmStatic external fun sendChar(codepoint: Int, mods: Int)
-    @JvmStatic external fun sendCursorPos(x: Double, y: Double)
-    @JvmStatic external fun sendMouseButton(button: Int, action: Int, mods: Int)
-    @JvmStatic external fun sendScroll(dx: Double, dy: Double)
-    @JvmStatic external fun isCursorGrabbed(): Boolean
-    @JvmStatic external fun setClipboard(text: String?)
+    @JvmStatic external fun redirectOutput(path: String): Boolean
+
+    fun sendKey(key: Int, scancode: Int, action: Int, mods: Int) = CallbackBridge.sendKey(key, scancode, action, mods)
+    fun sendChar(codepoint: Int, mods: Int) = CallbackBridge.sendChar(codepoint, mods)
+    fun sendCursorPos(x: Double, y: Double) = CallbackBridge.sendCursorPos(x.toFloat(), y.toFloat())
+    fun sendMouseButton(button: Int, action: Int, mods: Int) = CallbackBridge.sendMouseButton(button, action, mods)
+    fun sendScroll(dx: Double, dy: Double) = CallbackBridge.sendScroll(dx, dy)
+    fun isCursorGrabbed(): Boolean = CallbackBridge.isGrabbing
 
     fun tapKey(key: Int) {
         sendKey(key, 0, Glfw.PRESS, 0)

@@ -85,6 +85,11 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
             if (now != grabbed) {
                 releaseAll()
                 grabbed = now
+                if (now) {
+                    cursorX = org.lwjgl.glfw.CallbackBridge.windowWidth / 2.0
+                    cursorY = org.lwjgl.glfw.CallbackBridge.windowHeight / 2.0
+                    NativeBridge.sendCursorPos(cursorX, cursorY)
+                }
                 invalidate()
             }
             postDelayed(this, 100)

@@ -104,9 +104,17 @@ class GameSurfaceView @JvmOverloads constructor(context: Context, attrs: Attribu
 
     /** Captures a connected mouse while the game wants a hidden cursor. */
     fun updatePointerCapture(grabbed: Boolean) {
+        if (grabbed) centerCursor()
         if (!mouseSeen) return
         if (grabbed && !hasPointerCapture()) requestPointerCapture()
         else if (!grabbed && hasPointerCapture()) releasePointerCapture()
+    }
+
+    /** The game reads absolute positions, so start a grab from the window centre to avoid a camera jump. */
+    private fun centerCursor() {
+        cursorX = org.lwjgl.glfw.CallbackBridge.windowWidth / 2.0
+        cursorY = org.lwjgl.glfw.CallbackBridge.windowHeight / 2.0
+        NativeBridge.sendCursorPos(cursorX, cursorY)
     }
 
     private fun mouseButton(androidButton: Int, action: Int) {

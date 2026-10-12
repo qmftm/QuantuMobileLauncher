@@ -34,7 +34,7 @@
 | 터치 컨트롤 (이동 패드, 점프/웅크리기/달리기, 공격/사용, 단축키, 핫바 스크롤) | ✅ |
 | 화면 드래그로 시점 조작, 탭 = 사용, 길게 누르기 = 부수기, 메뉴에서는 마우스 포인터 | ✅ |
 | 물리 키보드 / 마우스 (포인터 캡처), 소프트 키보드로 채팅 입력 | ✅ |
-| 해상도 배율, 렌더러 선택 (GL4ES / Zink / 사용자 지정) | ✅ |
+| 해상도 배율, GL4ES 렌더러 | ✅ |
 | 한국어 / 영어 UI, 다크 테마 | ✅ |
 | 홈에서 계정·인스턴스 바로 전환, 스킨 아바타 표시 | ✅ |
 | **백그라운드 동작**: 설치·다운로드가 앱을 나가도 계속되고(진행 알림), 끝나면 알림, 게임은 홈 화면으로 나가도 계속 실행 (알림에서 복귀/종료) | ✅ |
@@ -59,13 +59,16 @@
   모장의 데스크톱용 LWJGL 은 x86/glibc 용이라 안드로이드에서 로드되지 않으므로 이 jar 로 교체합니다. 홈의 "시작하기" 체크리스트나
   설정의 "안드로이드용 LWJGL 설치"에서 직접 받을 수도 있고, 직접 가져온 jar 도 쓸 수 있습니다. 목록은 [`lwjgl.json`](app/src/main/assets/lwjgl.json) 입니다.
 
-### ⚠️ 아직 남은 것: 화면·입력 네이티브 브릿지 (`libpojavexec`)
+### 화면·입력 네이티브 브릿지 (`libpojavexec`)
 
-위에서 받는 LWJGL jar 의 `GLFW` 클래스는 시작할 때 네이티브 라이브러리 **`pojavexec`** 를 로드합니다. 이것이 안드로이드 창(EGL)과 터치·키 입력,
-커서 잡기를 GLFW 로 이어 주는 부분인데, 이 앱의 `libqmlbridge` 는 아직 그 자리를 대신하지 못합니다
-(PojavLauncher 의 `app_pojavlauncher/src/main/jni` 약 120 KB 의 C 코드와 `JREUtils`·`CallbackBridge` 같은 Java 클래스와 맞물려 있습니다).
-그래서 **현재 버전은 게임 화면을 띄우는 단계 직전까지** 준비됩니다. 게임을 시작하면 로그(홈 → 게임 로그)에 `pojavexec` 를 찾을 수 없다는 오류가 납니다.
-이 브릿지를 이식하는 것이 다음 큰 작업입니다.
+LWJGL jar 의 `GLFW` 클래스가 로드하는 **`pojavexec`** 는 PojavLauncher 의 네이티브 코드를 이식한 것입니다
+([`app/src/main/cpp/pojav`](app/src/main/cpp/pojav), 출처·변경점·LGPL-3.0 고지는 [`third_party/pojavlauncher`](third_party/pojavlauncher/NOTICE.md)).
+안드로이드 `Surface` → EGL/GL4ES, 터치·키 입력 → GLFW 콜백, JVM 실행(`JLI_Launch`)을 맡습니다.
+Kotlin 쪽에는 이 네이티브 코드가 요구하는 이름의 클래스(`org.lwjgl.glfw.CallbackBridge`, `net.kdt.pojavlaunch.utils.JREUtils`,
+`com.oracle.dalvik.VMLauncher`)가 있고, 시작 순서(`JvmStarter`)는 Pojav 와 같습니다: 화면 크기 전달 → 창 연결 → 환경변수·라이브러리 경로 → JVM 시작.
+
+> ⚠️ **실기기 검증 전입니다.** 컴파일·단위 테스트·린트까지만 확인했고, 실제 기기에서 화면이 뜨는지는 아직 확인하지 못했습니다.
+> 안 뜨면 홈 → 게임 로그를 공유해 주세요. 렌더러는 GL4ES 만 지원합니다 (Zink/Vulkan, AWT 가 필요한 모드는 미지원).
 
 ### Java 런타임 (자동 다운로드)
 

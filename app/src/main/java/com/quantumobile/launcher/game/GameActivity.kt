@@ -3,7 +3,6 @@ package com.quantumobile.launcher.game
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.SurfaceHolder
 import android.view.WindowManager
@@ -16,6 +15,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.core.GameLaunch
 import com.quantumobile.launcher.databinding.ActivityGameBinding
+import net.kdt.pojavlaunch.utils.JREUtils
+import org.lwjgl.glfw.CallbackBridge
 import kotlin.system.exitProcess
 
 /**
@@ -30,6 +31,7 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CallbackBridge.ensureLoaded()
         launch = intentLaunch(intent) ?: GameSession.launch ?: run { finish(); return }
         GameSession.launch = launch
         binding = ActivityGameBinding.inflate(layoutInflater)
@@ -66,13 +68,14 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
             holder.setFixedSize(fbWidth, fbHeight) // triggers another surfaceChanged at render size
             return
         }
-        NativeBridge.setSurface(holder.surface, width, height)
+        // Order matters: the size must be known before the window is bound, and both before the JVM starts.
+        CallbackBridge.sendScreenSize(width, height)
+        JREUtils.setupBridgeWindow(holder.surface)
         startJvmOnce()
     }
 
-    override fun surfaceDestroyed(holder: SurfaceHolder) {
-        NativeBridge.setSurface(null, 0, 0)
-    }
+    // The native side keeps rendering state across surface loss and re-binds on the next setupBridgeWindow.
+    override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
 
     private fun startJvmOnce() {
         if (GameSession.started) return
@@ -81,8 +84,7 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
         val l = launch
         // A big stack: the JVM's main thread runs on this thread and Minecraft recurses deeply.
         Thread(null, {
-            val rc = NativeBridge.launchJvm(l.javaHome, l.args.toTypedArray(), l.env.toTypedArray(), l.gameDir, l.logPath)
-            Log.i(TAG, "JVM exited with $rc")
+            val rc = JvmStarter.run(l)
             // Do not rely on this activity still being alive: the user may have left to the home screen.
             android.os.Handler(android.os.Looper.getMainLooper()).post {
                 runCatching { finishAndRemoveTask() }
@@ -146,7 +148,6 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     companion object {
-        private const val TAG = "GameActivity"
         private const val EXTRA_LAUNCH = "launch"
 
         fun intent(context: Context, launch: GameLaunch) =
