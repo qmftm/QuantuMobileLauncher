@@ -106,6 +106,8 @@ class LaunchPreparer(private val app: QuantumApp) {
                 val own = paths.nativeLibDir
                 add("-Dorg.lwjgl.librarypath=$own")
                 add("-Dorg.lwjgl.sdl.libname=$own/libSDL3.so")
+                // The jemalloc jar is on the classpath but its native library is not shipped: use the C allocator.
+                add("-Dorg.lwjgl.system.allocator=system")
                 // LWJGL finds GL entry points (glXGetProcAddress) in MobileGlues, the same library SDL uses as its EGL layer.
                 add("-Dorg.lwjgl.opengl.libname=$own/libmobileglues.so")
                 nativesDir?.let {
