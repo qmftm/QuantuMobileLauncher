@@ -40,7 +40,8 @@ class TaskRunner(
                     Result.success(block(TaskReporter { message, percent -> update(id, message, percent) }))
                 } catch (e: CancellationException) {
                     throw e
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
+                    // Errors too (a failed class initialiser, say): a task must report failure, not take the app down.
                     Result.failure(e)
                 }
             } finally {

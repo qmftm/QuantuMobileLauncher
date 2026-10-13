@@ -28,10 +28,30 @@ data class LaunchSpec(
 )
 
 object LaunchArgs {
-    private val PLACEHOLDER = Regex("""\$\{([^}]+)}""")
-
-    fun substitute(value: String, vars: Map<String, String>): String =
-        PLACEHOLDER.replace(value) { m -> vars[m.groupValues[1]] ?: m.value }
+    /**
+     * Replaces `${name}` placeholders; unknown names are left as they are. Written without a regex on purpose: Android's
+     * regex engine (ICU) rejects patterns the JVM accepts (an unescaped `}` crashed every launch), and unit tests run
+     * on the JVM so they would not catch it.
+     */
+    fun substitute(value: String, vars: Map<String, String>): String {
+        if ('$' !in value) return value
+        val out = StringBuilder(value.length)
+        var i = 0
+        while (i < value.length) {
+            if (value[i] == '$' && i + 1 < value.length && value[i + 1] == '{') {
+                val end = value.indexOf('}', i + 2)
+                if (end > i + 2) {
+                    val name = value.substring(i + 2, end)
+                    out.append(vars[name] ?: value.substring(i, end + 1))
+                    i = end + 1
+                    continue
+                }
+            }
+            out.append(value[i])
+            i++
+        }
+        return out.toString()
+    }
 
     /** Expands a modern `arguments.game`/`arguments.jvm` array, honouring per-entry rules. */
     fun expand(args: JsonArray?, env: RuleEnv, vars: Map<String, String>): List<String> {
