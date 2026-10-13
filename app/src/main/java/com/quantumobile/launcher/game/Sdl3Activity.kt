@@ -37,6 +37,14 @@ class Sdl3Activity : SDLActivity() {
         addControls()
     }
 
+    /**
+     * SDL re-decides the screen orientation when the game opens its (resizable) window: with no hint it picks "follow the
+     * device", which turns the game portrait. This launcher's game screen is always landscape.
+     */
+    override fun setOrientationBis(w: Int, h: Int, resizable: Boolean, hint: String?) {
+        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    }
+
     private fun addControls() {
         val settings = (application as QuantumApp).settings
         val view = TouchControlsView(this).apply {
