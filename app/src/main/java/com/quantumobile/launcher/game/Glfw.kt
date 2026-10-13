@@ -85,6 +85,11 @@ object Glfw {
 
     fun fromAndroid(keyCode: Int): Int? = map[keyCode]
 
+    private val toAndroid: Map<Int, Int> by lazy { map.entries.associate { (android, glfw) -> glfw to android } }
+
+    /** GLFW key code → Android key code (the SDL backend takes Android key events). */
+    fun toAndroid(glfwKey: Int): Int? = toAndroid[glfwKey]
+
     fun mods(event: KeyEvent): Int {
         var m = 0
         if (event.isShiftPressed) m = m or MOD_SHIFT

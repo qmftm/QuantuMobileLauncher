@@ -112,8 +112,8 @@ class GameSurfaceView @JvmOverloads constructor(context: Context, attrs: Attribu
 
     /** The game reads absolute positions, so start a grab from the window centre to avoid a camera jump. */
     private fun centerCursor() {
-        cursorX = org.lwjgl.glfw.CallbackBridge.windowWidth / 2.0
-        cursorY = org.lwjgl.glfw.CallbackBridge.windowHeight / 2.0
+        cursorX = NativeBridge.windowWidth() / 2.0
+        cursorY = NativeBridge.windowHeight() / 2.0
         NativeBridge.sendCursorPos(cursorX, cursorY)
     }
 

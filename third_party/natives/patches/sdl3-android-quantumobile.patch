@@ -1,3 +1,16 @@
+diff --git a/src/SDL.c b/src/SDL.c
+index 3e61b8a..7cdfc0f 100644
+--- a/src/SDL.c
++++ b/src/SDL.c
+@@ -186,7 +186,7 @@ const char *SDL_GetAppMetadataProperty(const char *name)
+ 
+ 
+ // The initialized subsystems
+-#ifdef SDL_MAIN_NEEDED
++#if defined(SDL_MAIN_NEEDED) && !defined(SDL_PLATFORM_ANDROID) // QuantuMobile: the JVM, not SDL_main, drives SDL on Android
+ static bool SDL_MainIsReady = false;
+ #else
+ static bool SDL_MainIsReady = true;
 diff --git a/src/video/SDL_egl.c b/src/video/SDL_egl.c
 index e26d31c..d3f2f80 100644
 --- a/src/video/SDL_egl.c
