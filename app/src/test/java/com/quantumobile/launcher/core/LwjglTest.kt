@@ -68,8 +68,9 @@ class LwjglTest {
         val inst = installer()
         val p = pkg()
         assertFalse(inst.isInstalled(p, "arm64-v8a"))
+        // Files download in parallel, so progress callbacks may arrive out of order: track the maximum, not the last value.
         var last = 0; var total = 0
-        inst.install(p, "arm64-v8a") { d, t -> last = d; total = t }
+        inst.install(p, "arm64-v8a") { d, t -> synchronized(this) { last = maxOf(last, d); total = t } }
         assertTrue(inst.isInstalled(p, "arm64-v8a"))
         assertEquals(total, last)
         assertEquals("jar-bytes", File(paths.lwjgl, "lwjgl-glfw-classes.jar").readText())
