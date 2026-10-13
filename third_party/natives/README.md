@@ -7,6 +7,8 @@ Minecraft 26.x(SDL3 + LWJGL 3.4.3)를 안드로이드(arm64-v8a)에서 돌리기
 |---|---|---|
 | `build-lwjgl-android.sh` | `liblwjgl.so` `liblwjgl_stb.so` `liblwjgl_opengl.so` `liblwjgl_vma.so` | [LWJGL 3.4.3](https://github.com/LWJGL/lwjgl3) (BSD-3-Clause) + libffi (MIT) |
 | `build-sdl3-android.sh` | `libSDL3.so` (+ `org.libsdl.app` 자바 글루) | [SDL 3.4.16](https://github.com/libsdl-org/SDL) (zlib), 패치: `patches/sdl3-android-quantumobile.patch` |
+| `build-spirv-cross-android.sh` | `libspirv-cross.so` (LWJGL spvc 가 찾는 이름) | [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) (Apache-2.0) |
+| `build-shaderc-android.sh` | `libshaderc.so` | [shaderc](https://github.com/google/shaderc) + glslang + SPIRV-Tools (Apache-2.0) |
 | `build-mobileglues-android.sh` | `libmobileglues.so` | [MobileGlues](https://github.com/MobileGL-Dev/MobileGlues) (LGPL-2.1), 수정 없이 빌드 |
 
 NDK(`ANDROID_NDK_HOME`)와 JDK, git, cmake 가 필요합니다. 라이선스 전문은 `licenses/` 에 있습니다.
