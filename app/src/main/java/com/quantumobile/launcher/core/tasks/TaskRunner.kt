@@ -61,6 +61,8 @@ class TaskRunner(
 
     @Synchronized
     private fun update(id: Long, message: String, percent: Int) {
+        // Downloads report once per file (thousands of times); only a visible change is worth a notification update.
+        if (_tasks.value.any { it.id == id && it.message == message && it.percent == percent }) return
         _tasks.value = _tasks.value.map { if (it.id == id) it.copy(message = message, percent = percent) else it }
     }
 

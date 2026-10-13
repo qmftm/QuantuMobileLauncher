@@ -57,6 +57,8 @@ class ModInstaller(
     private val api: ModrinthApi,
     private val gameDir: File,
     private val downloader: Downloader = Downloader(),
+    /** Only files from here are downloaded (tests point this at a local server). */
+    private val allowedPrefix: String = "https://cdn.modrinth.com/",
 ) {
     val store = InstalledModStore(File(gameDir, "qml-mods.json"))
 
@@ -89,17 +91,19 @@ class ModInstaller(
         return InstallPlan(items.values.toList(), missing)
     }
 
+    /**
+     * Downloads and records every item. [onProgress] is called on the caller's own thread/dispatcher (the UI thread
+     * when called from a screen or the task runner), never from the IO threads doing the work, so it may touch views.
+     */
     suspend fun apply(plan: InstallPlan, onProgress: (done: Int, total: Int, title: String) -> Unit = { _, _, _ -> }): List<InstalledMod> =
-        withContext(Dispatchers.IO) {
-            plan.items.mapIndexed { i, item ->
-                onProgress(i, plan.items.size, item.title)
-                install(item).also { onProgress(i + 1, plan.items.size, item.title) }
-            }
+        plan.items.mapIndexed { i, item ->
+            onProgress(i, plan.items.size, item.title)
+            install(item).also { onProgress(i + 1, plan.items.size, item.title) }
         }
 
-    private suspend fun install(item: PlanItem): InstalledMod {
+    private suspend fun install(item: PlanItem): InstalledMod = withContext(Dispatchers.IO) {
         val file = item.version.primaryFile ?: throw ModException("${item.title} has no downloadable file")
-        if (!file.url.startsWith("https://cdn.modrinth.com/")) throw ModException("Refusing to download from ${file.url}")
+        if (!file.url.startsWith(allowedPrefix)) throw ModException("Refusing to download from ${file.url}")
         val name = File(file.filename).name // strips any path components
         if (name.isBlank() || name.startsWith(".")) throw ModException("Invalid file name: ${file.filename}")
         val dest = File(File(gameDir, item.type.folder), name)
@@ -111,7 +115,7 @@ class ModInstaller(
         }
         val mod = InstalledMod(item.projectId, item.version.id, item.version.versionNumber, item.title, item.type.api, name, item.dependency)
         store.put(mod)
-        return mod
+        mod
     }
 
     fun remove(mod: InstalledMod) {

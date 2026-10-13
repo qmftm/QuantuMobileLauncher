@@ -48,7 +48,12 @@ class TaskService : Service() {
 
     private fun promote(notification: android.app.Notification) {
         val type = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
-        ServiceCompat.startForeground(this, Notifications.ID_TASKS, notification, type)
+        try {
+            ServiceCompat.startForeground(this, Notifications.ID_TASKS, notification, type)
+        } catch (e: RuntimeException) {
+            // The OS may refuse (e.g. started from the background); the work itself runs on without the service.
+            stopSelf()
+        }
     }
 
     override fun onDestroy() {

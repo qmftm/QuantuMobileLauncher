@@ -28,8 +28,13 @@ class LogActivity : AppCompatActivity() {
 
     private fun load() = lifecycleScope.launch {
         val file = (application as QuantumApp).paths.latestLog
-        val text = withContext(Dispatchers.IO) {
-            if (!file.isFile) return@withContext getString(R.string.no_log)
+        val crashes = withContext(Dispatchers.IO) {
+            (application as QuantumApp).paths.logs.listFiles { f -> f.name.startsWith("crash-") && f.name.endsWith(".txt") }
+                .orEmpty().sortedBy { it.name }
+                .joinToString("") { "=== ${it.name} ===\n${it.readText().take(8000)}\n\n" }
+        }
+        val text = crashes + withContext(Dispatchers.IO) {
+            if (!file.isFile) return@withContext if (crashes.isEmpty()) getString(R.string.no_log) else ""
             RandomAccessFile(file, "r").use { raf ->
                 val start = (raf.length() - MAX_BYTES).coerceAtLeast(0)
                 raf.seek(start)

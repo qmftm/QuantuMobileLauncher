@@ -53,6 +53,7 @@ class QuantumApp : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        installCrashLogger()
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityStarted(activity: Activity) { startedActivities++ }
             override fun onActivityStopped(activity: Activity) { startedActivities-- }
@@ -62,6 +63,26 @@ class QuantumApp : Application() {
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
             override fun onActivityDestroyed(activity: Activity) = Unit
         })
+    }
+
+    /**
+     * Writes any crash to `logs/crash-<process>.txt` (next to the game log) before the process dies, so a user who says
+     * "the app closed" can share what actually happened. Runs in both the launcher and the game process.
+     */
+    private fun installCrashLogger() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            runCatching {
+                val process = if (Build.VERSION.SDK_INT >= 28) getProcessName().substringAfter(':', "main") else "main"
+                val dir = java.io.File(getExternalFilesDir(null) ?: filesDir, "logs").apply { mkdirs() }
+                java.io.File(dir, "crash-$process.txt").writeText(
+                    "${java.util.Date()}  v${BuildConfig.VERSION_NAME}  thread=${thread.name}\n" +
+                        "${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n\n" +
+                        android.util.Log.getStackTraceString(error),
+                )
+            }
+            previous?.uncaughtException(thread, error)
+        }
     }
 
     /** Installs missing files and prepares the launch. Keeps running in the background; see [launchState]. */
