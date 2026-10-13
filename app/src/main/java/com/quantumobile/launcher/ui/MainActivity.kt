@@ -38,6 +38,28 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) (application as com.quantumobile.launcher.QuantumApp).prefetchComponents()
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkAbnormalGameExit()
+    }
+
+    /** The game process leaves a marker while it runs; finding it with no game process alive means it died. */
+    private fun checkAbnormalGameExit() {
+        val app = application as com.quantumobile.launcher.QuantumApp
+        val marker = com.quantumobile.launcher.game.JvmStarter.runningMarker(app.paths.latestLog.path)
+        if (!marker.isFile) return
+        val am = getSystemService(android.app.ActivityManager::class.java)
+        val alive = am.runningAppProcesses.orEmpty().any { it.processName.endsWith(":game") }
+        if (alive) return
+        marker.delete()
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.game_crashed_title)
+            .setMessage(R.string.game_crashed_message)
+            .setPositiveButton(R.string.game_log) { _, _ -> startActivity(android.content.Intent(this, LogActivity::class.java)) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     private val notificationPermission =
         registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
 

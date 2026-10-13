@@ -85,11 +85,27 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
         val l = launch
         // A big stack: the JVM's main thread runs on this thread and Minecraft recurses deeply.
         Thread(null, {
-            val rc = JvmStarter.run(l)
-            // Do not rely on this activity still being alive: the user may have left to the home screen.
+            val started = System.currentTimeMillis()
+            var rc = -1
+            try {
+                rc = JvmStarter.run(l)
+            } catch (t: Throwable) {
+                JvmStarter.logFailure(l.logPath, t)
+            }
+            // Only reached when the JVM returned (or could not start): a normal quit ends the process inside the JVM.
+            val quick = System.currentTimeMillis() - started < QUICK_EXIT_MS
             android.os.Handler(android.os.Looper.getMainLooper()).post {
-                runCatching { finishAndRemoveTask() }
-                exitProcess(rc)
+                if (rc != 0 || quick) {
+                    // Show why instead of just closing: the log viewer lives in the launcher process.
+                    runCatching {
+                        startActivity(
+                            Intent(applicationContext, com.quantumobile.launcher.ui.LogActivity::class.java)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                .putExtra(com.quantumobile.launcher.ui.LogActivity.EXTRA_EXIT_CODE, rc),
+                        )
+                    }
+                }
+                binding.root.postDelayed({ exitProcess(rc) }, 600)
             }
         }, "Minecraft-Main", 64L * 1024 * 1024).start()
     }
@@ -150,6 +166,7 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     companion object {
         private const val EXTRA_LAUNCH = "launch"
+        private const val QUICK_EXIT_MS = 20_000L
 
         fun intent(context: Context, launch: GameLaunch) =
             Intent(context, GameActivity::class.java).putExtra(EXTRA_LAUNCH, launch)

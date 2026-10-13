@@ -50,7 +50,13 @@ class GameService : Service() {
             .addAction(0, getString(R.string.quit_game), quit)
             .build()
         val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
-        ServiceCompat.startForeground(this, Notifications.ID_GAME, notification, type)
+        try {
+            ServiceCompat.startForeground(this, Notifications.ID_GAME, notification, type)
+        } catch (e: RuntimeException) {
+            // Not fatal: the game still runs, it just may be stopped sooner when the app is in the background.
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         if (wakeLock == null) {
             // Keeps the CPU running with the screen off so the server connection does not stall.

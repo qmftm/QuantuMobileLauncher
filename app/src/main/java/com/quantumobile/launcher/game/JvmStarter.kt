@@ -11,10 +11,32 @@ import net.kdt.pojavlaunch.utils.JREUtils
 object JvmStarter {
     private const val TAG = "JvmStarter"
 
+    /** Present while the game process is expected to be alive; still there later means it died without returning. */
+    fun runningMarker(logPath: String) = File(File(logPath).parentFile, "game.running")
+
+    /** Appends [error] to the game log (used when starting the JVM itself fails). */
+    fun logFailure(logPath: String, error: Throwable) {
+        runCatching {
+            java.io.FileWriter(logPath, true).use { it.write("\n[launcher] FAILED: ${Log.getStackTraceString(error)}\n") }
+        }
+    }
+
     fun run(l: GameLaunch): Int {
+        val marker = runningMarker(l.logPath)
+        runCatching { marker.parentFile?.mkdirs(); marker.writeText(System.currentTimeMillis().toString()) }
+        try {
+            return start(l)
+        } finally {
+            marker.delete() // only reached when the JVM returned; a crash/exit inside it leaves the marker behind
+        }
+    }
+
+    private fun start(l: GameLaunch): Int {
         NativeBridge.redirectOutput(l.logPath)
         startLogcatTail(l.logPath)
+        println("[launcher] stage: output redirected, ABI=${android.os.Build.SUPPORTED_ABIS.joinToString()}, API ${android.os.Build.VERSION.SDK_INT}")
         val layout = JreLayout(File(l.javaHome))
+        println("[launcher] stage: java home exists=${File(l.javaHome).isDirectory}, libjvm exists=${File(layout.jvmDir, "libjvm.so").isFile}")
         for (e in l.env) {
             val i = e.indexOf('=')
             if (i > 0) runCatching { Os.setenv(e.substring(0, i), e.substring(i + 1), true) }
@@ -35,6 +57,7 @@ object JvmStarter {
         JREUtils.dlopen(File(l.nativeLibDir, "libopenal.so").path)
         val chdir = JREUtils.chdir(l.gameDir)
         if (chdir != 0) println("[launcher] chdir failed: $chdir")
+        println("[launcher] stage: starting JVM")
         println("[launcher] java ${l.args.joinToString(" ")}")
         System.out.flush()
         val rc = VMLauncher.launchJVM((listOf("java") + l.args).toTypedArray())

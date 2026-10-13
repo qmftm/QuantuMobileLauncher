@@ -28,13 +28,15 @@ class LogActivity : AppCompatActivity() {
 
     private fun load() = lifecycleScope.launch {
         val file = (application as QuantumApp).paths.latestLog
-        val crashes = withContext(Dispatchers.IO) {
+        val exitCode = intent.getIntExtra(EXTRA_EXIT_CODE, Int.MIN_VALUE)
+        val header = if (exitCode == Int.MIN_VALUE) "" else getString(R.string.game_exited, exitCode) + "\n\n"
+        val crashes = header + withContext(Dispatchers.IO) {
             (application as QuantumApp).paths.logs.listFiles { f -> f.name.startsWith("crash-") && f.name.endsWith(".txt") }
                 .orEmpty().sortedBy { it.name }
                 .joinToString("") { "=== ${it.name} ===\n${it.readText().take(8000)}\n\n" }
         }
         val text = crashes + withContext(Dispatchers.IO) {
-            if (!file.isFile) return@withContext if (crashes.isEmpty()) getString(R.string.no_log) else ""
+            if (!file.isFile) return@withContext if (crashes.isBlank()) getString(R.string.no_log) else ""
             RandomAccessFile(file, "r").use { raf ->
                 val start = (raf.length() - MAX_BYTES).coerceAtLeast(0)
                 raf.seek(start)
@@ -94,5 +96,6 @@ class LogActivity : AppCompatActivity() {
 
     companion object {
         private const val MAX_BYTES = 256 * 1024L
+        const val EXTRA_EXIT_CODE = "exit_code"
     }
 }
