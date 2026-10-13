@@ -11,41 +11,6 @@ index 3e61b8a..7cdfc0f 100644
  static bool SDL_MainIsReady = false;
  #else
  static bool SDL_MainIsReady = true;
-diff --git a/src/video/SDL_egl.c b/src/video/SDL_egl.c
-index e26d31c..d3f2f80 100644
---- a/src/video/SDL_egl.c
-+++ b/src/video/SDL_egl.c
-@@ -953,8 +953,22 @@ static bool SDL_EGL_PrivateChooseConfig(SDL_VideoDevice *_this, bool set_config_
-     return true;
- }
- 
-+// QuantuMobile: Android has no desktop GL; whatever the game asks for, hand out an OpenGL ES 3.2 context
-+// (a GL->GLES translation layer sits on top in the launcher).
-+static void QML_ForceES(SDL_VideoDevice *_this)
-+{
-+#ifdef SDL_VIDEO_DRIVER_ANDROID
-+    if (_this->gl_config.profile_mask != SDL_GL_CONTEXT_PROFILE_ES) {
-+        _this->gl_config.profile_mask = SDL_GL_CONTEXT_PROFILE_ES;
-+        _this->gl_config.major_version = 3;
-+        _this->gl_config.minor_version = 2;
-+    }
-+#endif
-+}
-+
- bool SDL_EGL_ChooseConfig(SDL_VideoDevice *_this)
- {
-+    QML_ForceES(_this);
-     if (!_this->egl_data) {
-         return SDL_SetError("EGL not initialized");
-     }
-@@ -975,6 +989,7 @@ bool SDL_EGL_ChooseConfig(SDL_VideoDevice *_this)
- 
- SDL_GLContext SDL_EGL_CreateContext(SDL_VideoDevice *_this, EGLSurface egl_surface)
- {
-+    QML_ForceES(_this);
-     // max 16 key+value pairs plus terminator.
-     EGLint attribs[33];
-     int attr = 0;
 diff --git a/src/video/android/SDL_androidwindow.c b/src/video/android/SDL_androidwindow.c
 index 4652b5f..4bc8534 100644
 --- a/src/video/android/SDL_androidwindow.c

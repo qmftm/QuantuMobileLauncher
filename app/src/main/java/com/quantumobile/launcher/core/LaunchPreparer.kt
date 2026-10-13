@@ -182,7 +182,10 @@ class LaunchPreparer(private val app: QuantumApp) {
         if (sdl) {
             // MobileGlues is SDL's EGL library: it hands the game a desktop-GL-looking context on top of the phone's GLES driver.
             env += "SDL_EGL_LIBRARY=${paths.nativeLibDir}/libmobileglues.so"
-            env += "MG_DIR_PATH=${File(paths.internalRoot, "mobileglues").apply { mkdirs() }.absolutePath}"
+            val mgDir = File(paths.internalRoot, "mobileglues").apply { mkdirs() }
+            // MobileGlues rejects a context request above its configured GL version (default 4.0): allow up to 4.6.
+            File(mgDir, "config.json").takeUnless { it.exists() }?.writeText("{\"customGLVersion\": 46}\n")
+            env += "MG_DIR_PATH=${mgDir.absolutePath}"
             env += "SDL_VIDEODRIVER=android"
             env += "SDL_AUDIODRIVER=android"
         }

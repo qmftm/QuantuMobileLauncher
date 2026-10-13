@@ -120,7 +120,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         val radius = 10 * density
         for (b in buttons) {
             if (!visible(b)) continue
-            fill.color = if (b.pressed) Color.argb(alpha, 120, 200, 255) else Color.argb(alpha / 2 + 20, 40, 40, 40)
+            fill.color = if (b.pressed) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)
             canvas.drawRoundRect(b.rect, radius, radius, fill)
             text.alpha = (alpha + 80).coerceAtMost(255)
             canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)

@@ -24,7 +24,7 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
     private val density = resources.displayMetrics.density
     private val rect = RectF()
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * density; color = Color.rgb(120, 200, 255) }
+    private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * density; color = Color.rgb(46, 230, 214) }
     private val grid = Paint().apply { color = Color.argb(30, 255, 255, 255); strokeWidth = 1f }
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textAlign = Paint.Align.CENTER; textSize = 16 * density }
 
