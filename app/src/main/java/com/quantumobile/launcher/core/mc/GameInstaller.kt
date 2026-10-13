@@ -17,7 +17,7 @@ class GameInstaller(
     private val downloader: Downloader = Downloader(),
     private val env: RuleEnv = RuleEnv(),
 ) {
-    suspend fun install(version: VersionInfo, gameDir: File, listener: ProgressListener, useMojangLwjgl: Boolean = false) = withContext(Dispatchers.IO) {
+    suspend fun install(version: VersionInfo, gameDir: File, useMojangLwjgl: Boolean = false, listener: ProgressListener) = withContext(Dispatchers.IO) {
         paths.ensureDirs()
 
         listener.onProgress("Client", 0, 1)

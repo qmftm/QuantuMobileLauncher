@@ -61,7 +61,7 @@ class LaunchPreparer(private val app: QuantumApp) {
         }
         val gameDir = instance.gameDir(paths).apply { mkdirs() }
 
-        GameInstaller(paths).install(version, gameDir, listener, useMojangLwjgl = sdl)
+        GameInstaller(paths).install(version, gameDir, useMojangLwjgl = sdl, listener = listener)
 
         val runtime = app.runtimes.pick(version.javaMajorVersion)
             ?: installRuntimeAutomatically(version.javaMajorVersion, listener)
