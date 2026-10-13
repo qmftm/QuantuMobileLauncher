@@ -180,11 +180,12 @@ class LaunchPreparer(private val app: QuantumApp) {
             "LIBGL_ES=2",
             "FORCE_VSYNC=false",
             "MESA_GLSL_CACHE_DIR=${paths.cacheDir.absolutePath}",
-            "POJAV_RENDERER=opengles2",
             "AWTSTUB_WIDTH=$width",
             "AWTSTUB_HEIGHT=$height",
         )
 
+        // Only the GLFW/GL4ES path reads POJAV_RENDERER; Sodium refuses to start when it sees that variable.
+        if (!sdl) env += "POJAV_RENDERER=opengles2"
         if (sdl) {
             // MobileGlues is SDL's EGL library: it hands the game a desktop-GL-looking context on top of the phone's GLES driver.
             env += "SDL_EGL_LIBRARY=${paths.nativeLibDir}/libmobileglues.so"
