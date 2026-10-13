@@ -235,4 +235,5 @@
     <string name="controls_in_menus">Show in menus too</string>
     <string name="controls_delete">Delete</string>
     <string name="controls_save">OK</string>
+    <string name="download_started">Downloading %1$s in the background…</string>
 </resources>

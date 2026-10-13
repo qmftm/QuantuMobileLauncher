@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -63,7 +62,7 @@ class ModsFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope,
             showMore = false,
             onClick = { row -> if (!installedMode) hits[row.id]?.let(::startInstall) },
-            onMore = ::showInstalledMenu,
+            onAction = ::onRowAction,
         )
         binding.list.layoutManager = LinearLayoutManager(requireContext())
         binding.list.adapter = adapter
@@ -96,6 +95,8 @@ class ModsFragment : Fragment() {
             if (action == EditorInfo.IME_ACTION_SEARCH) { binding.root.removeCallbacks(debounce); reload(); true } else false
         }
         binding.checkUpdates.setOnClickListener { checkUpdates() }
+        // Rows being downloaded show a spinner; refresh when that set changes (and when a download ends).
+        viewLifecycleOwner.lifecycleScope.launch { ModActions.active.collect { renderRows() } }
     }
 
     override fun onResume() {
@@ -123,7 +124,6 @@ class ModsFragment : Fragment() {
         total = 0
         loading = false
         adapter.submitList(emptyList())
-        adapter.showMore = installedMode
 
         val inst = instance
         val tgt = target
@@ -161,7 +161,7 @@ class ModsFragment : Fragment() {
                 val page = api.search(requestQuery, requestType, tgt, offset = hits.size)
                 page.hits.forEach { hits.putIfAbsent(it.projectId, it) }
                 total = page.total
-                adapter.submitList(hits.values.map { it.toRow() })
+                renderRows()
                 binding.empty.isVisible = hits.isEmpty()
                 if (hits.isEmpty()) binding.empty.setText(R.string.mods_none)
             } catch (e: CancellationException) {
@@ -176,13 +176,56 @@ class ModsFragment : Fragment() {
         }
     }
 
-    private fun ModHit.toRow() = Row(
-        id = projectId, title = title, subtitle = description,
-        badge = "⬇ ${compact(downloads)}", iconUrl = iconUrl,
-    )
+    /** Rebuilds the visible rows from the current search results or installed list. */
+    private fun renderRows() {
+        if (_binding == null) return
+        if (installedMode) { showInstalled(); return }
+        val inst = installer ?: return
+        val installed = inst.store.list().associateBy { it.projectId }
+        val busy = ModActions.active.value
+        adapter.submitList(hits.values.map { hit ->
+            val mod = installed[hit.projectId]
+            Row(
+                id = hit.projectId, title = hit.title, subtitle = hit.description,
+                badge = "⬇ ${compact(hit.downloads)}", iconUrl = hit.iconUrl,
+                actions = ModActions.actionsFor(mod, mod?.let(inst::isEnabled) ?: false),
+                busy = hit.projectId in busy,
+            )
+        })
+    }
+
+    private fun onRowAction(row: Row, action: RowAction) {
+        val inst = installer ?: return
+        val mod = inst.store.list().firstOrNull { it.projectId == row.id }
+        when (action) {
+            RowAction.DOWNLOAD -> {
+                val hit = hits[row.id] ?: return
+                val tgt = target ?: return
+                Snackbar.make(binding.root, getString(R.string.download_started, hit.title), Snackbar.LENGTH_SHORT).show()
+                ModActions.download(app, inst, tgt, hit) { result ->
+                    if (_binding == null) return@download
+                    result.onSuccess { out ->
+                        val text = getString(R.string.installed_count, out.installed.size) +
+                            if (out.missing.isEmpty()) "" else "\n" + getString(R.string.install_missing, out.missing.joinToString())
+                        Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).show()
+                    }.onFailure { e ->
+                        Snackbar.make(binding.root, e.message ?: e.javaClass.simpleName, Snackbar.LENGTH_LONG).show()
+                    }
+                    renderRows()
+                }
+            }
+            RowAction.ENABLE, RowAction.DISABLE -> {
+                mod ?: return
+                inst.setEnabled(mod, action == RowAction.ENABLE)
+                renderRows()
+            }
+            RowAction.REMOVE -> mod?.let(::confirmRemove)
+        }
+    }
 
     private fun showInstalled() {
-        val mods = installer?.store?.list().orEmpty()
+        val inst = installer ?: return
+        val mods = inst.store.list()
         adapter.submitList(mods.map { m ->
             Row(m.projectId, m.title, "${m.versionNumber} · ${m.fileName}",
                 badge = if (m.dependency) getString(R.string.dependency_badge) else null,
@@ -190,7 +233,8 @@ class ModsFragment : Fragment() {
                     ProjectType.MOD -> R.drawable.ic_extension
                     ProjectType.RESOURCEPACK -> R.drawable.ic_folder
                     ProjectType.SHADER -> R.drawable.ic_layers
-                })
+                },
+                actions = ModActions.actionsFor(m, inst.isEnabled(m)))
         })
         binding.empty.setText(R.string.mods_installed_empty)
         binding.empty.isVisible = mods.isEmpty()
@@ -198,23 +242,12 @@ class ModsFragment : Fragment() {
         binding.checkUpdates.isEnabled = mods.isNotEmpty()
     }
 
-    private fun showInstalledMenu(row: Row, anchor: View) {
-        PopupMenu(requireContext(), anchor).apply {
-            menu.add(0, 1, 0, R.string.remove)
-            setOnMenuItemClickListener {
-                val mod = installer?.store?.list()?.firstOrNull { m -> m.projectId == row.id } ?: return@setOnMenuItemClickListener true
-                confirmRemove(mod)
-                true
-            }
-        }.show()
-    }
-
     private fun confirmRemove(mod: InstalledMod) {
         MaterialAlertDialogBuilder(requireContext())
             .setMessage(getString(R.string.confirm_remove, mod.title))
             .setPositiveButton(R.string.remove) { _, _ ->
                 installer?.remove(mod)
-                showInstalled()
+                renderRows()
                 Snackbar.make(binding.root, getString(R.string.removed, mod.title), Snackbar.LENGTH_SHORT).show()
             }
             .setNegativeButton(android.R.string.cancel, null)

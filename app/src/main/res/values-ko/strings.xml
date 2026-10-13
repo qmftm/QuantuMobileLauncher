@@ -235,4 +235,5 @@
     <string name="controls_in_menus">메뉴에서도 보이기</string>
     <string name="controls_delete">삭제</string>
     <string name="controls_save">확인</string>
+    <string name="download_started">%1$s 백그라운드에서 받는 중…</string>
 </resources>

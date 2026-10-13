@@ -13,6 +13,9 @@ import com.quantumobile.launcher.R
 import com.quantumobile.launcher.core.auth.Account
 import com.quantumobile.launcher.databinding.ItemRowBinding
 
+/** Buttons at the right end of a row. */
+enum class RowAction { DOWNLOAD, ENABLE, DISABLE, REMOVE }
+
 data class Row(
     val id: String,
     val title: String,
@@ -25,6 +28,10 @@ data class Row(
     val avatar: Account? = null,
     /** Remote icon (e.g. a mod icon); takes precedence over [icon]. */
     val iconUrl: String? = null,
+    /** Buttons shown at the right end (at most two: first is the main one). */
+    val actions: List<RowAction> = emptyList(),
+    /** Shows a spinner instead of the buttons while something is being done for this row. */
+    val busy: Boolean = false,
 )
 
 class SimpleListAdapter(
@@ -32,6 +39,7 @@ class SimpleListAdapter(
     showMore: Boolean = true,
     private val onClick: (Row) -> Unit,
     private val onMore: (Row, View) -> Unit = { _, _ -> },
+    private val onAction: (Row, RowAction) -> Unit = { _, _ -> },
 ) : ListAdapter<Row, SimpleListAdapter.Holder>(DIFF) {
 
     var showMore: Boolean = showMore
@@ -60,6 +68,7 @@ class SimpleListAdapter(
         b.card.strokeColor = ctx.getColor(if (row.selected) R.color.brand else R.color.outline)
         b.more.isVisible = showMore
         b.more.setOnClickListener { onMore(row, it) }
+        bindActions(b, row)
         b.root.setOnClickListener { onClick(row) }
         b.root.setOnLongClickListener { if (showMore) onMore(row, b.more); showMore }
 
@@ -76,6 +85,29 @@ class SimpleListAdapter(
             b.icon.setPadding(pad, pad, pad, pad)
             b.icon.setImageResource(row.icon)
             b.icon.imageTintList = android.content.res.ColorStateList.valueOf(row.iconTint ?: ctx.getColor(R.color.accent))
+        }
+    }
+
+    private fun bindActions(b: ItemRowBinding, row: Row) {
+        val ctx = b.root.context
+        b.busy.isVisible = row.busy
+        val buttons = listOf(b.action1, b.action2)
+        buttons.forEachIndexed { i, button ->
+            val action = row.actions.getOrNull(i)?.takeIf { !row.busy }
+            button.isVisible = action != null
+            if (action == null) return@forEachIndexed
+            val (icon, label) = when (action) {
+                RowAction.DOWNLOAD -> R.drawable.ic_download to R.string.download
+                RowAction.ENABLE -> R.drawable.ic_toggle_off to R.string.visual_enable
+                RowAction.DISABLE -> R.drawable.ic_toggle_on to R.string.visual_disable
+                RowAction.REMOVE -> R.drawable.ic_delete to R.string.remove
+            }
+            button.setImageResource(icon)
+            button.contentDescription = ctx.getString(label)
+            // Download and "on" are the highlighted states; "off" and remove stay quiet.
+            val tint = if (action == RowAction.DOWNLOAD || action == RowAction.DISABLE) R.color.accent else R.color.text_secondary
+            button.imageTintList = android.content.res.ColorStateList.valueOf(ctx.getColor(tint))
+            button.setOnClickListener { onAction(row, action) }
         }
     }
 

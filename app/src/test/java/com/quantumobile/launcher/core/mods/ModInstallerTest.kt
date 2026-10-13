@@ -52,4 +52,49 @@ class ModInstallerTest {
         val result = runCatching { installer.apply(InstallPlan(listOf(item(1)), emptyList())) }
         assertTrue(result.exceptionOrNull() is ModException)
     }
+
+    private fun installed(type: ProjectType, name: String, id: String = "p1") =
+        InstalledMod(id, "v1", "1.0", "T", type.api, name)
+
+    @Test fun modsAreDisabledByRenamingAndRemoveCleansUp() {
+        val dir = tmp.newFolder("game")
+        val installer = ModInstaller(ModrinthApi(), dir)
+        val mod = installed(ProjectType.MOD, "a.jar")
+        File(dir, "mods").mkdirs(); File(dir, "mods/a.jar").writeText("x")
+        installer.store.put(mod)
+
+        assertTrue(installer.isEnabled(mod))
+        installer.setEnabled(mod, false)
+        assertTrue(!installer.isEnabled(mod) && File(dir, "mods/a.jar.disabled").isFile && !File(dir, "mods/a.jar").exists())
+        installer.setEnabled(mod, true)
+        assertTrue(installer.isEnabled(mod) && !File(dir, "mods/a.jar.disabled").exists())
+
+        installer.setEnabled(mod, false)
+        installer.remove(mod)
+        assertTrue(File(dir, "mods").listFiles().isNullOrEmpty())
+        assertTrue(installer.store.list().isEmpty())
+    }
+
+    @Test fun packsAndShadersToggleThroughGameSettings() {
+        val dir = tmp.newFolder("game")
+        val installer = ModInstaller(ModrinthApi(), dir)
+        val rp = installed(ProjectType.RESOURCEPACK, "r.zip", "rp")
+        val sh = installed(ProjectType.SHADER, "s.zip", "sh")
+        File(dir, "resourcepacks").mkdirs(); File(dir, "resourcepacks/r.zip").writeText("x")
+        File(dir, "shaderpacks").mkdirs(); File(dir, "shaderpacks/s.zip").writeText("x")
+        installer.store.put(rp); installer.store.put(sh)
+
+        assertTrue(!installer.isEnabled(rp) && !installer.isEnabled(sh))
+        installer.setEnabled(rp, true); installer.setEnabled(sh, true)
+        assertTrue(installer.isEnabled(rp) && installer.isEnabled(sh))
+        installer.setEnabled(sh, false)
+        assertTrue(!installer.isEnabled(sh))
+
+        installer.setEnabled(sh, true)
+        installer.remove(rp); installer.remove(sh)
+        val pm = PackManager(dir)
+        assertTrue("r.zip" !in pm.enabledResourcePacks())
+        assertEquals(null, pm.activeShader())
+        assertTrue(!File(dir, "resourcepacks/r.zip").exists() && !File(dir, "shaderpacks/s.zip").exists())
+    }
 }

@@ -111,15 +111,53 @@ class ModInstaller(
 
         // Replace an older build of the same project instead of leaving two jars behind.
         store.list().firstOrNull { it.projectId == item.projectId && it.fileName != name }?.let {
-            File(File(gameDir, it.projectType.folder), it.fileName).delete()
+            val old = File(File(gameDir, it.projectType.folder), it.fileName)
+            old.delete()
+            File(old.path + DISABLED_SUFFIX).delete()
         }
         val mod = InstalledMod(item.projectId, item.version.id, item.version.versionNumber, item.title, item.type.api, name, item.dependency)
         store.put(mod)
         mod
     }
 
+    private fun fileOf(mod: InstalledMod) = File(File(gameDir, mod.projectType.folder), mod.fileName)
+    private val packs by lazy { PackManager(gameDir) }
+
+    /**
+     * Whether the game will use [mod]: mods are on unless renamed to `*.disabled`, resource packs are on when listed
+     * in options.txt, and a shader is on when it is the selected shader pack.
+     */
+    fun isEnabled(mod: InstalledMod): Boolean = when (mod.projectType) {
+        ProjectType.MOD -> fileOf(mod).isFile
+        ProjectType.RESOURCEPACK -> mod.fileName in packs.enabledResourcePacks()
+        ProjectType.SHADER -> packs.activeShader() == mod.fileName
+    }
+
+    fun setEnabled(mod: InstalledMod, enabled: Boolean) {
+        when (mod.projectType) {
+            ProjectType.MOD -> {
+                val on = fileOf(mod)
+                val off = File(on.path + DISABLED_SUFFIX)
+                if (enabled && off.isFile) { on.delete(); off.renameTo(on) }
+                else if (!enabled && on.isFile) { off.delete(); on.renameTo(off) }
+            }
+            ProjectType.RESOURCEPACK -> packs.setResourcePackEnabled(mod.fileName, enabled)
+            ProjectType.SHADER -> when {
+                enabled -> packs.setActiveShader(mod.fileName)
+                packs.activeShader() == mod.fileName -> packs.setActiveShader(null)
+            }
+        }
+    }
+
     fun remove(mod: InstalledMod) {
-        File(File(gameDir, mod.projectType.folder), mod.fileName).delete()
+        // Turn it off in the game's settings first so the game is not left pointing at a missing file.
+        when (mod.projectType) {
+            ProjectType.RESOURCEPACK -> packs.setResourcePackEnabled(mod.fileName, false)
+            ProjectType.SHADER -> if (packs.activeShader() == mod.fileName) packs.setActiveShader(null)
+            ProjectType.MOD -> Unit
+        }
+        fileOf(mod).delete()
+        File(fileOf(mod).path + DISABLED_SUFFIX).delete()
         store.remove(mod.projectId)
     }
 
@@ -135,5 +173,6 @@ class ModInstaller(
 
     companion object {
         private const val MAX_DEPTH = 5
+        const val DISABLED_SUFFIX = ".disabled"
     }
 }

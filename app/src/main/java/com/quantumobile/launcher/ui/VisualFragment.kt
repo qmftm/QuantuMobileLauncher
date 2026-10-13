@@ -70,6 +70,7 @@ class VisualFragment : Fragment() {
             showMore = true,
             onClick = { row -> if (browseMode) hits[row.id]?.let(::startInstall) else primaryAction(row.id) },
             onMore = ::showMenu,
+            onAction = ::onRowAction,
         )
         binding.list.layoutManager = LinearLayoutManager(requireContext())
         binding.list.adapter = adapter
@@ -93,6 +94,7 @@ class VisualFragment : Fragment() {
         binding.search.setOnEditorActionListener { _, action, _ ->
             if (action == EditorInfo.IME_ACTION_SEARCH) { binding.root.removeCallbacks(debounce); reload(); true } else false
         }
+        viewLifecycleOwner.lifecycleScope.launch { ModActions.active.collect { if (browseMode) renderHits() } }
         binding.add.setOnClickListener { pickFile.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")) }
     }
 
@@ -274,9 +276,7 @@ class VisualFragment : Fragment() {
                 val page = api.search(requestQuery, type, tgt, offset = hits.size)
                 page.hits.forEach { hits.putIfAbsent(it.projectId, it) }
                 total = page.total
-                adapter.submitList(hits.values.map {
-                    Row(it.projectId, it.title, it.description, badge = "⬇ ${ModsFragment.compact(it.downloads)}", iconUrl = it.iconUrl)
-                })
+                renderHits()
                 if (hits.isEmpty()) showEmpty(getString(R.string.mods_none))
             } catch (e: CancellationException) {
                 throw e
@@ -286,6 +286,55 @@ class VisualFragment : Fragment() {
             } finally {
                 loading = false
                 binding.loading.isVisible = false
+            }
+        }
+    }
+
+    private fun renderHits() {
+        if (_binding == null || !browseMode) return
+        val inst = installer ?: return
+        val installed = inst.store.list().associateBy { it.projectId }
+        val busy = ModActions.active.value
+        adapter.submitList(hits.values.map { hit ->
+            val mod = installed[hit.projectId]
+            Row(
+                hit.projectId, hit.title, hit.description,
+                badge = "⬇ ${ModsFragment.compact(hit.downloads)}", iconUrl = hit.iconUrl,
+                actions = ModActions.actionsFor(mod, mod?.let(inst::isEnabled) ?: false),
+                busy = hit.projectId in busy,
+            )
+        })
+    }
+
+    private fun onRowAction(row: Row, action: RowAction) {
+        val inst = installer ?: return
+        val mod = inst.store.list().firstOrNull { it.projectId == row.id }
+        when (action) {
+            RowAction.DOWNLOAD -> {
+                val hit = hits[row.id] ?: return
+                val tgt = target ?: return
+                Snackbar.make(binding.root, getString(R.string.download_started, hit.title), Snackbar.LENGTH_SHORT).show()
+                ModActions.download(app, inst, tgt, hit) { result ->
+                    if (_binding == null) return@download
+                    result.onSuccess { out ->
+                        Snackbar.make(binding.root, getString(R.string.installed_count, out.installed.size), Snackbar.LENGTH_LONG).show()
+                    }.onFailure { e ->
+                        Snackbar.make(binding.root, e.message ?: e.javaClass.simpleName, Snackbar.LENGTH_LONG).show()
+                    }
+                    renderHits()
+                }
+            }
+            RowAction.ENABLE, RowAction.DISABLE -> {
+                mod ?: return
+                inst.setEnabled(mod, action == RowAction.ENABLE)
+                renderHits()
+            }
+            RowAction.REMOVE -> mod?.let { m ->
+                MaterialAlertDialogBuilder(requireContext())
+                    .setMessage(getString(R.string.confirm_remove, m.title))
+                    .setPositiveButton(R.string.remove) { _, _ -> inst.remove(m); renderHits() }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
             }
         }
     }
