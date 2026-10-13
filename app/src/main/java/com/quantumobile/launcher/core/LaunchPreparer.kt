@@ -110,6 +110,12 @@ class LaunchPreparer(private val app: QuantumApp) {
                 add("-Dorg.lwjgl.system.allocator=system")
                 // LWJGL finds GL entry points (glXGetProcAddress) in MobileGlues, the same library SDL uses as its EGL layer.
                 add("-Dorg.lwjgl.opengl.libname=$own/libmobileglues.so")
+                // Diagnostics: dump all thread stacks to the game log a few times after start (tells a black screen from a hang).
+                runCatching {
+                    val agent = File(paths.internalRoot, "qm-debug-agent.jar")
+                    app.assets.open("qm-debug-agent.jar").use { src -> agent.outputStream().use { src.copyTo(it) } }
+                    add("-javaagent:${agent.absolutePath}")
+                }
                 nativesDir?.let {
                     add("-Dorg.lwjgl.openal.libname=${File(it, "libopenal.so").absolutePath}")
                     add("-Dorg.lwjgl.freetype.libname=${File(it, "libfreetype.so").absolutePath}")
