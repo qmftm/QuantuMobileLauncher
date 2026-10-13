@@ -2,7 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/nav_home" android:icon="@drawable/ic_play" android:title="@string/nav_home" />
     <item android:id="@+id/nav_instances" android:icon="@drawable/ic_layers" android:title="@string/nav_instances" />
-    <item android:id="@+id/nav_mods" android:icon="@drawable/ic_extension" android:title="@string/nav_mods" />
-    <item android:id="@+id/nav_visual" android:icon="@drawable/ic_palette" android:title="@string/nav_visual" />
+    <item android:id="@+id/nav_download" android:icon="@drawable/ic_download" android:title="@string/nav_download" />
     <item android:id="@+id/nav_settings" android:icon="@drawable/ic_settings" android:title="@string/nav_settings" />
 </menu>

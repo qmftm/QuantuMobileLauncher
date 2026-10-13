@@ -138,6 +138,7 @@
     <string name="download_progress_unknown">%1$s · %2$d MB</string>
     <string name="get_java">Get Java %1$d</string>
 
+    <string name="nav_download">Download</string>
     <string name="nav_mods">Mods</string>
     <string name="mods_no_instance">Create an instance to browse mods.</string>
     <string name="mods_vanilla">This instance has no mod loader. Create a Fabric instance to use mods (resource packs and shaders work on any instance).</string>

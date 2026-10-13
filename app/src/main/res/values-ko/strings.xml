@@ -138,6 +138,7 @@
     <string name="download_progress_unknown">%1$s · %2$d MB</string>
     <string name="get_java">Java %1$d 받기</string>
 
+    <string name="nav_download">다운로드</string>
     <string name="nav_mods">모드</string>
     <string name="mods_no_instance">인스턴스를 만들면 모드를 찾아볼 수 있어요.</string>
     <string name="mods_vanilla">이 인스턴스에는 모드 로더가 없어요. 모드를 쓰려면 Fabric 인스턴스를 만드세요 (리소스팩과 셰이더는 어디서나 쓸 수 있어요).</string>

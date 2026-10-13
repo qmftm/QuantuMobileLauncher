@@ -24,8 +24,7 @@ class MainActivity : AppCompatActivity() {
             show(
                 when (item.itemId) {
                     R.id.nav_instances -> InstancesFragment()
-                    R.id.nav_mods -> ModsFragment()
-                    R.id.nav_visual -> VisualFragment()
+                    R.id.nav_download -> DownloadFragment()
                     R.id.nav_settings -> SettingsFragment()
                     else -> HomeFragment()
                 },
