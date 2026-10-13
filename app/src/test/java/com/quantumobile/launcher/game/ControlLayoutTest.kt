@@ -41,4 +41,35 @@ class ControlLayoutTest {
         assertEquals(0f, moved.x, 0.001f)            // clamped to the right edge
         assertEquals((500f - 100f) / 2f, moved.y, 0.001f) // clamped to the top edge
     }
+
+    @Test fun defaultButtonsDoNotOverlapOnAPhoneScreen() {
+        // 2640×1080 px at density 3 = 880×360 dp (a Flip-class phone in landscape); also a small 640×320 dp screen.
+        for ((w, h) in listOf(880 to 360, 640 to 320)) {
+            val rects = ControlLayoutStore.defaults().map { it.id to it.bounds(w, h, 1f) } // l, t, r, b
+            for (i in rects.indices) for (j in i + 1 until rects.size) {
+                val a = rects[i].second; val b = rects[j].second
+                val overlap = a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]
+                assertTrue("${rects[i].first} overlaps ${rects[j].first} on ${w}x$h", !overlap)
+            }
+        }
+    }
+
+    @Test fun oneButtonCanPressSeveralKeys() {
+        val b = ControlSpec("combo", "C", ControlKind.KEY, Glfw.KEY_LEFT_CONTROL, extraKeys = listOf(Glfw.KEY_LEFT_SHIFT, 88), x = 0f, y = 0f)
+        assertEquals(listOf(341, 340, 88), b.allCodes)
+        assertEquals(listOf(Glfw.KEY_W), ControlLayoutStore.defaults().first { it.id == "w" }.allCodes)
+    }
+
+    @Test fun wideButtonsKeepTheirAspectAndOldLayoutsStillLoad() {
+        val wide = ControlSpec("t", "T", ControlKind.KEY, 1, x = 0f, y = 0f, size = 36f, aspect = 2.2f)
+        val r = wide.bounds(1000, 500, 1f)
+        assertEquals(36f * 2.2f - 6f, r[2] - r[0], 0.01f)
+        assertEquals(36f - 6f, r[3] - r[1], 0.01f)
+        val f = File(tmp.root, "old.json").apply {
+            writeText("""{"buttons":[{"id":"w","label":"W","kind":"KEY","code":87,"x":10.0,"y":20.0}]}""")
+        }
+        val loaded = ControlLayoutStore(f).load().single()
+        assertEquals(1f, loaded.aspect, 0f)
+        assertEquals(emptyList<Int>(), loaded.extraKeys)
+    }
 }

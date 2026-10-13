@@ -108,7 +108,11 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         for (b in buttons) b.spec.rect(width, height, density, b.rect)
     }
 
-    private fun visible(b: Button) = grabbed || b.spec.showInMenus
+    /** PojavLauncher's "GUI" button: hides every other button until pressed again. */
+    private var controlsHidden = false
+
+    private fun visible(b: Button) =
+        if (controlsHidden) b.kind == ControlKind.HIDE else grabbed || b.spec.showInMenus
 
     override fun onDraw(canvas: Canvas) {
         val alpha = (opacity * 255).toInt()
@@ -154,6 +158,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
         when (b.kind) {
             ControlKind.KEYBOARD -> onShowKeyboard()
+            ControlKind.HIDE -> { releaseAll(); controlsHidden = !controlsHidden }
             ControlKind.SCROLL_UP -> NativeBridge.sendScroll(0.0, 1.0)
             ControlKind.SCROLL_DOWN -> NativeBridge.sendScroll(0.0, -1.0)
             ControlKind.KEY, ControlKind.MOUSE -> {
@@ -177,8 +182,12 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     }
 
     private fun send(b: Button, action: Int) {
-        if (b.kind == ControlKind.MOUSE) NativeBridge.sendMouseButton(b.code, action, 0)
-        else NativeBridge.sendKey(b.code, 0, action, 0)
+        val codes = b.spec.allCodes
+        // Several keys press in order and release in reverse (so Ctrl+Shift+X style combos behave).
+        for (c in if (action == Glfw.RELEASE) codes.asReversed() else codes) {
+            if (b.kind == ControlKind.MOUSE) NativeBridge.sendMouseButton(c, action, 0)
+            else NativeBridge.sendKey(c, 0, action, 0)
+        }
     }
 
     /** Releases every pressed on-screen button and the camera finger (used when the screen goes to the background). */
