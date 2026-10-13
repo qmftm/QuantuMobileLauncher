@@ -29,6 +29,10 @@ object JvmStarter {
         }
     }
 
+    /** Hides the login token: the log gets shared when asking for help. */
+    internal fun redact(args: List<String>): List<String> =
+        args.mapIndexed { i, a -> if (i > 0 && args[i - 1] == "--accessToken") "<hidden>" else a }
+
     fun run(l: GameLaunch): Int {
         val marker = runningMarker(l.logPath)
         runCatching { marker.parentFile?.mkdirs(); marker.writeText(System.currentTimeMillis().toString()) }
@@ -71,7 +75,7 @@ object JvmStarter {
         val chdir = JREUtils.chdir(l.gameDir)
         if (chdir != 0) logLine("[launcher] chdir failed: $chdir")
         logLine("[launcher] stage: starting JVM")
-        logLine("[launcher] java ${l.args.joinToString(" ")}")
+        logLine("[launcher] java ${redact(l.args).joinToString(" ")}")
         System.out.flush()
         val rc = VMLauncher.launchJVM((listOf("java") + l.args).toTypedArray())
         logLine("[launcher] launchJVM returned $rc" + if (rc == -1) " (libjli.so could not be loaded or has no JLI_Launch; see the native lines above)" else "")
