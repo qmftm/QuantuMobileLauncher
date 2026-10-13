@@ -36,6 +36,23 @@ jobs:
           SDKMANAGER=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -1)
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+      - name: Prepare signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.QML_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.QML_KEYSTORE_PASSWORD }}
+        run: |
+          # One fixed key for every release, so new versions install over old ones and keep the user's data.
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            {
+              echo "QML_KEYSTORE=$RUNNER_TEMP/release.jks"
+              echo "QML_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+              echo "QML_KEY_PASSWORD=$KEYSTORE_PASSWORD"
+              echo "QML_KEY_ALIAS=quantumobile"
+            } >> "$GITHUB_ENV"
+          else
+            echo "::warning::QML_KEYSTORE_BASE64 / QML_KEYSTORE_PASSWORD secrets are not set: APKs get a throwaway key and cannot update older installs."
+          fi
       - name: Test
         run: ./gradlew testDebugUnitTest
       - name: Build APKs
