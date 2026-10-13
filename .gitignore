@@ -11,3 +11,4 @@ build/
 *.keystore
 *.jks
 !app/signing/quantumobile-release.jks
+.kotlin/
