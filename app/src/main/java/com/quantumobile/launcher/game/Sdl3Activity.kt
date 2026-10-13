@@ -35,6 +35,18 @@ class Sdl3Activity : SDLActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         if (launch == null) { finish(); return }
         addControls()
+        hideSystemBars()
+        // The bars come back whenever the keyboard closes or the window regains focus: hide them again each time.
+        window.decorView.setOnApplyWindowInsetsListener { v, insets ->
+            val bars = insets.isVisible(android.view.WindowInsets.Type.statusBars())
+            if (bars) v.postDelayed({ hideSystemBars() }, 1500)
+            v.onApplyWindowInsets(insets)
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemBars()
     }
 
     /**

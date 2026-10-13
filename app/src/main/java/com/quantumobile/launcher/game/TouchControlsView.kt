@@ -111,6 +111,10 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     /** PojavLauncher's "GUI" button: hides every other button until pressed again. */
     private var controlsHidden = false
 
+    /** The "Mouse" button: menus get a visible cursor moved by dragging, and a tap clicks where the cursor is. */
+    private var pointerMode = false
+    private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * density; color = Color.WHITE }
+
     private fun visible(b: Button) =
         if (controlsHidden) b.kind == ControlKind.HIDE else grabbed || b.spec.showInMenus
 
@@ -120,10 +124,18 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         val radius = 10 * density
         for (b in buttons) {
             if (!visible(b)) continue
-            fill.color = if (b.pressed) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)
+            fill.color = if (b.pressed || (b.kind == ControlKind.MOUSE_MODE && pointerMode)) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)
             canvas.drawRoundRect(b.rect, radius, radius, fill)
             text.alpha = (alpha + 80).coerceAtMost(255)
             canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)
+        }
+        if (pointerMode && !grabbed && !controlsHidden) {
+            val cx = (cursorX / framebufferScale).toFloat()
+            val cy = (cursorY / framebufferScale).toFloat()
+            val r = 9 * density
+            canvas.drawCircle(cx, cy, r, cursorPaint)
+            canvas.drawLine(cx - r * 1.6f, cy, cx + r * 1.6f, cy, cursorPaint)
+            canvas.drawLine(cx, cy - r * 1.6f, cx, cy + r * 1.6f, cursorPaint)
         }
     }
 
@@ -159,6 +171,14 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         when (b.kind) {
             ControlKind.KEYBOARD -> onShowKeyboard()
             ControlKind.HIDE -> { releaseAll(); controlsHidden = !controlsHidden }
+            ControlKind.MOUSE_MODE -> {
+                pointerMode = !pointerMode
+                if (pointerMode && !grabbed) {
+                    cursorX = NativeBridge.windowWidth() / 2.0
+                    cursorY = NativeBridge.windowHeight() / 2.0
+                    NativeBridge.sendCursorPos(cursorX, cursorY)
+                }
+            }
             ControlKind.SCROLL_UP -> NativeBridge.sendScroll(0.0, 1.0)
             ControlKind.SCROLL_DOWN -> NativeBridge.sendScroll(0.0, -1.0)
             ControlKind.KEY, ControlKind.MOUSE -> {
@@ -206,7 +226,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         downTime = System.currentTimeMillis()
         if (grabbed) {
             postDelayed(holdRunnable, HOLD_MS)
-        } else {
+        } else if (!pointerMode) {
             cursorX = (x * framebufferScale).toDouble()
             cursorY = (y * framebufferScale).toDouble()
             NativeBridge.sendCursorPos(cursorX, cursorY)
@@ -218,6 +238,9 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         if (grabbed) {
             cursorX += (x - lastX) * sensitivity * framebufferScale
             cursorY += (y - lastY) * sensitivity * framebufferScale
+        } else if (pointerMode) {
+            cursorX = (cursorX + (x - lastX) * sensitivity * framebufferScale).coerceIn(0.0, NativeBridge.windowWidth().toDouble())
+            cursorY = (cursorY + (y - lastY) * sensitivity * framebufferScale).coerceIn(0.0, NativeBridge.windowHeight().toDouble())
         } else {
             cursorX = (x * framebufferScale).toDouble()
             cursorY = (y * framebufferScale).toDouble()
@@ -236,6 +259,12 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
             ) {
                 NativeBridge.sendMouseButton(Glfw.MOUSE_RIGHT, Glfw.PRESS, 0)
                 NativeBridge.sendMouseButton(Glfw.MOUSE_RIGHT, Glfw.RELEASE, 0)
+            }
+        } else if (pointerMode) {
+            // A tap clicks at the cursor; a drag only moved it.
+            if (System.currentTimeMillis() - downTime < HOLD_MS && abs(lastX - downX) < 12 * density && abs(lastY - downY) < 12 * density) {
+                NativeBridge.sendMouseButton(Glfw.MOUSE_LEFT, Glfw.PRESS, 0)
+                NativeBridge.sendMouseButton(Glfw.MOUSE_LEFT, Glfw.RELEASE, 0)
             }
         } else {
             NativeBridge.sendMouseButton(Glfw.MOUSE_LEFT, Glfw.RELEASE, 0)

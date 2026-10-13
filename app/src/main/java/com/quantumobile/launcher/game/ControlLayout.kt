@@ -11,6 +11,9 @@ enum class ControlKind {
 
     /** Shows/hides all other on-screen buttons (PojavLauncher's "GUI" button). */
     HIDE,
+
+    /** Mouse on/off: in menus, drags move a visible cursor and a tap clicks it (instead of jumping to the touch point). */
+    MOUSE_MODE,
 }
 
 /**
@@ -65,18 +68,28 @@ data class ControlSpec(
 }
 
 @Serializable
-private data class LayoutFile(val buttons: List<ControlSpec> = emptyList())
+private data class LayoutFile(val buttons: List<ControlSpec> = emptyList(), val version: Int = 1)
 
 /** The user's button layout, saved as `controls.json`; falls back to [defaults] when missing or unreadable. */
 class ControlLayoutStore(private val file: File) {
-    fun load(): List<ControlSpec> =
-        runCatching { LauncherJson.decodeFromString<LayoutFile>(file.readText()).buttons }
-            .getOrNull()?.takeIf { it.isNotEmpty() } ?: defaults()
+    fun load(): List<ControlSpec> {
+        val file = runCatching { LauncherJson.decodeFromString<LayoutFile>(file.readText()) }.getOrNull()
+            ?.takeIf { it.buttons.isNotEmpty() } ?: return defaults()
+        return if (file.version >= VERSION) file.buttons else migrate(file.buttons)
+    }
+
+    /** Layouts saved by older versions: keep the user's edits, but show the movement/click pad outside the game too and add Mouse. */
+    private fun migrate(old: List<ControlSpec>): List<ControlSpec> {
+        val alwaysShown = setOf("w", "a", "s", "d", "attack", "use")
+        val kept = old.map { if (it.id in alwaysShown) it.copy(showInMenus = true) else it }
+        val added = defaults().filter { d -> d.id == "mouse" && kept.none { it.id == d.id } }
+        return kept + added
+    }
 
     fun save(buttons: List<ControlSpec>) {
         file.parentFile?.mkdirs()
         val tmp = File(file.path + ".tmp")
-        tmp.writeText(LauncherJson.encodeToString(LayoutFile.serializer(), LayoutFile(buttons)))
+        tmp.writeText(LauncherJson.encodeToString(LayoutFile.serializer(), LayoutFile(buttons, VERSION)))
         if (!tmp.renameTo(file)) { file.delete(); tmp.renameTo(file) }
     }
 
@@ -84,6 +97,8 @@ class ControlLayoutStore(private val file: File) {
 
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
+
+        private const val VERSION = 2
 
         private const val M = 10f // margin, as in PojavLauncher's default map
         private const val U = 50f // square button
@@ -101,6 +116,7 @@ class ControlLayoutStore(private val file: File) {
             key("chat", "Chat", Glfw.KEY_T, 2 * M + TH * TA, M, size = TH, aspect = TA),
             ControlSpec("kbd", "Keyboard", ControlKind.KEYBOARD, showInMenus = true, x = 3 * M + 2 * TH * TA, y = M, size = TH, aspect = TA),
             key("tab", "Tab", Glfw.KEY_TAB, 4 * M + 3 * TH * TA, M, size = TH, aspect = TA),
+            ControlSpec("mouse", "Mouse", ControlKind.MOUSE_MODE, showInMenus = true, x = 5 * M + 4 * TH * TA, y = M, size = TH, aspect = TA),
             key("view", "3rd", Glfw.KEY_F5, M, 2 * M + TH, size = TH, aspect = TA),
             // Top right
             key("esc", "Esc", Glfw.KEY_ESCAPE, M, M, right = true, menus = true, size = TH, aspect = TA),
@@ -108,14 +124,14 @@ class ControlLayoutStore(private val file: File) {
             ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = M + TH * TA + M, y = M, size = TH),
             // 3×3 pad (bottom-left): rows from the bottom
             ControlSpec("hide", "GUI", ControlKind.HIDE, showInMenus = true, fromBottom = true, x = M, y = M, size = U),
-            key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true),
+            key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true, menus = true),
             key("inv", "Inv", Glfw.KEY_E, 3 * M + 2 * U, M, bottom = true, menus = true),
-            key("a", "◀", Glfw.KEY_A, M, 2 * M + U, bottom = true),
+            key("a", "◀", Glfw.KEY_A, M, 2 * M + U, bottom = true, menus = true),
             key("sneak", "◇", Glfw.KEY_LEFT_SHIFT, 2 * M + U, 2 * M + U, bottom = true, toggle = true),
-            key("d", "▶", Glfw.KEY_D, 3 * M + 2 * U, 2 * M + U, bottom = true),
-            ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, fromBottom = true, x = M, y = 3 * M + 2 * U),
-            key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true),
-            ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, fromBottom = true, x = 3 * M + 2 * U, y = 3 * M + 2 * U),
+            key("d", "▶", Glfw.KEY_D, 3 * M + 2 * U, 2 * M + U, bottom = true, menus = true),
+            ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromBottom = true, x = M, y = 3 * M + 2 * U),
+            key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true, menus = true),
+            ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, showInMenus = true, fromBottom = true, x = 3 * M + 2 * U, y = 3 * M + 2 * U),
             // Bottom right
             key("jump", "⬛", Glfw.KEY_SPACE, 2 * M + U, 2 * M, right = true, bottom = true),
             key("sprint", "Run", Glfw.KEY_LEFT_CONTROL, M, 2 * M + U, right = true, bottom = true, toggle = true),
@@ -142,6 +158,7 @@ object KeyCatalog {
         add(KeyChoice("Hotbar next (scroll)", ControlKind.SCROLL_DOWN, 0))
         add(KeyChoice("On-screen keyboard", ControlKind.KEYBOARD, 0))
         add(KeyChoice("Hide / show controls (GUI)", ControlKind.HIDE, 0))
+        add(KeyChoice("Mouse on/off (menu cursor)", ControlKind.MOUSE_MODE, 0))
         for (c in 'A'..'Z') add(KeyChoice(c.toString(), ControlKind.KEY, c.code))
         for (d in 0..9) add(KeyChoice(d.toString(), ControlKind.KEY, 48 + d))
         for (f in 1..12) add(KeyChoice("F$f", ControlKind.KEY, 290 + f))

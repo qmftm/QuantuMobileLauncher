@@ -29,6 +29,20 @@ class ControlLayoutTest {
         assertEquals(ControlLayoutStore.defaults(), store.load())
     }
 
+    @Test fun oldLayoutKeepsEditsButGainsMouseAndAlwaysVisiblePad() {
+        val f = File(tmp.root, "controls.json")
+        val old = ControlLayoutStore.defaults().filter { it.id != "mouse" }
+            .map { if (it.id == "w") it.copy(label = "↑", showInMenus = false) else it.copy(showInMenus = false) }
+        // A file written before layouts were versioned.
+        f.writeText(com.quantumobile.launcher.core.LauncherJson.encodeToString(
+            kotlinx.serialization.builtins.ListSerializer(ControlSpec.serializer()), old).let { """{"buttons":$it}""" })
+        val loaded = ControlLayoutStore(f).load()
+        assertEquals("↑", loaded.first { it.id == "w" }.label)
+        for (id in listOf("w", "a", "s", "d", "attack", "use")) assertTrue(id, loaded.first { it.id == id }.showInMenus)
+        assertTrue(loaded.any { it.id == "mouse" && it.kind == ControlKind.MOUSE_MODE })
+        assertTrue(!loaded.first { it.id == "chat" }.showInMenus)
+    }
+
     @Test fun corruptFileFallsBackToDefaults() {
         val f = File(tmp.root, "controls.json").apply { writeText("{ nope") }
         assertEquals(ControlLayoutStore.defaults(), ControlLayoutStore(f).load())
@@ -68,7 +82,7 @@ class ControlLayoutTest {
         val f = File(tmp.root, "old.json").apply {
             writeText("""{"buttons":[{"id":"w","label":"W","kind":"KEY","code":87,"x":10.0,"y":20.0}]}""")
         }
-        val loaded = ControlLayoutStore(f).load().single()
+        val loaded = ControlLayoutStore(f).load().first { it.id == "w" }
         assertEquals(1f, loaded.aspect, 0f)
         assertEquals(emptyList<Int>(), loaded.extraKeys)
     }
