@@ -97,4 +97,34 @@ class ModInstallerTest {
         assertEquals(null, pm.activeShader())
         assertTrue(!File(dir, "resourcepacks/r.zip").exists() && !File(dir, "shaderpacks/s.zip").exists())
     }
+
+    @Test fun handDroppedModsAreListedAndCanBeSwitchedOff() {
+        val dir = tmp.newFolder("game")
+        val installer = ModInstaller(ModrinthApi(), dir)
+        File(dir, "mods").mkdirs()
+        File(dir, "mods/sodium-0.9.jar").writeText("x")
+        File(dir, "mods/lithium.jar.disabled").writeText("x")
+        File(dir, "mods/readme.txt").writeText("x")
+        val tracked = installed(ProjectType.MOD, "tracked.jar", "t")
+        File(dir, "mods/tracked.jar").writeText("x")
+        installer.store.put(tracked)
+
+        val all = installer.listAllMods()
+        assertEquals(listOf("tracked.jar", "lithium.jar", "sodium-0.9.jar"), all.map { it.fileName })
+        val sodium = all.first { it.fileName == "sodium-0.9.jar" }
+        val lithium = all.first { it.fileName == "lithium.jar" }
+        assertTrue(installer.isEnabled(sodium) && !installer.isEnabled(lithium))
+
+        installer.setEnabled(sodium, false)
+        installer.setEnabled(lithium, true)
+        assertTrue(File(dir, "mods/sodium-0.9.jar.disabled").isFile && File(dir, "mods/lithium.jar").isFile)
+        installer.remove(sodium)
+        assertTrue(!File(dir, "mods/sodium-0.9.jar.disabled").exists())
+    }
+
+    @Test fun knownRendererModsAreFlagged() {
+        assertTrue(AndroidCompat.likelyUnsupported("sodium-fabric-0.9.2+mc26.3.jar"))
+        assertTrue(AndroidCompat.likelyUnsupported("iris-1.11.7.jar"))
+        assertTrue(!AndroidCompat.likelyUnsupported("lithium-0.26.2.jar"))
+    }
 }

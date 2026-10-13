@@ -120,6 +120,23 @@ class ModInstaller(
         mod
     }
 
+    /**
+     * Everything in the instance's `mods` folder: what the launcher installed plus jars the user dropped in by hand
+     * (listed so they can be switched off or removed too). Disabled jars (`*.jar.disabled`) are included.
+     */
+    fun listAllMods(): List<InstalledMod> {
+        val tracked = store.list()
+        val known = tracked.filter { it.projectType == ProjectType.MOD }.map { it.fileName }.toSet()
+        val untracked = File(gameDir, ProjectType.MOD.folder).listFiles().orEmpty()
+            .filter { it.isFile && (it.name.endsWith(".jar") || it.name.endsWith(".jar$DISABLED_SUFFIX")) }
+            .map { it.name.removeSuffix(DISABLED_SUFFIX) }
+            .filter { it !in known }
+            .distinct()
+            .sorted()
+            .map { InstalledMod("file:$it", "", "", it.removeSuffix(".jar"), ProjectType.MOD.api, it) }
+        return tracked + untracked
+    }
+
     private fun fileOf(mod: InstalledMod) = File(File(gameDir, mod.projectType.folder), mod.fileName)
     private val packs by lazy { PackManager(gameDir) }
 

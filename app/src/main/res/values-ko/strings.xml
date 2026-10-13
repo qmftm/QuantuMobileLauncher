@@ -239,4 +239,5 @@
     <string name="game_exited">게임이 종료됐어요 (종료 코드 %1$d). 아래 로그에서 원인을 볼 수 있어요.</string>
     <string name="game_crashed_title">게임이 갑자기 꺼졌어요</string>
     <string name="game_crashed_message">지난 게임 실행이 정상적으로 끝나지 않았어요. 게임 로그에서 원인을 확인하고, 도움이 필요하면 공유해 주세요.</string>
+    <string name="android_unsupported_badge">안드로이드 미지원 가능</string>
 </resources>

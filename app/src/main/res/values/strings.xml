@@ -239,4 +239,5 @@
     <string name="game_exited">The game stopped (exit code %1$d). The log below shows why.</string>
     <string name="game_crashed_title">The game closed unexpectedly</string>
     <string name="game_crashed_message">The last game session ended without finishing normally. Open the game log to see what happened, and share it if you need help.</string>
+    <string name="android_unsupported_badge">May not work on Android</string>
 </resources>

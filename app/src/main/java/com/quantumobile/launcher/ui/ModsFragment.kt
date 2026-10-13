@@ -196,7 +196,7 @@ class ModsFragment : Fragment() {
 
     private fun onRowAction(row: Row, action: RowAction) {
         val inst = installer ?: return
-        val mod = inst.store.list().firstOrNull { it.projectId == row.id }
+        val mod = inst.listAllMods().firstOrNull { it.projectId == row.id }
         when (action) {
             RowAction.DOWNLOAD -> {
                 val hit = hits[row.id] ?: return
@@ -225,10 +225,15 @@ class ModsFragment : Fragment() {
 
     private fun showInstalled() {
         val inst = installer ?: return
-        val mods = inst.store.list()
+        val mods = inst.listAllMods()
         adapter.submitList(mods.map { m ->
-            Row(m.projectId, m.title, "${m.versionNumber} · ${m.fileName}",
-                badge = if (m.dependency) getString(R.string.dependency_badge) else null,
+            val unsupported = m.projectType == ProjectType.MOD && com.quantumobile.launcher.core.mods.AndroidCompat.likelyUnsupported(m.fileName)
+            Row(m.projectId, m.title, listOf(m.versionNumber, m.fileName).filter { it.isNotEmpty() }.joinToString(" · "),
+                badge = when {
+                    unsupported -> getString(R.string.android_unsupported_badge)
+                    m.dependency -> getString(R.string.dependency_badge)
+                    else -> null
+                },
                 icon = when (m.projectType) {
                     ProjectType.MOD -> R.drawable.ic_extension
                     ProjectType.RESOURCEPACK -> R.drawable.ic_folder
