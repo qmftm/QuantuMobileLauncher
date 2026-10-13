@@ -10,3 +10,4 @@ build/
 *.apk
 *.keystore
 *.jks
+!app/signing/quantumobile-release.jks

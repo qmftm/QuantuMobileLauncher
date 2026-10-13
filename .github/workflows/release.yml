@@ -41,7 +41,7 @@ jobs:
           KEYSTORE_B64: ${{ secrets.QML_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.QML_KEYSTORE_PASSWORD }}
         run: |
-          # One fixed key for every release, so new versions install over old ones and keep the user's data.
+          # Optional override: a key from repository secrets. Without it the build uses the project key in app/signing.
           if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
             {
@@ -51,7 +51,7 @@ jobs:
               echo "QML_KEY_ALIAS=quantumobile"
             } >> "$GITHUB_ENV"
           else
-            echo "::warning::QML_KEYSTORE_BASE64 / QML_KEYSTORE_PASSWORD secrets are not set: APKs get a throwaway key and cannot update older installs."
+            echo "No signing secrets set: using the project key committed in app/signing."
           fi
       - name: Test
         run: ./gradlew testDebugUnitTest

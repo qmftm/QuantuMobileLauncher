@@ -13,8 +13,8 @@ android {
         applicationId = "com.quantumobile.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.5.2"
+        versionCode = 10
+        versionName = "0.5.3"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -26,22 +26,21 @@ android {
         }
     }
 
-    // A fixed key lets users update in place and keep their data; a key generated per CI run would make every
-    // release a "different app" to Android. The key is never committed: CI passes it through the environment
-    // (QML_KEYSTORE = path to the .jks, QML_KEYSTORE_PASSWORD, QML_KEY_ALIAS, QML_KEY_PASSWORD). Without it the
-    // build falls back to the local debug key.
-    val keystorePath = System.getenv("QML_KEYSTORE")
-    if (!keystorePath.isNullOrBlank()) {
-        signingConfigs {
-            create("project") {
-                storeFile = file(keystorePath)
-                storePassword = System.getenv("QML_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("QML_KEY_ALIAS")
-                keyPassword = System.getenv("QML_KEY_PASSWORD")
-            }
+    // One fixed key for every build, so a new version installs over the old one and keeps the user's data (a key
+    // generated per CI run would make every release a "different app" to Android and updates would be refused).
+    // The key is committed on purpose: this is a sideloaded hobby app, not a store build. That also means anyone can
+    // sign an APK that updates this app; replace the key (and these passwords) if that ever matters.
+    // QML_KEYSTORE, QML_KEYSTORE_PASSWORD, QML_KEY_ALIAS and QML_KEY_PASSWORD override it (e.g. from CI secrets).
+    signingConfigs {
+        create("project") {
+            val envStore = System.getenv("QML_KEYSTORE")
+            storeFile = if (!envStore.isNullOrBlank()) file(envStore) else file("signing/quantumobile-release.jks")
+            storePassword = System.getenv("QML_KEYSTORE_PASSWORD") ?: "1EZ91V86NuZnUQwo0dqoDv"
+            keyAlias = System.getenv("QML_KEY_ALIAS") ?: "quantumobile"
+            keyPassword = System.getenv("QML_KEY_PASSWORD") ?: "1EZ91V86NuZnUQwo0dqoDv"
         }
     }
-    val projectSigning = signingConfigs.findByName("project") ?: signingConfigs.getByName("debug")
+    val projectSigning = signingConfigs.getByName("project")
 
     buildTypes {
         debug {
