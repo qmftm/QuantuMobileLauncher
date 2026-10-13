@@ -53,6 +53,12 @@ class LaunchPreparer(private val app: QuantumApp) {
 
         listener.onProgress("Version", 0, 1)
         val version = app.versions.resolve(instance.versionId)
+        com.quantumobile.launcher.core.mc.AndroidSupport.unsupportedReason(version.libraries.map { it.name })?.let { reason ->
+            throw LaunchException(
+                "${version.id} cannot run on this launcher yet: it $reason, but the Android build uses LWJGL 3.3 with a GLFW window. " +
+                    "Pick an older version (for example 1.21.1 or 1.20.1).",
+            )
+        }
         val gameDir = instance.gameDir(paths).apply { mkdirs() }
 
         GameInstaller(paths).install(version, gameDir, listener)
