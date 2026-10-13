@@ -106,10 +106,12 @@ class LaunchPreparer(private val app: QuantumApp) {
                 val own = paths.nativeLibDir
                 add("-Dorg.lwjgl.librarypath=$own")
                 add("-Dorg.lwjgl.sdl.libname=$own/libSDL3.so")
+                // LWJGL finds GL entry points (glXGetProcAddress) in MobileGlues, the same library SDL uses as its EGL layer.
+                add("-Dorg.lwjgl.opengl.libname=$own/libmobileglues.so")
                 nativesDir?.let {
                     add("-Dorg.lwjgl.openal.libname=${File(it, "libopenal.so").absolutePath}")
                     add("-Dorg.lwjgl.freetype.libname=${File(it, "libfreetype.so").absolutePath}")
-                    add("-Djna.boot.library.path=${it.absolutePath}")
+                    // (no jna.boot.library.path: the bundled JNA 6 native does not match the game's JNA 7)
                 }
             } else if (nativesDir != null) {
                 add("-Dorg.lwjgl.librarypath=${nativesDir.absolutePath}")
