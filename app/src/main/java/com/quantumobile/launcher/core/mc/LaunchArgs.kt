@@ -53,6 +53,21 @@ object LaunchArgs {
         return out.toString()
     }
 
+    /**
+     * Makes sure `-Djava.library.path` includes [extra] (the app's native library folder, where libpojavexec lives), whatever
+     * the version JSON set it to. The last occurrence is the one the JVM uses, so that is the one extended.
+     */
+    fun ensureLibraryPath(args: List<String>, extra: List<String>): List<String> {
+        val key = "-Djava.library.path="
+        val idx = args.indexOfLast { it.startsWith(key) }
+        val addition = extra.filter { it.isNotEmpty() }.joinToString(":")
+        if (addition.isEmpty()) return args
+        if (idx < 0) return listOf(key + addition) + args
+        val current = args[idx].removePrefix(key).split(':').filter { it.isNotEmpty() }
+        val merged = (current + extra.filter { it !in current }).joinToString(":")
+        return args.toMutableList().also { it[idx] = key + merged }
+    }
+
     /** Expands a modern `arguments.game`/`arguments.jvm` array, honouring per-entry rules. */
     fun expand(args: JsonArray?, env: RuleEnv, vars: Map<String, String>): List<String> {
         val out = ArrayList<String>()

@@ -120,7 +120,9 @@ class LaunchPreparer(private val app: QuantumApp) {
             gameDir = gameDir.absolutePath,
             assetsRoot = paths.assets.absolutePath,
             librariesDir = paths.libraries.absolutePath,
-            nativesDir = paths.nativeLibDir,
+            // ${natives_directory}: newer versions create java/, jna/, lwjgl/ and netty/ folders under it, so it must be writable
+            // (the app's own library folder is read-only).
+            nativesDir = File(paths.internalRoot, "natives").apply { mkdirs() }.absolutePath,
             classpath = classpath,
             width = width,
             height = height,
@@ -157,7 +159,7 @@ class LaunchPreparer(private val app: QuantumApp) {
         listener.onProgress("Starting", 1, 1)
         return GameLaunch(
             javaHome = runtime.home.absolutePath,
-            args = ArrayList(LaunchArgs.build(spec)),
+            args = ArrayList(LaunchArgs.ensureLibraryPath(LaunchArgs.build(spec), libraryPaths)),
             gameDir = gameDir.absolutePath,
             env = env,
             logPath = paths.latestLog.absolutePath,

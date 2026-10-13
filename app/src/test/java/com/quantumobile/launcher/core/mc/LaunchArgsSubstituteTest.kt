@@ -19,4 +19,14 @@ class LaunchArgsSubstituteTest {
         assertEquals("\${}", LaunchArgs.substitute("\${}", vars))
         assertEquals("plain", LaunchArgs.substitute("plain", vars))
     }
+
+    @Test fun libraryPathKeepsVersionValueAndAddsOurFolders() {
+        val args = listOf("-Xmx1G", "-Djava.library.path=/natives/java", "-cp", "x", "Main")
+        val out = LaunchArgs.ensureLibraryPath(args, listOf("/app/lib", "/lwjgl"))
+        assertEquals("-Djava.library.path=/natives/java:/app/lib:/lwjgl", out[1])
+        assertEquals(args.size, out.size)
+        // no duplicates when it is already there, and it is added when the version sets none
+        assertEquals(out, LaunchArgs.ensureLibraryPath(out, listOf("/app/lib", "/lwjgl")))
+        assertEquals(listOf("-Djava.library.path=/app/lib", "-Xmx1G"), LaunchArgs.ensureLibraryPath(listOf("-Xmx1G"), listOf("/app/lib")))
+    }
 }
