@@ -15,6 +15,14 @@ object JvmStarter {
     fun runningMarker(logPath: String) = File(File(logPath).parentFile, "game.running")
 
     /** Appends [error] to the game log (used when starting the JVM itself fails). */
+    /** Appends a launcher line to the game log. (Kotlin's println goes to logcat on Android, not to the redirected stdout.) */
+    private fun logLine(text: String) {
+        Log.i(TAG, text)
+        runCatching { java.io.FileWriter(currentLog, true).use { it.write(text + "\n") } }
+    }
+
+    @Volatile private var currentLog = ""
+
     fun logFailure(logPath: String, error: Throwable) {
         runCatching {
             java.io.FileWriter(logPath, true).use { it.write("\n[launcher] FAILED: ${Log.getStackTraceString(error)}\n") }
@@ -32,11 +40,12 @@ object JvmStarter {
     }
 
     private fun start(l: GameLaunch): Int {
+        currentLog = l.logPath
         NativeBridge.redirectOutput(l.logPath)
         startLogcatTail(l.logPath)
-        println("[launcher] stage: output redirected, ABI=${android.os.Build.SUPPORTED_ABIS.joinToString()}, API ${android.os.Build.VERSION.SDK_INT}")
+        logLine("[launcher] stage: output redirected, ABI=${android.os.Build.SUPPORTED_ABIS.joinToString()}, API ${android.os.Build.VERSION.SDK_INT}")
         val layout = JreLayout(File(l.javaHome))
-        println("[launcher] stage: java home exists=${File(l.javaHome).isDirectory}, libjvm exists=${File(layout.jvmDir, "libjvm.so").isFile}")
+        logLine("[launcher] stage: java home exists=${File(l.javaHome).isDirectory}, libjvm exists=${File(layout.jvmDir, "libjvm.so").isFile}")
         for (e in l.env) {
             val i = e.indexOf('=')
             if (i > 0) runCatching { Os.setenv(e.substring(0, i), e.substring(i + 1), true) }
@@ -46,35 +55,40 @@ object JvmStarter {
             Os.setenv("LD_LIBRARY_PATH", ld, true)
             Os.setenv("PATH", "${File(l.javaHome, "bin")}:${System.getenv("PATH").orEmpty()}", true)
         }
-        println("[launcher] JAVA_HOME=${l.javaHome} libDir=${layout.libDir} jvmDir=${layout.jvmDir}")
-        println("[launcher] LD_LIBRARY_PATH=$ld")
+        logLine("[launcher] JAVA_HOME=${l.javaHome} libDir=${layout.libDir} jvmDir=${layout.jvmDir}")
+        logLine("[launcher] LD_LIBRARY_PATH=$ld")
         val full = "${layout.jvmDir}:$ld"
         JREUtils.setLdLibraryPath(full)
         JREUtils.setLdLibraryPath(full)
         for (lib in layout.preloadList()) {
-            if (!JREUtils.dlopen(lib.path)) println("[launcher] preload failed: ${lib.name}")
+            if (!JREUtils.dlopen(lib.path)) logLine("[launcher] preload failed: ${lib.path}")
         }
         JREUtils.dlopen(File(l.nativeLibDir, "libopenal.so").path)
         val chdir = JREUtils.chdir(l.gameDir)
-        if (chdir != 0) println("[launcher] chdir failed: $chdir")
-        println("[launcher] stage: starting JVM")
-        println("[launcher] java ${l.args.joinToString(" ")}")
+        if (chdir != 0) logLine("[launcher] chdir failed: $chdir")
+        logLine("[launcher] stage: starting JVM")
+        logLine("[launcher] java ${l.args.joinToString(" ")}")
         System.out.flush()
         val rc = VMLauncher.launchJVM((listOf("java") + l.args).toTypedArray())
-        Log.i(TAG, "JVM exited with $rc")
+        logLine("[launcher] launchJVM returned $rc" + if (rc == -1) " (libjli.so could not be loaded or has no JLI_Launch; see the native lines above)" else "")
         return rc
     }
 
-    /** Native libraries log to logcat; mirror the relevant tags into the game log so users can share one file. */
+    /** Mirrors this process' logcat output (linker errors, System.out, ART) and native crash dumps into the game log. */
     private fun startLogcatTail(logPath: String) {
-        Thread({
-            runCatching {
-                val p = ProcessBuilder("logcat", "-v", "brief", "-s", "jrelog", "LIBGL", "QMLNative", "AndroidRuntime", "DEBUG", "libc", "linker")
-                    .redirectErrorStream(true).start()
-                java.io.FileWriter(logPath, true).use { w ->
-                    p.inputStream.bufferedReader().forEachLine { w.write(it); w.write("\n"); w.flush() }
+        val pid = android.os.Process.myPid().toString()
+        for (args in listOf(
+            listOf("logcat", "-v", "brief", "--pid=$pid"),
+            listOf("logcat", "-v", "brief", "-s", "DEBUG", "libc", "AndroidRuntime"),
+        )) {
+            Thread({
+                runCatching {
+                    val p = ProcessBuilder(args).redirectErrorStream(true).start()
+                    java.io.FileWriter(logPath, true).use { w ->
+                        p.inputStream.bufferedReader().forEachLine { w.write(it); w.write("\n"); w.flush() }
+                    }
                 }
-            }
-        }, "log-tail").apply { isDaemon = true }.start()
+            }, "log-tail").apply { isDaemon = true }.start()
+        }
     }
 }
