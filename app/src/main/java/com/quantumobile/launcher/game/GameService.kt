@@ -32,7 +32,7 @@ class GameService : Service() {
         }
         Notifications.ensureChannels(this)
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, GameActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            this, 0, Intent(this, if (GameSession.launch?.sdl == true) Sdl3Activity::class.java else GameActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val quit = PendingIntent.getService(

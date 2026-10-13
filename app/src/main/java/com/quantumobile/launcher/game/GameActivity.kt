@@ -81,33 +81,10 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private fun startJvmOnce() {
         if (GameSession.started) return
         GameSession.started = true
-        GameService.start(applicationContext)
-        val l = launch
-        // A big stack: the JVM's main thread runs on this thread and Minecraft recurses deeply.
-        Thread(null, {
-            val started = System.currentTimeMillis()
-            var rc = -1
-            try {
-                rc = JvmStarter.run(l)
-            } catch (t: Throwable) {
-                JvmStarter.logFailure(l.logPath, t)
-            }
-            // Only reached when the JVM returned (or could not start): a normal quit ends the process inside the JVM.
-            val quick = System.currentTimeMillis() - started < QUICK_EXIT_MS
-            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                if (rc != 0 || quick) {
-                    // Show why instead of just closing: the log viewer lives in the launcher process.
-                    runCatching {
-                        startActivity(
-                            Intent(applicationContext, com.quantumobile.launcher.ui.LogActivity::class.java)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                .putExtra(com.quantumobile.launcher.ui.LogActivity.EXTRA_EXIT_CODE, rc),
-                        )
-                    }
-                }
-                binding.root.postDelayed({ exitProcess(rc) }, 600)
-            }
-        }, "Minecraft-Main", 64L * 1024 * 1024).start()
+        GameRunner.start(applicationContext, launch) { rc, showLog ->
+            if (showLog) GameRunner.showLog(applicationContext, rc)
+            binding.root.postDelayed({ exitProcess(rc) }, 600)
+        }
     }
 
     private fun startGrabWatcher() {
@@ -165,14 +142,13 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     companion object {
-        private const val EXTRA_LAUNCH = "launch"
-        private const val QUICK_EXIT_MS = 20_000L
+        internal const val EXTRA_LAUNCH = "launch"
 
         fun intent(context: Context, launch: GameLaunch) =
-            Intent(context, GameActivity::class.java).putExtra(EXTRA_LAUNCH, launch)
+            Intent(context, if (launch.sdl) Sdl3Activity::class.java else GameActivity::class.java).putExtra(EXTRA_LAUNCH, launch)
 
         @Suppress("DEPRECATION")
-        private fun intentLaunch(intent: Intent): GameLaunch? =
+        internal fun intentLaunch(intent: Intent): GameLaunch? =
             if (android.os.Build.VERSION.SDK_INT >= 33) intent.getSerializableExtra(EXTRA_LAUNCH, GameLaunch::class.java)
             else intent.getSerializableExtra(EXTRA_LAUNCH) as? GameLaunch
     }

@@ -29,6 +29,8 @@ data class GameLaunch(
     val nativeLibDir: String,
     /** Extra directories for the dynamic linker (the downloaded LWJGL natives). */
     val libraryPaths: ArrayList<String>,
+    /** Minecraft 26.x and newer: SDL3 window, LWJGL 3.4 (see [com.quantumobile.launcher.core.mc.AndroidSupport]). */
+    val sdl: Boolean = false,
 ) : Serializable
 
 /** The only renderer the bridge supports: GL4ES on top of GLES 2/3. */
@@ -53,15 +55,13 @@ class LaunchPreparer(private val app: QuantumApp) {
 
         listener.onProgress("Version", 0, 1)
         val version = app.versions.resolve(instance.versionId)
-        com.quantumobile.launcher.core.mc.AndroidSupport.unsupportedReason(version.libraries.map { it.name })?.let { reason ->
-            throw LaunchException(
-                "${version.id} cannot run on this launcher yet: it $reason, but the Android build uses LWJGL 3.3 with a GLFW window. " +
-                    "Pick an older version (for example 1.21.1 or 1.20.1).",
-            )
+        val sdl = com.quantumobile.launcher.core.mc.AndroidSupport.needsSdl(version.libraries.map { it.name })
+        if (sdl && "arm64-v8a" !in Build.SUPPORTED_ABIS) {
+            throw LaunchException("${version.id} needs the SDL3 backend, which is only built for 64-bit ARM (arm64-v8a) devices.")
         }
         val gameDir = instance.gameDir(paths).apply { mkdirs() }
 
-        GameInstaller(paths).install(version, gameDir, listener)
+        GameInstaller(paths).install(version, gameDir, listener, useMojangLwjgl = sdl)
 
         val runtime = app.runtimes.pick(version.javaMajorVersion)
             ?: installRuntimeAutomatically(version.javaMajorVersion, listener)
@@ -70,7 +70,8 @@ class LaunchPreparer(private val app: QuantumApp) {
                 missingRuntimeMessage(version.id, version.javaMajorVersion, app.runtimes.list().map { it.majorVersion }),
             )
 
-        val lwjglOverride = GameInstaller.hasLwjglOverride(paths)
+        // 26.x brings its own LWJGL 3.4.3 jars (the bundled 3.3.3 GLFW build cannot run it).
+        val lwjglOverride = !sdl && GameInstaller.hasLwjglOverride(paths)
         val classpath = buildList {
             if (lwjglOverride) paths.lwjgl.listFiles { f -> f.name.endsWith(".jar") }!!.sorted().forEach { add(it.absolutePath) }
             GameInstaller.classpathLibraries(version, RuleEnv(), lwjglOverride).forEach {
@@ -90,15 +91,27 @@ class LaunchPreparer(private val app: QuantumApp) {
             add("-Duser.home=${paths.gameRoot.parent}")
             add("-Dos.name=Linux")
             add("-Djava.home=${runtime.home.absolutePath}")
-            add("-Dglfwstub.windowWidth=$width")
-            add("-Dglfwstub.windowHeight=$height")
-            add("-Dglfwstub.initEgl=false")
+            if (!sdl) {
+                add("-Dglfwstub.windowWidth=$width")
+                add("-Dglfwstub.windowHeight=$height")
+                add("-Dglfwstub.initEgl=false")
+            }
             add("-Dorg.lwjgl.vulkan.libname=libvulkan.so")
             add("-Djdk.lang.Process.launchMechanism=FORK")
             add("-Dnet.minecraft.clientmodname=QuantuMobileLauncher")
             add("-XX:ActiveProcessorCount=${Runtime.getRuntime().availableProcessors()}")
             val nativesDir = lwjgl?.let { LwjglInstaller(paths).nativesDir(it.abi) }
-            if (nativesDir != null) {
+            if (sdl) {
+                // LWJGL 3.4.3 natives and SDL3 ship inside the app; OpenAL and FreeType come from the downloaded set.
+                val own = paths.nativeLibDir
+                add("-Dorg.lwjgl.librarypath=$own")
+                add("-Dorg.lwjgl.sdl.libname=$own/libSDL3.so")
+                nativesDir?.let {
+                    add("-Dorg.lwjgl.openal.libname=${File(it, "libopenal.so").absolutePath}")
+                    add("-Dorg.lwjgl.freetype.libname=${File(it, "libfreetype.so").absolutePath}")
+                    add("-Djna.boot.library.path=${it.absolutePath}")
+                }
+            } else if (nativesDir != null) {
                 add("-Dorg.lwjgl.librarypath=${nativesDir.absolutePath}")
                 add("-Dorg.lwjgl.freetype.libname=${File(nativesDir, "libfreetype.so").absolutePath}")
                 add("-Djna.boot.library.path=${nativesDir.absolutePath}")
@@ -141,8 +154,9 @@ class LaunchPreparer(private val app: QuantumApp) {
 
         val nativesPath = lwjgl?.let { LwjglInstaller(paths).nativesDir(it.abi).absolutePath }
         val libraryPaths = arrayListOf<String>().apply {
+            if (sdl) add(paths.nativeLibDir)
             if (nativesPath != null) add(nativesPath)
-            add(paths.nativeLibDir)
+            if (!sdl) add(paths.nativeLibDir)
         }
         val env = arrayListOf(
             "POJAV_NATIVEDIR=${paths.nativeLibDir}",
@@ -161,16 +175,29 @@ class LaunchPreparer(private val app: QuantumApp) {
             "AWTSTUB_HEIGHT=$height",
         )
 
+        if (sdl) {
+            // MobileGlues is SDL's EGL library: it hands the game a desktop-GL-looking context on top of the phone's GLES driver.
+            env += "SDL_EGL_LIBRARY=${paths.nativeLibDir}/libmobileglues.so"
+            env += "MG_DIR_PATH=${File(paths.internalRoot, "mobileglues").apply { mkdirs() }.absolutePath}"
+            env += "SDL_VIDEODRIVER=android"
+            env += "SDL_AUDIODRIVER=android"
+        }
+
         paths.logs.mkdirs()
         listener.onProgress("Starting", 1, 1)
         return GameLaunch(
             javaHome = runtime.home.absolutePath,
-            args = ArrayList(LaunchArgs.ensureLibraryPath(LaunchArgs.build(spec), libraryPaths)),
+            args = ArrayList(
+                LaunchArgs.ensureLibraryPath(LaunchArgs.build(spec), libraryPaths) +
+                    // 26.x defaults to Vulkan, whose shader compiler (shaderc) is not available yet: use the OpenGL backend.
+                    if (sdl) listOf("--graphicsBackend", "opengl") else emptyList(),
+            ),
             gameDir = gameDir.absolutePath,
             env = env,
             logPath = paths.latestLog.absolutePath,
             nativeLibDir = paths.nativeLibDir,
             libraryPaths = libraryPaths,
+            sdl = sdl,
         )
     }
 

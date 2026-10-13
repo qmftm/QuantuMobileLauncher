@@ -78,8 +78,9 @@ LWJGL jar 의 `GLFW` 클래스가 로드하는 **`pojavexec`** 는 PojavLauncher
 Kotlin 쪽에는 이 네이티브 코드가 요구하는 이름의 클래스(`org.lwjgl.glfw.CallbackBridge`, `net.kdt.pojavlaunch.utils.JREUtils`,
 `com.oracle.dalvik.VMLauncher`)가 있고, 시작 순서(`JvmStarter`)는 Pojav 와 같습니다: 화면 크기 전달 → 창 연결 → 환경변수·라이브러리 경로 → JVM 시작.
 
-> **지원 버전**: 마인크래프트 **1.21.x 이하**처럼 LWJGL 3.3 + GLFW 창을 쓰는 버전을 대상으로 합니다. 26.x 처럼 LWJGL 3.4 와 SDL 창 백엔드가
-> 필요한 새 버전은 아직 시작하지 못하고, 실행 전에 안내 메시지를 보여 줍니다. Sodium·Iris 같은 렌더링 모드도 지원하지 않습니다.
+> **지원 버전**: 마인크래프트 **1.21.x 이하**는 LWJGL 3.3 + GLFW 창(PojavLauncher 방식)으로, **26.x** 는 SDL3 + LWJGL 3.4.3 경로(실험 단계)로
+> 실행합니다. 26.x 는 안드로이드용 SDL3·LWJGL 3.4.3 을 [`third_party/natives`](third_party/natives) 의 스크립트로 직접 빌드해 앱에 넣었고,
+> OpenGL 은 [MobileGlues](https://github.com/MobileGL-Dev/MobileGlues)(LGPL-2.1)로 변환합니다. 아직 터치 조작판·Vulkan·Sodium·Iris 는 지원하지 않습니다.
 >
 > ⚠️ **실기기 검증 전입니다.** 컴파일·단위 테스트·린트까지만 확인했고, 실제 기기에서 화면이 뜨는지는 아직 확인하지 못했습니다.
 > 안 뜨면 홈 → 게임 로그를 공유해 주세요. 렌더러는 GL4ES 만 지원합니다 (Zink/Vulkan, AWT 가 필요한 모드는 미지원).

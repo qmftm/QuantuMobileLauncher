@@ -17,7 +17,7 @@ class GameInstaller(
     private val downloader: Downloader = Downloader(),
     private val env: RuleEnv = RuleEnv(),
 ) {
-    suspend fun install(version: VersionInfo, gameDir: File, listener: ProgressListener) = withContext(Dispatchers.IO) {
+    suspend fun install(version: VersionInfo, gameDir: File, listener: ProgressListener, useMojangLwjgl: Boolean = false) = withContext(Dispatchers.IO) {
         paths.ensureDirs()
 
         listener.onProgress("Client", 0, 1)
@@ -27,7 +27,7 @@ class GameInstaller(
             downloader.download(DownloadTask(client.url, jar, client.sha1, client.size))
         } else check(jar.isFile) { "No client jar for ${version.jarId}" }
 
-        val libs = libraryTasks(version)
+        val libs = libraryTasks(version, useMojangLwjgl)
         downloader.downloadAll(libs) { d, t -> listener.onProgress("Libraries", d, t) }
 
         installAssets(version, gameDir, listener)
@@ -38,8 +38,9 @@ class GameInstaller(
         listener.onProgress("Done", 1, 1)
     }
 
-    fun libraryTasks(version: VersionInfo): List<DownloadTask> =
-        classpathLibraries(version, env, hasLwjglOverride(paths)).map { lib ->
+    /** [useMojangLwjgl]: the version's own LWJGL jars are needed even when the bundled 3.3.3 build is installed (26.x). */
+    fun libraryTasks(version: VersionInfo, useMojangLwjgl: Boolean = false): List<DownloadTask> =
+        classpathLibraries(version, env, !useMojangLwjgl && hasLwjglOverride(paths)).map { lib ->
             DownloadTask(lib.downloadUrl, File(paths.libraries, lib.path), lib.artifact?.sha1, lib.artifact?.size ?: -1)
         }
 

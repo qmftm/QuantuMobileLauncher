@@ -76,5 +76,16 @@
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.Quantum.Fullscreen"
             android:windowSoftInputMode="adjustNothing" />
+
+        <!-- Minecraft 26.x (SDL3 window); same rules as GameActivity. -->
+        <activity
+            android:name=".game.Sdl3Activity"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|density"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:process=":game"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Quantum.Fullscreen"
+            android:windowSoftInputMode="adjustNothing" />
     </application>
 </manifest>
