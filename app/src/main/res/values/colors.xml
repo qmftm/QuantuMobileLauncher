@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0E1020</color>
+    <color name="surface">#181A30</color>
+    <color name="surface_high">#22254A</color>
+    <color name="outline">#33366A</color>
+    <color name="brand">#7C8CFF</color>
+    <color name="brand_deep">#4B5BE0</color>
+    <color name="accent">#3DDC97</color>
+    <color name="on_brand">#0B0D1F</color>
+    <color name="text_primary">#F2F3FF</color>
+    <color name="text_secondary">#A6A9D0</color>
+    <color name="warning">#FFC857</color>
+    <color name="error">#FF6B7A</color>
+</resources>

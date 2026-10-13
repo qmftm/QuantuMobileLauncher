@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- SDL's upstream Java glue (zlib licence) is shipped unmodified; it checks permissions at run time. -->
+    <issue id="all">
+        <ignore path="**/org/libsdl/app/**" />
+    </issue>
+</lint>

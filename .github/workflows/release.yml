@@ -1,0 +1,92 @@
+name: Release
+
+# Runs for pushed "v*" tags, or for any branch push whose commit message contains "[release]"
+# (the tag is then created from versionName in app/build.gradle.kts).
+on:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - "**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install NDK and CMake
+        run: |
+          SDKMANAGER=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -1)
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+      - name: Prepare signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.QML_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.QML_KEYSTORE_PASSWORD }}
+        run: |
+          # Optional override: a key from repository secrets. Without it the build uses the project key in app/signing.
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            {
+              echo "QML_KEYSTORE=$RUNNER_TEMP/release.jks"
+              echo "QML_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+              echo "QML_KEY_PASSWORD=$KEYSTORE_PASSWORD"
+              echo "QML_KEY_ALIAS=quantumobile"
+            } >> "$GITHUB_ENV"
+          else
+            echo "No signing secrets set: using the project key committed in app/signing."
+          fi
+      - name: Test
+        run: ./gradlew testDebugUnitTest
+      - name: Build APKs
+        run: ./gradlew assembleRelease assembleDebug
+      - name: Rename APKs
+        run: |
+          mkdir dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}-debug.apk"
+      - name: Write release notes
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          {
+            echo "## 이번 버전 ($TAG) 변경사항"
+            echo
+            if [ -f "release-notes/$TAG.md" ]; then
+              cat "release-notes/$TAG.md"
+            else
+              # No notes file: use the body of the release commit message (everything after the first line).
+              printf '%s\n' "$COMMIT_MESSAGE" | tail -n +3
+            fi
+            echo
+            echo "---"
+            echo
+            cat .github/release-common.md
+          } > release-body.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: QuantuMobileLauncher ${{ steps.version.outputs.tag }}
+          prerelease: false
+          make_latest: true
+          files: dist/*.apk
+          body_path: release-body.md

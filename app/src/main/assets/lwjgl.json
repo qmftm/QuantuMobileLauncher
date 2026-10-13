@@ -1,0 +1,240 @@
+{
+  "_comment": "Android build of LWJGL 3 for the launcher: one merged jar (LWJGL core, GLFW, OpenGL, STB, OpenAL, NanoVG, tinyfd, jemalloc, freetype) with an Android GLFW backend, plus the matching native libraries per ABI, from PojavLauncher (LGPL-3.0, discontinued 2025-09), pinned to commit b12ad048157b3aa255d078c235dd4571e1900309. Every file is verified by SHA-256. Note: the jar's GLFW class loads the native library 'pojavexec'.",
+  "source": {
+    "project": "PojavLauncherTeam/PojavLauncher",
+    "commit": "b12ad048157b3aa255d078c235dd4571e1900309",
+    "license": "LGPL-3.0"
+  },
+  "jar": {
+    "name": "lwjgl-glfw-classes.jar",
+    "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/assets/components/lwjgl3/lwjgl-glfw-classes.jar",
+    "sha256": "1bf89a90cbcc0bb4bd07511afc92e8345ff221d2a7ab1a04f2fcbc1bd09a3ffd",
+    "size": 2940058
+  },
+  "natives": {
+    "arm64-v8a": [
+      {
+        "name": "liblwjgl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/liblwjgl.so",
+        "sha256": "7cd38e1550505f47a941476a8ba8be0e2341822d1d66309fc7c8afb8b6ab5c37",
+        "size": 495456
+      },
+      {
+        "name": "liblwjgl_opengl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/liblwjgl_opengl.so",
+        "sha256": "2e5b83ed440507a928306f955db73d48261a33d55f131d665df329ecb7b664e7",
+        "size": 360280
+      },
+      {
+        "name": "liblwjgl_stb.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/liblwjgl_stb.so",
+        "sha256": "fbc9fb88310268f14150734a360c4e1839bd2bf81245d67b2bd4b38e63f43c46",
+        "size": 347408
+      },
+      {
+        "name": "liblwjgl_nanovg.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/liblwjgl_nanovg.so",
+        "sha256": "c599b785f8d871635a53c17efdf0c3e47a7135af4bf79f1a58fc82d319ab346c",
+        "size": 351376
+      },
+      {
+        "name": "liblwjgl_tinyfd.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/liblwjgl_tinyfd.so",
+        "sha256": "0da99be886e3b7f22f36616ea3425a512cf5ebdeceb40ff250ef1efb427d7f43",
+        "size": 81912
+      },
+      {
+        "name": "libopenal.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/libopenal.so",
+        "sha256": "2d218342fd1cb08080d708a8a4104b69cfc1209b47773bf41e9bb9126cb9ef8e",
+        "size": 15914936
+      },
+      {
+        "name": "libgl4es_114.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/libgl4es_114.so",
+        "sha256": "3dbcc87baae1436f2affb923eda053d7e256f0aa032654452e2b2092566f6b24",
+        "size": 2649480
+      },
+      {
+        "name": "libfreetype.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/libfreetype.so",
+        "sha256": "9caeec136f7b997423b38b857918bc5b27d421e5410d63d3bcb6447a252d9406",
+        "size": 706136
+      },
+      {
+        "name": "libjnidispatch.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/arm64-v8a/libjnidispatch.so",
+        "sha256": "95fd6129757ceae73472b014c0c7e23a27a193adc4c355693706998aa4757be8",
+        "size": 168176
+      }
+    ],
+    "armeabi-v7a": [
+      {
+        "name": "liblwjgl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/liblwjgl.so",
+        "sha256": "09f25297781d4342aeb22e73ba793c42cd17a152b7671261bab3612af41614f5",
+        "size": 387072
+      },
+      {
+        "name": "liblwjgl_opengl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/liblwjgl_opengl.so",
+        "sha256": "e441c723158bc107d5885bd4d79d1d19af16b23f4f7d1543fa8cad8a4b1d0805",
+        "size": 301760
+      },
+      {
+        "name": "liblwjgl_stb.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/liblwjgl_stb.so",
+        "sha256": "290a24aa8b83762297d441057df1076e57b63e8435a9cb67976d89afb9a8c30b",
+        "size": 326112
+      },
+      {
+        "name": "liblwjgl_nanovg.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/liblwjgl_nanovg.so",
+        "sha256": "f6b46fffb9f317d6ab523b1485ea79707b536ad0565b3d42f82285b5da728f3c",
+        "size": 350996
+      },
+      {
+        "name": "liblwjgl_tinyfd.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/liblwjgl_tinyfd.so",
+        "sha256": "f6566149ebabbc7c3c9ab52c60225fe45eeaf31442397c9f58f945fa0df499ec",
+        "size": 88600
+      },
+      {
+        "name": "libopenal.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/libopenal.so",
+        "sha256": "3f43259713474f443004123ee518aedba76cd0a38b5fc328df750c405c536250",
+        "size": 15289544
+      },
+      {
+        "name": "libgl4es_114.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/libgl4es_114.so",
+        "sha256": "ffa254b7d1f71fe25af962bf145b013f57546cfd67ee5d1c7a75ad973df183e4",
+        "size": 1713044
+      },
+      {
+        "name": "libfreetype.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/libfreetype.so",
+        "sha256": "0fc4f09dc64e78529516774a07b3a0643cc171e6ec296915b074c9b9734022b5",
+        "size": 651984
+      },
+      {
+        "name": "libjnidispatch.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/armeabi-v7a/libjnidispatch.so",
+        "sha256": "e262e528436960b51259a62d2a44deb914d00804b25a0a295c089b739ffe8445",
+        "size": 122296
+      }
+    ],
+    "x86_64": [
+      {
+        "name": "liblwjgl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/liblwjgl.so",
+        "sha256": "f23b197c47aca72f2b2c62a4bb05362533fca09996ea28859000f8591a20d780",
+        "size": 471184
+      },
+      {
+        "name": "liblwjgl_opengl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/liblwjgl_opengl.so",
+        "sha256": "7c94c36227caf0ab80de3de8e08647c3ceabe24267fdb1a69289df14e31519f1",
+        "size": 374504
+      },
+      {
+        "name": "liblwjgl_stb.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/liblwjgl_stb.so",
+        "sha256": "50bde0508553ba8abf0c4fee4473ffa8df6a686ab67c8b70056c7401cdd1cd7b",
+        "size": 412368
+      },
+      {
+        "name": "liblwjgl_nanovg.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/liblwjgl_nanovg.so",
+        "sha256": "76e972a81dc145657616f009ffa6d94fe2f661e9d06dbaab5e69553f34b17214",
+        "size": 419656
+      },
+      {
+        "name": "liblwjgl_tinyfd.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/liblwjgl_tinyfd.so",
+        "sha256": "d4b4c7b40b6704098734fe58a3264c6019a0fa62a91b497ceb52db80df244119",
+        "size": 83504
+      },
+      {
+        "name": "libopenal.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/libopenal.so",
+        "sha256": "ab575f4c4ab9b8e55f727fe3a3c381972e8551c2c48f042223523b871d0c610e",
+        "size": 16112824
+      },
+      {
+        "name": "libgl4es_114.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/libgl4es_114.so",
+        "sha256": "eba6fa929bfde45afa60ea92788493ffa5f0ebe635b482452447d0631bd5811f",
+        "size": 2760568
+      },
+      {
+        "name": "libfreetype.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/libfreetype.so",
+        "sha256": "ef87aa51523bd2b9b34336610c3c72e5365602ad3efa109747a28c79471ff9b4",
+        "size": 795216
+      },
+      {
+        "name": "libjnidispatch.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86_64/libjnidispatch.so",
+        "sha256": "081d3f045743b818d4d3f1868b8655f34760828ead6e2b712659d5bceadafe04",
+        "size": 118584
+      }
+    ],
+    "x86": [
+      {
+        "name": "liblwjgl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/liblwjgl.so",
+        "sha256": "6e3d1991d1bf1654f555b3e7598f1e082514ae1dc42eb3c16233047f2f33ac5f",
+        "size": 419540
+      },
+      {
+        "name": "liblwjgl_opengl.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/liblwjgl_opengl.so",
+        "sha256": "8b18ef46591b49758fadd5167d5222514a62f2605dd0a441495d7e4de22a0310",
+        "size": 439024
+      },
+      {
+        "name": "liblwjgl_stb.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/liblwjgl_stb.so",
+        "sha256": "833d0a9704e8d08bee2f10e2877838a72b9d84fe0e8cb78add818ff2efaec84d",
+        "size": 426088
+      },
+      {
+        "name": "liblwjgl_nanovg.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/liblwjgl_nanovg.so",
+        "sha256": "be0984691259f0c5647885dfc1f595b0f703e6e957e00bd640ddd796d7e5e408",
+        "size": 432984
+      },
+      {
+        "name": "liblwjgl_tinyfd.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/liblwjgl_tinyfd.so",
+        "sha256": "07f7c147638281352d31efb7037bdeffd8ac8d596c7dbc4396b8eafd2d95fe0e",
+        "size": 84636
+      },
+      {
+        "name": "libopenal.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/libopenal.so",
+        "sha256": "d2267a5ddcfbd2079e07447e1b165c31cd2b9bd447d86dd21e1557b41c71088b",
+        "size": 17228488
+      },
+      {
+        "name": "libgl4es_114.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/libgl4es_114.so",
+        "sha256": "b53d34bf8dc086d78ddaf33b6b400da9397c85d3b55530daf8b9ed2fea08a093",
+        "size": 2808944
+      },
+      {
+        "name": "libfreetype.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/libfreetype.so",
+        "sha256": "ef110e17123db1121ce1d73b956d55037d3b06846f56364954b52cf06391436a",
+        "size": 765656
+      },
+      {
+        "name": "libjnidispatch.so",
+        "url": "https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/b12ad048157b3aa255d078c235dd4571e1900309/app_pojavlauncher/src/main/jniLibs/x86/libjnidispatch.so",
+        "sha256": "1ff39ffce0dfc1ccc2f10a08777ece9096ae73276853a46ef307d48a78173de5",
+        "size": 120184
+      }
+    ]
+  }
+}

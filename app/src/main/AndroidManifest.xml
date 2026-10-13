@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <application
+        android:name=".QuantumApp"
+        android:allowBackup="false"
+        android:extractNativeLibs="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Quantum">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.MicrosoftLoginActivity"
+            android:exported="false"
+            android:label="@string/add_microsoft" />
+
+        <activity
+            android:name=".ui.LogActivity"
+            android:exported="false"
+            android:label="@string/game_log" />
+
+        <!-- Keeps installs and downloads running when the app is in the background. -->
+        <service
+            android:name=".service.TaskService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- Keeps the game process alive in the background (same process as GameActivity). -->
+        <service
+            android:name=".game.GameService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:process=":game">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Runs the Minecraft Java process while the launcher is in the background" />
+        </service>
+
+        <activity
+            android:name=".ui.ControlsEditorActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Quantum" />
+
+        <!-- The JVM runs inside this process and owns it until the game exits. -->
+        <activity
+            android:name=".game.GameActivity"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|density"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:process=":game"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Quantum.Fullscreen"
+            android:windowSoftInputMode="adjustNothing" />
+
+        <!-- Minecraft 26.x (SDL3 window); same rules as GameActivity. -->
+        <activity
+            android:name=".game.Sdl3Activity"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|density"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:process=":game"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Quantum.Fullscreen"
+            android:windowSoftInputMode="adjustNothing" />
+    </application>
+</manifest>
