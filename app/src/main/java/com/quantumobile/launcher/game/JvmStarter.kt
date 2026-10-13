@@ -60,10 +60,14 @@ object JvmStarter {
         val full = "${layout.jvmDir}:$ld"
         JREUtils.setLdLibraryPath(full)
         JREUtils.setLdLibraryPath(full)
+        // The Java runtime links against libc++_shared.so, which only the app ships; it must be loaded first.
+        val cxx = File(l.nativeLibDir, "libc++_shared.so")
+        if (!cxx.isFile) logLine("[launcher] libc++_shared.so is missing from ${l.nativeLibDir}")
+        else if (!JREUtils.dlopen(cxx.path)) logLine("[launcher] could not load ${cxx.path}")
         for (lib in layout.preloadList()) {
             if (!JREUtils.dlopen(lib.path)) logLine("[launcher] preload failed: ${lib.path}")
         }
-        JREUtils.dlopen(File(l.nativeLibDir, "libopenal.so").path)
+        l.libraryPaths.map { File(it, "libopenal.so") }.firstOrNull { it.isFile }?.let { JREUtils.dlopen(it.path) }
         val chdir = JREUtils.chdir(l.gameDir)
         if (chdir != 0) logLine("[launcher] chdir failed: $chdir")
         logLine("[launcher] stage: starting JVM")

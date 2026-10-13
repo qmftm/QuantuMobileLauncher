@@ -13,8 +13,8 @@ android {
         applicationId = "com.quantumobile.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.6.1"
+        versionCode = 14
+        versionName = "0.6.2"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -22,6 +22,8 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += ""
+                // The Java runtimes we download link against libc++_shared.so, which Android does not provide, so ship it.
+                arguments += "-DANDROID_STL=c++_shared"
             }
         }
     }
