@@ -43,6 +43,27 @@ class ControlLayoutTest {
         assertTrue(!loaded.first { it.id == "chat" }.showInMenus)
     }
 
+    @Test fun clicksSitBesideSpaceAndShiftExists() {
+        val d = ControlLayoutStore.defaults().associateBy { it.id }
+        val attack = d.getValue("attack"); val jump = d.getValue("jump"); val use = d.getValue("use")
+        // Same row, bottom-right anchored: left click, then Space, then right click, left to right (larger x = further left).
+        assertTrue(attack.fromRight && jump.fromRight && use.fromRight)
+        assertEquals(attack.y, jump.y, 0f); assertEquals(use.y, jump.y, 0f)
+        assertTrue(attack.x > jump.x && jump.x > use.x)
+        assertEquals(Glfw.KEY_SPACE, jump.code)
+        assertEquals(Glfw.KEY_LEFT_SHIFT, d.getValue("sneak").code)
+    }
+
+    @Test fun layoutsBeforeVersion3TakeTheNewClickSpaceShiftPositions() {
+        val f = File(tmp.root, "controls.json")
+        val d = ControlLayoutStore.defaults()
+        val old = d.map { if (it.id == "attack") it.copy(x = 999f, y = 999f, fromRight = false) else it }
+        f.writeText("""{"buttons":${com.quantumobile.launcher.core.LauncherJson.encodeToString(kotlinx.serialization.builtins.ListSerializer(ControlSpec.serializer()), old)},"version":2}""")
+        val loaded = ControlLayoutStore(f).load().associateBy { it.id }
+        assertEquals(d.first { it.id == "attack" }, loaded.getValue("attack"))
+        assertEquals(d.first { it.id == "chat" }, loaded.getValue("chat"))
+    }
+
     @Test fun corruptFileFallsBackToDefaults() {
         val f = File(tmp.root, "controls.json").apply { writeText("{ nope") }
         assertEquals(ControlLayoutStore.defaults(), ControlLayoutStore(f).load())
