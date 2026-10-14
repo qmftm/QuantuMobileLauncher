@@ -111,6 +111,13 @@ class ControlLayoutStore(private val file: File) {
             val moved = setOf("sneak", "jump", "attack", "use")
             list = list.map { b -> if (b.id in moved) defaults.firstOrNull { it.id == b.id } ?: b else b }
         }
+        if (from < 7) {
+            // 7: tighter gaps between buttons: every default button takes its new position (labels and keys are kept).
+            list = list.map { b ->
+                val d = defaults.firstOrNull { it.id == b.id } ?: return@map b
+                b.copy(fromRight = d.fromRight, fromBottom = d.fromBottom, centerX = d.centerX, x = d.x, y = d.y)
+            }
+        }
         return list
     }
 
@@ -126,9 +133,9 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 6
+        private const val VERSION = 7
 
-        private const val M = 10f // margin, as in PojavLauncher's default map
+        private const val M = 5f // margin / gap between buttons
         private const val U = 50f // square button
         private const val TH = 36f // height of the wide top-row buttons
         private const val TA = 1.6f // their width / height

@@ -105,7 +105,7 @@ class ControlLayoutTest {
         assertTrue(shift.toggle)
         // Space and the two click buttons are one cell (button + margin) above the bottom row.
         val jump = d.getValue("jump")
-        assertEquals(10f + 50f + 10f, jump.y, 0f)
+        assertEquals(5f + 50f + 5f, jump.y, 0f)
         assertEquals(jump.y, d.getValue("attack").y, 0f); assertEquals(jump.y, d.getValue("use").y, 0f)
         // Simple drawn icons instead of text.
         assertEquals("@shift", shift.label); assertEquals("@space", jump.label)

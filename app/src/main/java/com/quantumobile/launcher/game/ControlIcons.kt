@@ -7,14 +7,14 @@ import android.graphics.RectF
 
 /**
  * Tiny drawn icons for buttons whose label starts with `@` (so they never depend on a font having the glyph):
- * `@shift` is an outlined up arrow, `@space` is the open-box "space" bracket.
+ * `@shift` is an up arrow, `@space` (jump) is two stacked chevrons.
  */
 internal object ControlIcons {
     fun isIcon(label: String) = label.startsWith("@")
 
     fun draw(canvas: Canvas, label: String, r: RectF, density: Float, paint: Paint) {
         val cx = r.centerX(); val cy = r.centerY()
-        val s = minOf(r.width(), r.height()) * 0.28f
+        val s = minOf(r.width(), r.height()) * 0.2f // leaves a generous margin inside the button
         val old = paint.style; val oldW = paint.strokeWidth; val oldJoin = paint.strokeJoin; val oldCap = paint.strokeCap
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2.5f * density
@@ -22,21 +22,14 @@ internal object ControlIcons {
         paint.strokeCap = Paint.Cap.ROUND
         val path = Path()
         when (label) {
-            "@shift" -> {
-                path.moveTo(cx, cy - s)
-                path.lineTo(cx + s * 0.95f, cy + 0.05f * s)
-                path.lineTo(cx + s * 0.4f, cy + 0.05f * s)
-                path.lineTo(cx + s * 0.4f, cy + s)
-                path.lineTo(cx - s * 0.4f, cy + s)
-                path.lineTo(cx - s * 0.4f, cy + 0.05f * s)
-                path.lineTo(cx - s * 0.95f, cy + 0.05f * s)
-                path.close()
+            "@shift" -> { // plain up arrow
+                path.moveTo(cx, cy + s); path.lineTo(cx, cy - s)
+                path.moveTo(cx - s * 0.8f, cy - s * 0.2f); path.lineTo(cx, cy - s); path.lineTo(cx + s * 0.8f, cy - s * 0.2f)
             }
-            "@space" -> {
-                path.moveTo(cx - s * 1.3f, cy - s * 0.35f)
-                path.lineTo(cx - s * 1.3f, cy + s * 0.35f)
-                path.lineTo(cx + s * 1.3f, cy + s * 0.35f)
-                path.lineTo(cx + s * 1.3f, cy - s * 0.35f)
+            "@space" -> { // two stacked chevrons: jump
+                for (dy in floatArrayOf(-0.45f, 0.55f)) {
+                    path.moveTo(cx - s, cy + s * (dy + 0.45f)); path.lineTo(cx, cy + s * (dy - 0.25f)); path.lineTo(cx + s, cy + s * (dy + 0.45f))
+                }
             }
         }
         canvas.drawPath(path, paint)
