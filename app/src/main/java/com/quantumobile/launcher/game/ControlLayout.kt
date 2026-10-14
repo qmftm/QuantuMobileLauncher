@@ -93,6 +93,12 @@ class ControlLayoutStore(private val file: File) {
             val moved = setOf("attack", "use", "jump", "sneak", "sprint", "drop")
             list = list.map { b -> if (b.id in moved) defaults.firstOrNull { it.id == b.id } ?: b else b }
         }
+        if (from < 4) {
+            // 4: F and Q flank S on the bottom row, GUI and Inventory flank W.
+            val moved = setOf("hide", "inv", "drop")
+            list = list.map { b -> if (b.id in moved) defaults.firstOrNull { it.id == b.id } ?: b else b }
+            list = list + defaults.filter { d -> d.id == "swap" && list.none { it.id == d.id } }
+        }
         return list
     }
 
@@ -108,7 +114,7 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 3
+        private const val VERSION = 4
 
         private const val M = 10f // margin, as in PojavLauncher's default map
         private const val U = 50f // square button
@@ -132,18 +138,19 @@ class ControlLayoutStore(private val file: File) {
             key("esc", "Esc", Glfw.KEY_ESCAPE, M, M, right = true, menus = true, size = TH, aspect = TA),
             ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = M + TH * TA + M + U, y = M, size = TH),
             ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = M + TH * TA + M, y = M, size = TH),
-            // WASD cross (bottom-left); GUI and Inventory sit in its bottom corners
-            ControlSpec("hide", "GUI", ControlKind.HIDE, showInMenus = true, fromBottom = true, x = M, y = M, size = U),
-            key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true, menus = true),
-            key("inv", "Inv", Glfw.KEY_E, 3 * M + 2 * U, M, bottom = true, menus = true),
+            // WASD cross (bottom-left) with F and Q flanking S on the bottom row; GUI and Inventory flank W
+            ControlSpec("hide", "GUI", ControlKind.HIDE, showInMenus = true, fromBottom = true, x = M, y = 3 * M + 2 * U, size = U),
+            key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true, menus = true),
+            key("inv", "Inv", Glfw.KEY_E, 3 * M + 2 * U, 3 * M + 2 * U, bottom = true, menus = true),
             key("a", "◀", Glfw.KEY_A, M, 2 * M + U, bottom = true, menus = true),
             key("d", "▶", Glfw.KEY_D, 3 * M + 2 * U, 2 * M + U, bottom = true, menus = true),
-            key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true, menus = true),
+            key("swap", "F", Glfw.KEY_F, M, M, bottom = true, menus = true),
+            key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true, menus = true),
+            key("drop", "Q", Glfw.KEY_Q, 3 * M + 2 * U, M, bottom = true),
             // Bottom right: left click, Space, right click in one row (Space in the middle); Q, Ctrl, Shift above
             ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromRight = true, fromBottom = true, x = 3 * M + 2 * U, y = M),
             key("jump", "Space", Glfw.KEY_SPACE, 2 * M + U, M, right = true, bottom = true, menus = true),
             ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, showInMenus = true, fromRight = true, fromBottom = true, x = M, y = M),
-            key("drop", "Q", Glfw.KEY_Q, 3 * M + 2 * U, 2 * M + U, right = true, bottom = true),
             key("sprint", "Ctrl", Glfw.KEY_LEFT_CONTROL, 2 * M + U, 2 * M + U, right = true, bottom = true, toggle = true),
             key("sneak", "Shift", Glfw.KEY_LEFT_SHIFT, M, 2 * M + U, right = true, bottom = true, toggle = true, menus = true),
         )

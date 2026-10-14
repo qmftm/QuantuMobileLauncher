@@ -64,6 +64,21 @@ class ControlLayoutTest {
         assertEquals(d.first { it.id == "chat" }, loaded.getValue("chat"))
     }
 
+    @Test fun fAndQSitBelowWasdAndOldLayoutsGainF() {
+        val d = ControlLayoutStore.defaults().associateBy { it.id }
+        val s = d.getValue("s"); val f = d.getValue("swap"); val q = d.getValue("drop"); val a = d.getValue("a")
+        assertEquals(Glfw.KEY_F, f.code); assertEquals(Glfw.KEY_Q, q.code)
+        // Bottom row: F left of S, Q right of S, all below the A/D row.
+        assertEquals(s.y, f.y, 0f); assertEquals(s.y, q.y, 0f)
+        assertTrue(f.x < s.x && s.x < q.x)
+        assertTrue(a.y > s.y)
+        val file = File(tmp.root, "v3.json")
+        val v3 = ControlLayoutStore.defaults().filter { it.id != "swap" }
+        file.writeText("""{"buttons":${com.quantumobile.launcher.core.LauncherJson.encodeToString(kotlinx.serialization.builtins.ListSerializer(ControlSpec.serializer()), v3)},"version":3}""")
+        val loaded = ControlLayoutStore(file).load()
+        assertTrue(loaded.any { it.id == "swap" })
+    }
+
     @Test fun corruptFileFallsBackToDefaults() {
         val f = File(tmp.root, "controls.json").apply { writeText("{ nope") }
         assertEquals(ControlLayoutStore.defaults(), ControlLayoutStore(f).load())
