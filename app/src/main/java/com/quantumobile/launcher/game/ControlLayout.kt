@@ -126,6 +126,13 @@ class ControlLayoutStore(private val file: File) {
             // 9: the GUI button is an eye (closed while the buttons are hidden) and sits higher.
             list = list.map { b -> if (b.id == "hide") defaults.firstOrNull { it.id == b.id } ?: b else b }
         }
+        if (from < 10) {
+            // 10: gaps tightened again: every default button takes its new position (labels and keys are kept).
+            list = list.map { b ->
+                val d = defaults.firstOrNull { it.id == b.id } ?: return@map b
+                b.copy(fromRight = d.fromRight, fromBottom = d.fromBottom, centerX = d.centerX, x = d.x, y = d.y)
+            }
+        }
         return list
     }
 
@@ -141,10 +148,10 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 9
+        private const val VERSION = 10
         private const val MS = 30f // the Mouse (pointer icon) button
 
-        private const val M = 5f // margin / gap between buttons
+        private const val M = 3f // margin / gap between buttons
         private const val U = 50f // square button
         private const val TH = 36f // height of the wide top-row buttons
         private const val TA = 1.6f // their width / height

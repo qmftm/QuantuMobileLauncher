@@ -7,7 +7,7 @@ import android.graphics.RectF
 
 /**
  * Tiny drawn icons for buttons whose label starts with `@` (so they never depend on a font having the glyph):
- * `@shift` is an up arrow, `@eye`/`@eyeoff` are the open/closed GUI eye, `@mouse` is a pointer arrow, `@space` (jump) is two stacked chevrons.
+ * `@shift` is a hollow up triangle, `@space` (jump) a filled one, `@eye`/`@eyeoff` the open/closed GUI eye, `@mouse` the ring-and-crosshair cursor.
  */
 internal object ControlIcons {
     fun isIcon(label: String) = label.startsWith("@")
@@ -22,9 +22,9 @@ internal object ControlIcons {
         paint.strokeCap = Paint.Cap.ROUND
         val path = Path()
         when (label) {
-            "@shift" -> { // plain up arrow
-                path.moveTo(cx, cy + s); path.lineTo(cx, cy - s)
-                path.moveTo(cx - s * 0.8f, cy - s * 0.2f); path.lineTo(cx, cy - s); path.lineTo(cx + s * 0.8f, cy - s * 0.2f)
+            "@shift", "@space" -> { // sneak: hollow up triangle, jump: filled up triangle
+                path.moveTo(cx, cy - s); path.lineTo(cx + s * 1.15f, cy + s * 0.85f); path.lineTo(cx - s * 1.15f, cy + s * 0.85f); path.close()
+                if (label == "@space") paint.style = Paint.Style.FILL_AND_STROKE
             }
             "@eye", "@eyeoff" -> {
                 val w = s * 1.5f; val h = s * 0.9f
@@ -36,20 +36,11 @@ internal object ControlIcons {
                     path.moveTo(cx - w, cy + s * 0.9f); path.lineTo(cx + w, cy - s * 0.9f)
                 }
             }
-            "@mouse" -> { // pointer arrow
-                path.moveTo(cx - s * 0.7f, cy - s)
-                path.lineTo(cx - s * 0.7f, cy + s * 0.8f)
-                path.lineTo(cx - s * 0.25f, cy + s * 0.4f)
-                path.lineTo(cx + s * 0.1f, cy + s * 1.1f)
-                path.lineTo(cx + s * 0.45f, cy + s * 0.95f)
-                path.lineTo(cx + s * 0.1f, cy + s * 0.25f)
-                path.lineTo(cx + s * 0.75f, cy + s * 0.2f)
-                path.close()
-            }
-            "@space" -> { // two stacked chevrons: jump
-                for (dy in floatArrayOf(-0.45f, 0.55f)) {
-                    path.moveTo(cx - s, cy + s * (dy + 0.45f)); path.lineTo(cx, cy + s * (dy - 0.25f)); path.lineTo(cx + s, cy + s * (dy + 0.45f))
-                }
+            "@mouse" -> { // the same ring-and-crosshair cursor that is drawn in the game while Mouse mode is on
+                val r = s * 1.0f
+                path.addCircle(cx, cy, r, Path.Direction.CW)
+                path.moveTo(cx - r * 1.6f, cy); path.lineTo(cx + r * 1.6f, cy)
+                path.moveTo(cx, cy - r * 1.6f); path.lineTo(cx, cy + r * 1.6f)
             }
         }
         canvas.drawPath(path, paint)

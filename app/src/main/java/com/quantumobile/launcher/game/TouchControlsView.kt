@@ -123,11 +123,10 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     override fun onDraw(canvas: Canvas) {
         val alpha = (opacity * 255).toInt()
         if (alpha == 0) return
-        val radius = 4 * density
-        for (b in buttons) {
+                for (b in buttons) {
             if (!visible(b)) continue
             fill.color = if (b.pressed || (b.kind == ControlKind.MOUSE_MODE && pointerMode)) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)
-            canvas.drawRoundRect(b.rect, radius, radius, fill)
+            canvas.drawRoundRect(b.rect, b.rect.cornerRadius(), b.rect.cornerRadius(), fill)
             text.alpha = (alpha + 80).coerceAtMost(255)
             if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, if (b.kind == ControlKind.HIDE && controlsHidden) "@eyeoff" else b.label, b.rect, density, iconPaint)
             else canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)
@@ -280,3 +279,6 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         private const val HOLD_MS = 300L
     }
 }
+
+/** Corners scale with the button so every button has the look of the 50dp click buttons. */
+internal fun android.graphics.RectF.cornerRadius() = 0.1f * minOf(width(), height())

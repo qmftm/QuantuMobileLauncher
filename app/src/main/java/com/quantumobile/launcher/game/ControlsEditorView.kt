@@ -43,12 +43,11 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
         while (x < width) { canvas.drawLine(x, 0f, x, height.toFloat(), grid); x += step }
         var y = step
         while (y < height) { canvas.drawLine(0f, y, width.toFloat(), y, grid); y += step }
-        val radius = 4 * density
-        for (b in buttons) {
+                for (b in buttons) {
             b.rect(width, height, density, rect)
             fill.color = Color.argb(150, 40, 40, 40)
-            canvas.drawRoundRect(rect, radius, radius, fill)
-            if (b.id == selectedId) canvas.drawRoundRect(rect, radius, radius, stroke)
+            canvas.drawRoundRect(rect, rect.cornerRadius(), rect.cornerRadius(), fill)
+            if (b.id == selectedId) canvas.drawRoundRect(rect, rect.cornerRadius(), rect.cornerRadius(), stroke)
             if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, b.label, rect, density, iconPaint)
             else canvas.drawText(b.label, rect.centerX(), rect.centerY() - (text.descent() + text.ascent()) / 2, text)
         }
@@ -86,3 +85,4 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
         return true
     }
 }
+
