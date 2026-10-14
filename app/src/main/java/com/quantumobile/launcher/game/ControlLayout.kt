@@ -122,6 +122,10 @@ class ControlLayoutStore(private val file: File) {
             // 8: Mouse is a small pointer icon; the hotbar arrows next to it shift over.
             list = list.map { b -> if (b.id in setOf("mouse", "hot_next", "hot_prev")) defaults.firstOrNull { it.id == b.id } ?: b else b }
         }
+        if (from < 9) {
+            // 9: the GUI button is an eye (closed while the buttons are hidden) and sits higher.
+            list = list.map { b -> if (b.id == "hide") defaults.firstOrNull { it.id == b.id } ?: b else b }
+        }
         return list
     }
 
@@ -137,7 +141,7 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 8
+        private const val VERSION = 9
         private const val MS = 30f // the Mouse (pointer icon) button
 
         private const val M = 5f // margin / gap between buttons
@@ -158,8 +162,8 @@ class ControlLayoutStore(private val file: File) {
             key("chat", "Chat", Glfw.KEY_T, 4 * M + 3 * TH * TA, M, size = TH, aspect = TA),
             key("tab", "Tab", Glfw.KEY_TAB, M, 2 * M + TH, size = TH, aspect = TA),
             key("view", "3rd", Glfw.KEY_F5, 2 * M + TH * TA, 2 * M + TH, size = TH, aspect = TA),
-            // Top centre: the small GUI (hide/show all buttons) gear
-            ControlSpec("hide", "⚙", ControlKind.HIDE, showInMenus = true, centerX = true, x = 0f, y = M, size = 34f),
+            // Top centre: the small GUI (hide/show all buttons) eye
+            ControlSpec("hide", "@eye", ControlKind.HIDE, showInMenus = true, centerX = true, x = 0f, y = 2f, size = 34f),
             // Top right: Mouse on/off at the far end, hotbar scroll next to it
             ControlSpec("mouse", "@mouse", ControlKind.MOUSE_MODE, showInMenus = true, fromRight = true, x = M, y = M, size = MS),
             ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + MS, y = M, size = TH),

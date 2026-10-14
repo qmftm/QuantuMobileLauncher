@@ -7,7 +7,7 @@ import android.graphics.RectF
 
 /**
  * Tiny drawn icons for buttons whose label starts with `@` (so they never depend on a font having the glyph):
- * `@shift` is an up arrow, `@mouse` is a pointer arrow, `@space` (jump) is two stacked chevrons.
+ * `@shift` is an up arrow, `@eye`/`@eyeoff` are the open/closed GUI eye, `@mouse` is a pointer arrow, `@space` (jump) is two stacked chevrons.
  */
 internal object ControlIcons {
     fun isIcon(label: String) = label.startsWith("@")
@@ -25,6 +25,16 @@ internal object ControlIcons {
             "@shift" -> { // plain up arrow
                 path.moveTo(cx, cy + s); path.lineTo(cx, cy - s)
                 path.moveTo(cx - s * 0.8f, cy - s * 0.2f); path.lineTo(cx, cy - s); path.lineTo(cx + s * 0.8f, cy - s * 0.2f)
+            }
+            "@eye", "@eyeoff" -> {
+                val w = s * 1.5f; val h = s * 0.9f
+                path.moveTo(cx - w, cy)
+                path.quadTo(cx, cy - h * 2f, cx + w, cy)
+                path.quadTo(cx, cy + h * 2f, cx - w, cy)
+                if (label == "@eye") path.addCircle(cx, cy, s * 0.4f, Path.Direction.CW)
+                else { // closed: lashes-free lid line plus a slash
+                    path.moveTo(cx - w, cy + s * 0.9f); path.lineTo(cx + w, cy - s * 0.9f)
+                }
             }
             "@mouse" -> { // pointer arrow
                 path.moveTo(cx - s * 0.7f, cy - s)

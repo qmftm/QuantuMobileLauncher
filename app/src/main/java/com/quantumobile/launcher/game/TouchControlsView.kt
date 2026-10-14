@@ -129,7 +129,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
             fill.color = if (b.pressed || (b.kind == ControlKind.MOUSE_MODE && pointerMode)) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)
             canvas.drawRoundRect(b.rect, radius, radius, fill)
             text.alpha = (alpha + 80).coerceAtMost(255)
-            if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, b.label, b.rect, density, iconPaint)
+            if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, if (b.kind == ControlKind.HIDE && controlsHidden) "@eyeoff" else b.label, b.rect, density, iconPaint)
             else canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)
         }
         if (pointerMode && !grabbed && !controlsHidden) {
