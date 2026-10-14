@@ -36,6 +36,8 @@ data class ControlSpec(
     val size: Float = 56f,
     val extraKeys: List<Int> = emptyList(),
     val aspect: Float = 1f,
+    /** Anchored to the horizontal centre of the screen: [x] is then an offset from the centre (dp), not from an edge. */
+    val centerX: Boolean = false,
 ) {
     /** Every key (or mouse button) this button presses. */
     val allCodes: List<Int> get() = listOf(code) + extraKeys
@@ -44,7 +46,7 @@ data class ControlSpec(
     fun bounds(w: Int, h: Int, density: Float): FloatArray {
         val sh = size * density
         val sw = sh * aspect
-        val left = if (fromRight) w - x * density - sw else x * density
+        val left = if (centerX) (w - sw) / 2 + x * density else if (fromRight) w - x * density - sw else x * density
         val top = if (fromBottom) h - y * density - sh else y * density
         val inset = 3 * density
         return floatArrayOf(left + inset, top + inset, left + sw - inset, top + sh - inset)
@@ -61,7 +63,7 @@ data class ControlSpec(
         val l = left.coerceIn(0f, (w - sw).coerceAtLeast(0f))
         val t = top.coerceIn(0f, (h - sh).coerceAtLeast(0f))
         return copy(
-            x = (if (fromRight) w - l - sw else l) / density,
+            x = (if (centerX) l - (w - sw) / 2 else if (fromRight) w - l - sw else l) / density,
             y = (if (fromBottom) h - t - sh else t) / density,
         )
     }
@@ -99,6 +101,11 @@ class ControlLayoutStore(private val file: File) {
             list = list.map { b -> if (b.id in moved) defaults.firstOrNull { it.id == b.id } ?: b else b }
             list = list + defaults.filter { d -> d.id == "swap" && list.none { it.id == d.id } }
         }
+        if (from < 5) {
+            // 5: top row rearranged (Esc/Keyboard left, GUI gear in the centre, Mouse at the right end), Ctrl takes GUI's old place.
+            val moved = setOf("esc", "kbd", "debug", "chat", "tab", "view", "hide", "mouse", "hot_next", "hot_prev", "sprint")
+            list = list.map { b -> if (b.id in moved) defaults.firstOrNull { it.id == b.id } ?: b else b }
+        }
         return list
     }
 
@@ -114,12 +121,12 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 4
+        private const val VERSION = 5
 
         private const val M = 10f // margin, as in PojavLauncher's default map
         private const val U = 50f // square button
         private const val TH = 36f // height of the wide top-row buttons
-        private const val TA = 2.2f // their width / height
+        private const val TA = 1.6f // their width / height
 
         /**
          * Arranged like PojavLauncher's default control map: Debug / Chat / Keyboard / Tab on the top row with the
@@ -127,19 +134,21 @@ class ControlLayoutStore(private val file: File) {
          * and Space bottom-right. Extras kept from this launcher: Esc, hotbar scroll, sprint, drop.
          */
         fun defaults(): List<ControlSpec> = listOf(
-            // Top row (left)
-            key("debug", "Debug", Glfw.KEY_F3, M, M, size = TH, aspect = TA),
-            key("chat", "Chat", Glfw.KEY_T, 2 * M + TH * TA, M, size = TH, aspect = TA),
-            ControlSpec("kbd", "Keyboard", ControlKind.KEYBOARD, showInMenus = true, x = 3 * M + 2 * TH * TA, y = M, size = TH, aspect = TA),
-            key("tab", "Tab", Glfw.KEY_TAB, 4 * M + 3 * TH * TA, M, size = TH, aspect = TA),
-            ControlSpec("mouse", "Mouse", ControlKind.MOUSE_MODE, showInMenus = true, x = 5 * M + 4 * TH * TA, y = M, size = TH, aspect = TA),
-            key("view", "3rd", Glfw.KEY_F5, M, 2 * M + TH, size = TH, aspect = TA),
-            // Top right
-            key("esc", "Esc", Glfw.KEY_ESCAPE, M, M, right = true, menus = true, size = TH, aspect = TA),
-            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = M + TH * TA + M + U, y = M, size = TH),
-            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = M + TH * TA + M, y = M, size = TH),
-            // WASD cross (bottom-left) with F and Q flanking S on the bottom row; GUI and Inventory flank W
-            ControlSpec("hide", "GUI", ControlKind.HIDE, showInMenus = true, fromBottom = true, x = M, y = 3 * M + 2 * U, size = U),
+            // Top row (left): Esc, Keyboard, F3, Chat; Tab and 3rd person below them
+            key("esc", "Esc", Glfw.KEY_ESCAPE, M, M, menus = true, size = TH, aspect = TA),
+            ControlSpec("kbd", "Key", ControlKind.KEYBOARD, showInMenus = true, x = 2 * M + TH * TA, y = M, size = TH, aspect = TA),
+            key("debug", "F3", Glfw.KEY_F3, 3 * M + 2 * TH * TA, M, size = TH, aspect = TA),
+            key("chat", "Chat", Glfw.KEY_T, 4 * M + 3 * TH * TA, M, size = TH, aspect = TA),
+            key("tab", "Tab", Glfw.KEY_TAB, M, 2 * M + TH, size = TH, aspect = TA),
+            key("view", "3rd", Glfw.KEY_F5, 2 * M + TH * TA, 2 * M + TH, size = TH, aspect = TA),
+            // Top centre: the small GUI (hide/show all buttons) gear
+            ControlSpec("hide", "⚙", ControlKind.HIDE, showInMenus = true, centerX = true, x = 0f, y = M, size = 34f),
+            // Top right: Mouse on/off at the far end, hotbar scroll next to it
+            ControlSpec("mouse", "Mouse", ControlKind.MOUSE_MODE, showInMenus = true, fromRight = true, x = M, y = M, size = TH, aspect = TA),
+            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + TH * TA, y = M, size = TH),
+            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = 3 * M + TH * TA + TH, y = M, size = TH),
+            // WASD cross (bottom-left) with F and Q flanking S on the bottom row; Ctrl and Inventory flank W
+            key("sprint", "Ctrl", Glfw.KEY_LEFT_CONTROL, M, 3 * M + 2 * U, bottom = true, toggle = true),
             key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true, menus = true),
             key("inv", "Inv", Glfw.KEY_E, 3 * M + 2 * U, 3 * M + 2 * U, bottom = true, menus = true),
             key("a", "◀", Glfw.KEY_A, M, 2 * M + U, bottom = true, menus = true),
@@ -147,11 +156,10 @@ class ControlLayoutStore(private val file: File) {
             key("swap", "F", Glfw.KEY_F, M, M, bottom = true, menus = true),
             key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true, menus = true),
             key("drop", "Q", Glfw.KEY_Q, 3 * M + 2 * U, M, bottom = true),
-            // Bottom right: left click, Space, right click in one row (Space in the middle); Q, Ctrl, Shift above
+            // Bottom right: left click, Space, right click in one row (Space in the middle); Shift above
             ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromRight = true, fromBottom = true, x = 3 * M + 2 * U, y = M),
             key("jump", "Space", Glfw.KEY_SPACE, 2 * M + U, M, right = true, bottom = true, menus = true),
             ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, showInMenus = true, fromRight = true, fromBottom = true, x = M, y = M),
-            key("sprint", "Ctrl", Glfw.KEY_LEFT_CONTROL, 2 * M + U, 2 * M + U, right = true, bottom = true, toggle = true),
             key("sneak", "Shift", Glfw.KEY_LEFT_SHIFT, M, 2 * M + U, right = true, bottom = true, toggle = true, menus = true),
         )
 

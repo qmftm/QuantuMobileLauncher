@@ -79,6 +79,23 @@ class ControlLayoutTest {
         assertTrue(loaded.any { it.id == "swap" })
     }
 
+    @Test fun topRowAndGearLayout() {
+        val d = ControlLayoutStore.defaults().associateBy { it.id }
+        val gear = d.getValue("hide")
+        assertTrue(gear.centerX)
+        // Gear is centred on the screen whatever its width.
+        val r = gear.bounds(1000, 500, 1f)
+        assertEquals(500f, (r[0] + r[2]) / 2, 0.01f)
+        // movedTo keeps the centre anchor.
+        assertTrue(gear.movedTo(100f, 20f, 1000, 500, 1f).centerX)
+        // Ctrl sits where GUI used to (left of W); Mouse is the right-most top button; Esc and Keyboard are on the left.
+        val w = d.getValue("w"); val ctrl = d.getValue("sprint")
+        assertEquals(w.y, ctrl.y, 0f); assertTrue(ctrl.x < w.x && !ctrl.fromRight)
+        val mouse = d.getValue("mouse")
+        assertTrue(mouse.fromRight && d.values.filter { it.fromRight && it.y == mouse.y && !it.fromBottom }.all { it.x >= mouse.x })
+        assertTrue(!d.getValue("esc").fromRight && !d.getValue("kbd").fromRight)
+    }
+
     @Test fun corruptFileFallsBackToDefaults() {
         val f = File(tmp.root, "controls.json").apply { writeText("{ nope") }
         assertEquals(ControlLayoutStore.defaults(), ControlLayoutStore(f).load())
