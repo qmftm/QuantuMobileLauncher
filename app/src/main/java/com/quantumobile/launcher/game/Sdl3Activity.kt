@@ -90,6 +90,13 @@ class Sdl3Activity : SDLActivity() {
         return super.dispatchKeyEvent(event)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Coming back from the background: forget stale pointer/button state so touches reach the game again.
+        NativeBridge.resetInputState()
+        controls?.releaseAll()
+    }
+
     override fun onPause() {
         controls?.releaseAll() // held keys would stay "pressed" in the game while it runs unseen
         super.onPause()

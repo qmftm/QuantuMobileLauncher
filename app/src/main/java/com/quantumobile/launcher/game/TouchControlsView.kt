@@ -118,12 +118,12 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * density; color = Color.WHITE }
 
     private fun visible(b: Button) =
-        if (controlsHidden) b.kind == ControlKind.HIDE else grabbed || b.spec.showInMenus
+        if (controlsHidden) b.kind == ControlKind.HIDE else true
 
     override fun onDraw(canvas: Canvas) {
         val alpha = (opacity * 255).toInt()
         if (alpha == 0) return
-        val radius = 10 * density
+        val radius = 4 * density
         for (b in buttons) {
             if (!visible(b)) continue
             fill.color = if (b.pressed || (b.kind == ControlKind.MOUSE_MODE && pointerMode)) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)

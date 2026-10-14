@@ -43,7 +43,7 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
         while (x < width) { canvas.drawLine(x, 0f, x, height.toFloat(), grid); x += step }
         var y = step
         while (y < height) { canvas.drawLine(0f, y, width.toFloat(), y, grid); y += step }
-        val radius = 10 * density
+        val radius = 4 * density
         for (b in buttons) {
             b.rect(width, height, density, rect)
             fill.color = Color.argb(150, 40, 40, 40)

@@ -31,6 +31,9 @@ object NativeBridge {
     private var lastY = 0f
     private var wasRelative = false
 
+    /** Drops held mouse buttons / relative-mode tracking (after the app returns from the background). */
+    fun resetInputState() { mouseState = 0; wasRelative = false }
+
     fun sendKey(key: Int, scancode: Int, action: Int, mods: Int) {
         if (!sdl) return CallbackBridge.sendKey(key, scancode, action, mods)
         val code = Glfw.toAndroid(key) ?: return
