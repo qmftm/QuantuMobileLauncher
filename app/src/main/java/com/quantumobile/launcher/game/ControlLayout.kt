@@ -106,6 +106,11 @@ class ControlLayoutStore(private val file: File) {
             val moved = setOf("esc", "kbd", "debug", "chat", "tab", "view", "hide", "mouse", "hot_next", "hot_prev", "sprint")
             list = list.map { b -> if (b.id in moved) defaults.firstOrNull { it.id == b.id } ?: b else b }
         }
+        if (from < 6) {
+            // 6: Shift in the middle of WASD, Space and the click row one cell up, Shift/Space drawn as simple icons.
+            val moved = setOf("sneak", "jump", "attack", "use")
+            list = list.map { b -> if (b.id in moved) defaults.firstOrNull { it.id == b.id } ?: b else b }
+        }
         return list
     }
 
@@ -121,7 +126,7 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 5
+        private const val VERSION = 6
 
         private const val M = 10f // margin, as in PojavLauncher's default map
         private const val U = 50f // square button
@@ -154,13 +159,13 @@ class ControlLayoutStore(private val file: File) {
             key("a", "◀", Glfw.KEY_A, M, 2 * M + U, bottom = true, menus = true),
             key("d", "▶", Glfw.KEY_D, 3 * M + 2 * U, 2 * M + U, bottom = true, menus = true),
             key("swap", "F", Glfw.KEY_F, M, M, bottom = true, menus = true),
+            key("sneak", "@shift", Glfw.KEY_LEFT_SHIFT, 2 * M + U, 2 * M + U, bottom = true, toggle = true, menus = true),
             key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true, menus = true),
             key("drop", "Q", Glfw.KEY_Q, 3 * M + 2 * U, M, bottom = true),
-            // Bottom right: left click, Space, right click in one row (Space in the middle); Shift above
-            ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromRight = true, fromBottom = true, x = 3 * M + 2 * U, y = M),
-            key("jump", "Space", Glfw.KEY_SPACE, 2 * M + U, M, right = true, bottom = true, menus = true),
-            ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, showInMenus = true, fromRight = true, fromBottom = true, x = M, y = M),
-            key("sneak", "Shift", Glfw.KEY_LEFT_SHIFT, M, 2 * M + U, right = true, bottom = true, toggle = true, menus = true),
+            // Right side, one cell up from the bottom: left click, Space, right click in one row (Space in the middle)
+            ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromRight = true, fromBottom = true, x = 3 * M + 2 * U, y = 2 * M + U),
+            key("jump", "@space", Glfw.KEY_SPACE, 2 * M + U, 2 * M + U, right = true, bottom = true, menus = true),
+            ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, showInMenus = true, fromRight = true, fromBottom = true, x = M, y = 2 * M + U),
         )
 
         private fun key(

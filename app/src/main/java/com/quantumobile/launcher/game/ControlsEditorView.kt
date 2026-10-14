@@ -28,6 +28,8 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
     private val grid = Paint().apply { color = Color.argb(30, 255, 255, 255); strokeWidth = 1f }
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textAlign = Paint.Align.CENTER; textSize = 16 * density }
 
+    private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+
     private var dragId: String? = null
     private var downX = 0f
     private var downY = 0f
@@ -47,7 +49,8 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
             fill.color = Color.argb(150, 40, 40, 40)
             canvas.drawRoundRect(rect, radius, radius, fill)
             if (b.id == selectedId) canvas.drawRoundRect(rect, radius, radius, stroke)
-            canvas.drawText(b.label, rect.centerX(), rect.centerY() - (text.descent() + text.ascent()) / 2, text)
+            if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, b.label, rect, density, iconPaint)
+            else canvas.drawText(b.label, rect.centerX(), rect.centerY() - (text.descent() + text.ascent()) / 2, text)
         }
     }
 

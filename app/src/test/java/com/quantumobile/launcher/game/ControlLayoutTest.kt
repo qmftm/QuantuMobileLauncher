@@ -96,6 +96,21 @@ class ControlLayoutTest {
         assertTrue(!d.getValue("esc").fromRight && !d.getValue("kbd").fromRight)
     }
 
+    @Test fun shiftIsAtTheCentreOfWasdAndSpaceRowIsOneCellUp() {
+        val d = ControlLayoutStore.defaults().associateBy { it.id }
+        val shift = d.getValue("sneak"); val s = d.getValue("s"); val w = d.getValue("w"); val a = d.getValue("a"); val dd = d.getValue("d")
+        // Shift: same column as W/S, same row as A/D.
+        assertEquals(w.x, shift.x, 0f); assertEquals(s.x, shift.x, 0f)
+        assertEquals(a.y, shift.y, 0f); assertEquals(dd.y, shift.y, 0f)
+        assertTrue(shift.toggle)
+        // Space and the two click buttons are one cell (button + margin) above the bottom row.
+        val jump = d.getValue("jump")
+        assertEquals(10f + 50f + 10f, jump.y, 0f)
+        assertEquals(jump.y, d.getValue("attack").y, 0f); assertEquals(jump.y, d.getValue("use").y, 0f)
+        // Simple drawn icons instead of text.
+        assertEquals("@shift", shift.label); assertEquals("@space", jump.label)
+    }
+
     @Test fun corruptFileFallsBackToDefaults() {
         val f = File(tmp.root, "controls.json").apply { writeText("{ nope") }
         assertEquals(ControlLayoutStore.defaults(), ControlLayoutStore(f).load())
