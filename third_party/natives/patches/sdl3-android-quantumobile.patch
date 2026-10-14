@@ -11,11 +11,45 @@ index 3e61b8a..7cdfc0f 100644
  static bool SDL_MainIsReady = false;
  #else
  static bool SDL_MainIsReady = true;
+diff --git a/src/video/SDL_egl.c b/src/video/SDL_egl.c
+index e26d31c..3107cfc 100644
+--- a/src/video/SDL_egl.c
++++ b/src/video/SDL_egl.c
+@@ -1181,8 +1181,9 @@ bool SDL_EGL_MakeCurrent(SDL_VideoDevice *_this, EGLSurface egl_surface, SDL_GLC
+     if (!egl_context || (!egl_surface && !_this->gl_allow_no_surface)) {
+         _this->egl_data->eglMakeCurrent(_this->egl_data->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+     } else {
+-        if (!_this->egl_data->eglMakeCurrent(_this->egl_data->egl_display,
+-                                             egl_surface, egl_surface, egl_context)) {
++        const bool qm_ok = _this->egl_data->eglMakeCurrent(_this->egl_data->egl_display, egl_surface, egl_surface, egl_context);
++        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM makeCurrent surface=%p ctx=%p -> %s", egl_surface, egl_context, qm_ok ? "ok" : "FAILED");
++        if (!qm_ok) {
+             return SDL_EGL_SetError("Unable to make EGL context current", "eglMakeCurrent");
+         }
+     }
+@@ -1226,7 +1227,16 @@ bool SDL_EGL_GetSwapInterval(SDL_VideoDevice *_this, int *interval)
+ 
+ bool SDL_EGL_SwapBuffers(SDL_VideoDevice *_this, EGLSurface egl_surface)
+ {
+-    if (!_this->egl_data->eglSwapBuffers(_this->egl_data->egl_display, egl_surface)) {
++    // QuantuMobile diagnostics: report the first swaps and every failure (a failing swap shows up as a black screen).
++    static int qm_swaps = 0;
++    const bool qm_ok = _this->egl_data->eglSwapBuffers(_this->egl_data->egl_display, egl_surface);
++    if (!qm_ok) {
++        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM swap FAILED surface=%p eglError=0x%x", egl_surface, (unsigned)_this->egl_data->eglGetError());
++    } else if (qm_swaps < 3 || qm_swaps % 1000 == 0) {
++        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM swap #%d ok surface=%p", qm_swaps, egl_surface);
++    }
++    qm_swaps++;
++    if (!qm_ok) {
+         return SDL_EGL_SetError("unable to show color buffer in an OS-native window", "eglSwapBuffers");
+     }
+     return true;
 diff --git a/src/video/android/SDL_androidwindow.c b/src/video/android/SDL_androidwindow.c
-index 4652b5f..1a8f9e9 100644
+index 4652b5f..c130941 100644
 --- a/src/video/android/SDL_androidwindow.c
 +++ b/src/video/android/SDL_androidwindow.c
-@@ -45,8 +45,26 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
+@@ -45,8 +45,27 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
          return false;
      }
  
@@ -41,10 +75,19 @@ index 4652b5f..1a8f9e9 100644
 +        }
 +#endif
 +        window->internal = data;
++        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM window '%s' flags=0x%llx -> OFFSCREEN surface=%p", window->title ? window->title : "", (unsigned long long)window->flags, data->egl_surface);
          goto endfunction;
      }
  
-@@ -178,8 +196,10 @@ void Android_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
+@@ -97,6 +116,7 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
+ 
+     window->internal = data;
+     Android_Window = window;
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM window '%s' flags=0x%llx -> SCREEN surface=%p native=%p", window->title ? window->title : "", (unsigned long long)window->flags, data->egl_surface, data->native_window);
+ 
+ endfunction:
+ 
+@@ -178,8 +198,10 @@ void Android_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
  {
      Android_LockActivityMutex();
  
