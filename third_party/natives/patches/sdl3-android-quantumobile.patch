@@ -12,15 +12,18 @@ index 3e61b8a..7cdfc0f 100644
  #else
  static bool SDL_MainIsReady = true;
 diff --git a/src/video/android/SDL_androidwindow.c b/src/video/android/SDL_androidwindow.c
-index 4652b5f..4bc8534 100644
+index 4652b5f..1a8f9e9 100644
 --- a/src/video/android/SDL_androidwindow.c
 +++ b/src/video/android/SDL_androidwindow.c
-@@ -46,7 +46,24 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
+@@ -45,8 +45,26 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
+         return false;
      }
  
-     if (Android_Window) {
+-    if (Android_Window) {
 -        result = SDL_SetError("Android only supports one window");
-+        // QuantuMobile: Minecraft 26.x opens a second (hidden) window; give it its own off-screen surface.
++    if (Android_Window || (window->flags & SDL_WINDOW_HIDDEN)) {
++        // QuantuMobile: Minecraft 26.x opens two hidden helper windows (GL utility/test) before its real one. Only a visible
++        // window may take the activity's screen surface; hidden ones and any further window get their own off-screen surface.
 +        data = (SDL_WindowData *)SDL_calloc(1, sizeof(*data));
 +        if (!data) {
 +            result = false;
@@ -41,7 +44,7 @@ index 4652b5f..4bc8534 100644
          goto endfunction;
      }
  
-@@ -178,8 +195,10 @@ void Android_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
+@@ -178,8 +196,10 @@ void Android_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
  {
      Android_LockActivityMutex();
  

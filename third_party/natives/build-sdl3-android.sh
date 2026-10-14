@@ -1,6 +1,6 @@
 #!/bin/bash
 # Builds libSDL3.so (zlib licence) for Android arm64-v8a from the upstream sources with QuantuMobile's own small patch
-# (patches/sdl3-android-quantumobile.patch: allow Minecraft's second hidden window, no SDL_main needed), and copies SDL's Java glue (org.libsdl.app, zlib) next to it.
+# (patches/sdl3-android-quantumobile.patch: hidden helper windows get off-screen surfaces, the visible one gets the screen, no SDL_main needed), and copies SDL's Java glue (org.libsdl.app, zlib) next to it.
 #
 #   usage: build-sdl3-android.sh <output dir> [sdl tag, default release-3.4.16]
 set -euo pipefail
