@@ -32,7 +32,18 @@ object NativeBridge {
     private var wasRelative = false
 
     /** Drops held mouse buttons / relative-mode tracking (after the app returns from the background). */
-    fun resetInputState() { mouseState = 0; wasRelative = false }
+    fun resetInputState() {
+        android.util.Log.w("QM", "resetInputState relative=${QuantuSdlInput.isRelativeMouse()} size=${sdlWidth}x$sdlHeight")
+        mouseState = 0; wasRelative = false; trace = 8
+    }
+
+    /** Diagnostics: the first few mouse events after a resume are logged (logcat tag QM). */
+    private var trace = 0
+    private fun traceMouse(what: String, state: Int, action: Int, x: Float, y: Float, relative: Boolean) {
+        if (trace <= 0) return
+        trace--
+        android.util.Log.w("QM", "mouse $what state=$state action=$action x=$x y=$y relative=$relative")
+    }
 
     fun sendKey(key: Int, scancode: Int, action: Int, mods: Int) {
         if (!sdl) return CallbackBridge.sendKey(key, scancode, action, mods)
@@ -53,6 +64,7 @@ object NativeBridge {
         if (relative && !wasRelative) { lastX = fx; lastY = fy }
         wasRelative = relative
         // Mouse-look wants deltas; menus want the absolute position.
+        traceMouse("move", mouseState, MotionEvent.ACTION_MOVE, fx, fy, relative)
         if (relative) SDLActivity.onNativeMouse(mouseState, MotionEvent.ACTION_MOVE, fx - lastX, fy - lastY, true)
         else SDLActivity.onNativeMouse(mouseState, MotionEvent.ACTION_MOVE, fx, fy, false)
         lastX = fx; lastY = fy
@@ -67,6 +79,7 @@ object NativeBridge {
         }
         mouseState = if (action == Glfw.RELEASE) mouseState and bit.inv() else mouseState or bit
         val relative = QuantuSdlInput.isRelativeMouse()
+        traceMouse("button", mouseState, if (action == Glfw.RELEASE) MotionEvent.ACTION_UP else MotionEvent.ACTION_DOWN, lastX, lastY, relative)
         SDLActivity.onNativeMouse(
             mouseState,
             if (action == Glfw.RELEASE) MotionEvent.ACTION_UP else MotionEvent.ACTION_DOWN,

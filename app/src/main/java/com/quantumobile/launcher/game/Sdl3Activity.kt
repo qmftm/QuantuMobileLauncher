@@ -51,6 +51,7 @@ class Sdl3Activity : SDLActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
+        android.util.Log.w("QM", "window focus=$hasFocus")
         if (hasFocus) hideSystemBars()
     }
 

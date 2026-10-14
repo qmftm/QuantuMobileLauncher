@@ -62,6 +62,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         override fun run() {
             val now = NativeBridge.isCursorGrabbed()
             if (now != grabbed) {
+                android.util.Log.w("QM", "grabbed $grabbed -> $now")
                 releaseAll()
                 grabbed = now
                 if (now) {
