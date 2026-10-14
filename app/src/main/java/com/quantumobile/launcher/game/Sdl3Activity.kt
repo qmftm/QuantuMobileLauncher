@@ -35,6 +35,12 @@ class Sdl3Activity : SDLActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         if (launch == null) { finish(); return }
         addControls()
+        // With predictive back the key event never arrives: take the gesture/button ourselves and send Escape.
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
+                NativeBridge.tapKey(Glfw.KEY_ESCAPE)
+            }
+        }
         hideSystemBars()
         // The bars come back whenever the keyboard closes or the window regains focus: hide them again each time.
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { v, insets ->
@@ -89,6 +95,9 @@ class Sdl3Activity : SDLActivity() {
         }
         return super.dispatchKeyEvent(event)
     }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onBackPressed() { NativeBridge.tapKey(Glfw.KEY_ESCAPE) }
 
     override fun onResume() {
         super.onResume()
