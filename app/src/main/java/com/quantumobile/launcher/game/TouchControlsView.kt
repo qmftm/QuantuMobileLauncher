@@ -123,7 +123,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     override fun onDraw(canvas: Canvas) {
         val alpha = (opacity * 255).toInt()
         if (alpha == 0) return
-                for (b in buttons) {
+        for (b in buttons) {
             if (!visible(b)) continue
             fill.color = if (b.pressed || (b.kind == ControlKind.MOUSE_MODE && pointerMode)) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)
             canvas.drawRoundRect(b.rect, b.rect.cornerRadius(), b.rect.cornerRadius(), fill)
