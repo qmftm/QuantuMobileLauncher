@@ -11,6 +11,55 @@ index 3e61b8a..7cdfc0f 100644
  static bool SDL_MainIsReady = false;
  #else
  static bool SDL_MainIsReady = true;
+diff --git a/src/core/android/SDL_android.c b/src/core/android/SDL_android.c
+index c4f517d..ac0231f 100644
+--- a/src/core/android/SDL_android.c
++++ b/src/core/android/SDL_android.c
+@@ -1261,6 +1261,7 @@ JNIEXPORT void JNICALL SDL_JAVA_CONTROLLER_INTERFACE(nativeRemoveHaptic)(
+ // Called from surfaceCreated()
+ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeSurfaceCreated)(JNIEnv *env, jclass jcls)
+ {
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM life surfaceCreated");
+     SDL_LockMutex(Android_ActivityMutex);
+ 
+     if (Android_Window) {
+@@ -1279,6 +1280,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeSurfaceCreated)(JNIEnv *env, j
+ // Called from surfaceChanged()
+ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeSurfaceChanged)(JNIEnv *env, jclass jcls)
+ {
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM life surfaceChanged");
+     SDL_LockMutex(Android_ActivityMutex);
+ 
+ #ifdef SDL_VIDEO_OPENGL_EGL
+@@ -1307,6 +1309,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeSurfaceChanged)(JNIEnv *env, j
+ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeSurfaceDestroyed)(JNIEnv *env, jclass jcls)
+ {
+     int nb_attempt = 50;
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM life surfaceDestroyed");
+ 
+ retry:
+ 
+@@ -1363,6 +1366,12 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeKeyDown)(
+ {
+     SDL_LockMutex(Android_ActivityMutex);
+ 
++    {
++        static int n;
++        if (n++ < 3 || n % 200 == 0) {
++            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM input key %d window=%p kbdfocus=%p inputfocus=%d", (int)keycode, (void *)Android_Window, (void *)SDL_GetKeyboardFocus(), Android_Window ? (Android_Window->flags & SDL_WINDOW_INPUT_FOCUS) != 0 : 0);
++        }
++    }
+     if (Android_Window) {
+         Android_OnKeyDown(keycode);
+     }
+@@ -1581,6 +1590,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeFocusChanged)(
+ {
+     SDL_LockMutex(Android_ActivityMutex);
+ 
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM life focusChanged=%d window=%p flags=0x%llx", (int)hasFocus, (void *)Android_Window, Android_Window ? (unsigned long long)Android_Window->flags : 0ULL);
+     if (Android_Window) {
+         __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "nativeFocusChanged()");
+         SDL_SendWindowEvent(Android_Window, (hasFocus ? SDL_EVENT_WINDOW_FOCUS_GAINED : SDL_EVENT_WINDOW_FOCUS_LOST), 0, 0);
 diff --git a/src/video/SDL_egl.c b/src/video/SDL_egl.c
 index e26d31c..3107cfc 100644
 --- a/src/video/SDL_egl.c
@@ -45,6 +94,26 @@ index e26d31c..3107cfc 100644
          return SDL_EGL_SetError("unable to show color buffer in an OS-native window", "eglSwapBuffers");
      }
      return true;
+diff --git a/src/video/android/SDL_androidevents.c b/src/video/android/SDL_androidevents.c
+index 4bdd717..1269d90 100644
+--- a/src/video/android/SDL_androidevents.c
++++ b/src/video/android/SDL_androidevents.c
+@@ -112,6 +112,7 @@ static void Android_ResumeAudio(void)
+ 
+ static void Android_OnPause(void)
+ {
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM life OnPause (pumped by game thread)");
+     SDL_OnApplicationWillEnterBackground();
+     SDL_OnApplicationDidEnterBackground();
+ 
+@@ -138,6 +139,7 @@ static void Android_OnPause(void)
+ 
+ static void Android_OnResume(void)
+ {
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM life OnResume (pumped by game thread)");
+     Android_Paused = false;
+ 
+     SDL_OnApplicationWillEnterForeground();
 diff --git a/src/video/android/SDL_androidwindow.c b/src/video/android/SDL_androidwindow.c
 index 4652b5f..0437b75 100644
 --- a/src/video/android/SDL_androidwindow.c
