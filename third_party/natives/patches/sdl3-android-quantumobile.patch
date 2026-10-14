@@ -46,18 +46,19 @@ index e26d31c..3107cfc 100644
      }
      return true;
 diff --git a/src/video/android/SDL_androidwindow.c b/src/video/android/SDL_androidwindow.c
-index 4652b5f..c130941 100644
+index 4652b5f..0437b75 100644
 --- a/src/video/android/SDL_androidwindow.c
 +++ b/src/video/android/SDL_androidwindow.c
-@@ -45,8 +45,27 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
+@@ -45,8 +45,28 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
          return false;
      }
  
 -    if (Android_Window) {
 -        result = SDL_SetError("Android only supports one window");
-+    if (Android_Window || (window->flags & SDL_WINDOW_HIDDEN)) {
-+        // QuantuMobile: Minecraft 26.x opens two hidden helper windows (GL utility/test) before its real one. Only a visible
-+        // window may take the activity's screen surface; hidden ones and any further window get their own off-screen surface.
++    if (Android_Window || (window->flags & SDL_WINDOW_NOT_FOCUSABLE)) {
++        // QuantuMobile: Minecraft 26.x opens two helper windows (GL utility/test; flags NOT_FOCUSABLE|HIDDEN) before its real
++        // window, which is also created HIDDEN and shown later. Only a focusable window may take the activity's screen
++        // surface; helper windows and any further window get their own off-screen surface.
 +        data = (SDL_WindowData *)SDL_calloc(1, sizeof(*data));
 +        if (!data) {
 +            result = false;
@@ -79,7 +80,7 @@ index 4652b5f..c130941 100644
          goto endfunction;
      }
  
-@@ -97,6 +116,7 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
+@@ -97,6 +117,7 @@ bool Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Proper
  
      window->internal = data;
      Android_Window = window;
@@ -87,7 +88,7 @@ index 4652b5f..c130941 100644
  
  endfunction:
  
-@@ -178,8 +198,10 @@ void Android_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
+@@ -178,8 +199,10 @@ void Android_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
  {
      Android_LockActivityMutex();
  
