@@ -94,6 +94,30 @@ index e26d31c..3107cfc 100644
          return SDL_EGL_SetError("unable to show color buffer in an OS-native window", "eglSwapBuffers");
      }
      return true;
+diff --git a/src/video/SDL_video.c b/src/video/SDL_video.c
+index ce942bf..5970b63 100644
+--- a/src/video/SDL_video.c
++++ b/src/video/SDL_video.c
+@@ -6236,8 +6236,19 @@ void SDL_OnApplicationDidEnterForeground(void)
+ 
+     if (_this) {
+         SDL_Window *window;
++#ifdef SDL_PLATFORM_ANDROID
++        // QuantuMobile: the game opens several windows but only one owns the screen; keyboard focus must go back to
++        // that one (the loop below would otherwise leave it on the last window of the list, an off-screen helper).
++        extern SDL_Window *Android_Window;
++#endif
+         for (window = _this->windows; window; window = window->next) {
++#ifdef SDL_PLATFORM_ANDROID
++            if (window == Android_Window) {
++                SDL_SetKeyboardFocus(window);
++            }
++#else
+             SDL_SetKeyboardFocus(window);
++#endif
+             SDL_SendWindowEvent(window, SDL_EVENT_WINDOW_RESTORED, 0, 0);
+         }
+     }
 diff --git a/src/video/android/SDL_androidevents.c b/src/video/android/SDL_androidevents.c
 index 4bdd717..1269d90 100644
 --- a/src/video/android/SDL_androidevents.c
