@@ -137,6 +137,13 @@ class ControlLayoutStore(private val file: File) {
             // 11: Mouse is a small labelled button again (the on-screen cursor became a PC arrow); hotbar arrows follow it.
             list = list.map { b -> if (b.id in setOf("mouse", "hot_next", "hot_prev")) defaults.firstOrNull { it.id == b.id } ?: b else b }
         }
+        if (from < 12) {
+            // 12: wider top-row buttons and smaller gaps: default buttons take the new positions and widths.
+            list = list.map { b ->
+                val d = defaults.firstOrNull { it.id == b.id } ?: return@map b
+                b.copy(fromRight = d.fromRight, fromBottom = d.fromBottom, centerX = d.centerX, x = d.x, y = d.y, aspect = d.aspect)
+            }
+        }
         return list
     }
 
@@ -152,13 +159,13 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 11
+        private const val VERSION = 12
         private const val MS = 30f // height of the Mouse button
 
-        private const val M = 3f // margin / gap between buttons
+        private const val M = 2f // margin / gap between buttons
         private const val U = 50f // square button
         private const val TH = 36f // height of the wide top-row buttons
-        private const val TA = 1.6f // their width / height
+        private const val TA = 2.0f // their width / height
 
         /**
          * Arranged like PojavLauncher's default control map: Debug / Chat / Keyboard / Tab on the top row with the
