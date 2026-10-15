@@ -116,7 +116,9 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
 
     /** The "Mouse" button: menus get a visible cursor moved by dragging, and a tap clicks where the cursor is. */
     private var pointerMode = false
-    private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * density; color = Color.WHITE }
+    private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.2f * density; color = Color.BLACK; strokeJoin = Paint.Join.MITER }
+    private val cursorFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.WHITE }
+    private val cursorArrow = android.graphics.Path()
 
     private fun visible(b: Button) =
         if (controlsHidden) b.kind == ControlKind.HIDE else true
@@ -130,15 +132,28 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
             canvas.drawRoundRect(b.rect, b.rect.cornerRadius(), b.rect.cornerRadius(), fill)
             text.alpha = (alpha + 80).coerceAtMost(255)
             if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, if (b.kind == ControlKind.HIDE && controlsHidden) "@eyeoff" else b.label, b.rect, density, iconPaint)
-            else canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)
+            else {
+                // Shrink the text a little when the label is wider than the button.
+                val fit = (b.rect.width() * 0.84f / text.measureText(b.label)).coerceAtMost(1f)
+                val size = text.textSize
+                text.textSize = size * fit
+                canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)
+                text.textSize = size
+            }
         }
         if (pointerMode && !grabbed && !controlsHidden) {
             val cx = (cursorX / framebufferScale).toFloat()
             val cy = (cursorY / framebufferScale).toFloat()
-            val r = 9 * density
-            canvas.drawCircle(cx, cy, r, cursorPaint)
-            canvas.drawLine(cx - r * 1.6f, cy, cx + r * 1.6f, cy, cursorPaint)
-            canvas.drawLine(cx, cy - r * 1.6f, cx, cy + r * 1.6f, cursorPaint)
+            // A PC-style arrow pointer: the tip is the click position.
+            val u = density * 1.25f
+            val arrow = cursorArrow
+            arrow.reset()
+            arrow.moveTo(cx, cy)
+            arrow.lineTo(cx, cy + 16 * u); arrow.lineTo(cx + 4 * u, cy + 12.5f * u); arrow.lineTo(cx + 7 * u, cy + 19 * u)
+            arrow.lineTo(cx + 9.8f * u, cy + 17.8f * u); arrow.lineTo(cx + 6.8f * u, cy + 11.4f * u); arrow.lineTo(cx + 11.5f * u, cy + 11.4f * u)
+            arrow.close()
+            canvas.drawPath(arrow, cursorFill)
+            canvas.drawPath(arrow, cursorPaint)
         }
     }
 

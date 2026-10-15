@@ -133,6 +133,10 @@ class ControlLayoutStore(private val file: File) {
                 b.copy(fromRight = d.fromRight, fromBottom = d.fromBottom, centerX = d.centerX, x = d.x, y = d.y)
             }
         }
+        if (from < 11) {
+            // 11: Mouse is a small labelled button again (the on-screen cursor became a PC arrow); hotbar arrows follow it.
+            list = list.map { b -> if (b.id in setOf("mouse", "hot_next", "hot_prev")) defaults.firstOrNull { it.id == b.id } ?: b else b }
+        }
         return list
     }
 
@@ -148,8 +152,8 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 10
-        private const val MS = 30f // the Mouse (pointer icon) button
+        private const val VERSION = 11
+        private const val MS = 30f // height of the Mouse button
 
         private const val M = 3f // margin / gap between buttons
         private const val U = 50f // square button
@@ -172,9 +176,9 @@ class ControlLayoutStore(private val file: File) {
             // Top centre: the small GUI (hide/show all buttons) eye
             ControlSpec("hide", "@eye", ControlKind.HIDE, showInMenus = true, centerX = true, x = 0f, y = 2f, size = 34f),
             // Top right: Mouse on/off at the far end, hotbar scroll next to it
-            ControlSpec("mouse", "@mouse", ControlKind.MOUSE_MODE, showInMenus = true, fromRight = true, x = M, y = M, size = MS),
-            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + MS, y = M, size = TH),
-            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = 3 * M + MS + TH, y = M, size = TH),
+            ControlSpec("mouse", "Mouse", ControlKind.MOUSE_MODE, showInMenus = true, fromRight = true, x = M, y = M, size = MS, aspect = TA),
+            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + MS * TA, y = M, size = TH),
+            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = 3 * M + MS * TA + TH, y = M, size = TH),
             // WASD cross (bottom-left) with F and Q flanking S on the bottom row; Ctrl and Inventory flank W
             key("sprint", "Ctrl", Glfw.KEY_LEFT_CONTROL, M, 3 * M + 2 * U, bottom = true, toggle = true),
             key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true, menus = true),

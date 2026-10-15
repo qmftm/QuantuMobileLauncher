@@ -7,7 +7,7 @@ import android.graphics.RectF
 
 /**
  * Tiny drawn icons for buttons whose label starts with `@` (so they never depend on a font having the glyph):
- * `@shift` is a hollow up triangle, `@space` (jump) a filled one, `@eye`/`@eyeoff` the open/closed GUI eye, `@mouse` the ring-and-crosshair cursor.
+ * `@shift` is a hollow diamond, `@space` (jump) a filled one, `@eye`/`@eyeoff` the open/closed GUI eye.
  */
 internal object ControlIcons {
     fun isIcon(label: String) = label.startsWith("@")
@@ -17,13 +17,14 @@ internal object ControlIcons {
         val s = minOf(r.width(), r.height()) * 0.2f // leaves a generous margin inside the button
         val old = paint.style; val oldW = paint.strokeWidth; val oldJoin = paint.strokeJoin; val oldCap = paint.strokeCap
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 2.5f * density
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.strokeCap = Paint.Cap.ROUND
+        paint.strokeWidth = 2f * density
+        paint.strokeJoin = Paint.Join.MITER
+        paint.strokeCap = Paint.Cap.BUTT
         val path = Path()
         when (label) {
-            "@shift", "@space" -> { // sneak: hollow up triangle, jump: filled up triangle
-                path.moveTo(cx, cy - s); path.lineTo(cx + s * 1.15f, cy + s * 0.85f); path.lineTo(cx - s * 1.15f, cy + s * 0.85f); path.close()
+            "@shift", "@space" -> { // sneak: hollow diamond (a square turned 45 degrees), jump: filled diamond
+                val d = s * 1.15f
+                path.moveTo(cx, cy - d); path.lineTo(cx + d, cy); path.lineTo(cx, cy + d); path.lineTo(cx - d, cy); path.close()
                 if (label == "@space") paint.style = Paint.Style.FILL_AND_STROKE
             }
             "@eye", "@eyeoff" -> {
@@ -35,12 +36,6 @@ internal object ControlIcons {
                 else { // closed: lashes-free lid line plus a slash
                     path.moveTo(cx - w, cy + s * 0.9f); path.lineTo(cx + w, cy - s * 0.9f)
                 }
-            }
-            "@mouse" -> { // the same ring-and-crosshair cursor that is drawn in the game while Mouse mode is on
-                val r = s * 1.0f
-                path.addCircle(cx, cy, r, Path.Direction.CW)
-                path.moveTo(cx - r * 1.6f, cy); path.lineTo(cx + r * 1.6f, cy)
-                path.moveTo(cx, cy - r * 1.6f); path.lineTo(cx, cy + r * 1.6f)
             }
         }
         canvas.drawPath(path, paint)
