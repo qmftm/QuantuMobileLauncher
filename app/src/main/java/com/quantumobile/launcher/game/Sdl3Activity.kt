@@ -81,11 +81,17 @@ class Sdl3Activity : SDLActivity() {
         }
     }
 
+    /**
+     * The "Key" button. Typing has to go through SDL's own hidden text field (it owns the input connection that turns
+     * typed characters into SDL text events); showing the IME on the bare game surface gives it nothing to type into.
+     */
     private fun toggleKeyboard() {
-        mSurface?.let {
-            it.requestFocus()
-            getSystemService(InputMethodManager::class.java).showSoftInput(it, InputMethodManager.SHOW_FORCED)
-        }
+        val imm = getSystemService(InputMethodManager::class.java)
+        val shown = androidx.core.view.ViewCompat.getRootWindowInsets(window.decorView)
+            ?.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime()) == true
+        android.util.Log.w("QM", "keyboard button: ime shown=$shown")
+        if (shown) imm.hideSoftInputFromWindow(window.decorView.windowToken, 0)
+        else showTextInput(android.text.InputType.TYPE_CLASS_TEXT, 0, 0, 1, 1)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
