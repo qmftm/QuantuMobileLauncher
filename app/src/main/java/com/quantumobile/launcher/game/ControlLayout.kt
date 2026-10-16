@@ -144,6 +144,13 @@ class ControlLayoutStore(private val file: File) {
                 b.copy(fromRight = d.fromRight, fromBottom = d.fromBottom, centerX = d.centerX, x = d.x, y = d.y, aspect = d.aspect)
             }
         }
+        if (from < 13) {
+            // 13: the Mouse button is half its former size; the hotbar arrows next to it follow.
+            list = list.map { b ->
+                val d = defaults.firstOrNull { it.id == b.id }?.takeIf { it.id in setOf("mouse", "hot_next", "hot_prev") } ?: return@map b
+                b.copy(x = d.x, y = d.y, size = d.size, aspect = d.aspect)
+            }
+        }
         return list
     }
 
@@ -159,8 +166,8 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 12
-        private const val MS = 30f // height of the Mouse button
+        private const val VERSION = 13
+        private const val MS = 16f // height of the Mouse button
 
         private const val M = 2f // margin / gap between buttons
         private const val U = 50f // square button
