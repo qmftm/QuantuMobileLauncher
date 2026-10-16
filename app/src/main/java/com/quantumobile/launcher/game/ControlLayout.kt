@@ -151,6 +151,17 @@ class ControlLayoutStore(private val file: File) {
                 b.copy(x = d.x, y = d.y, size = d.size, aspect = d.aspect)
             }
         }
+        if (from < 14) {
+            // 14: Mouse button back to its earlier size (it was the on-screen pointer that should shrink); gaps halved.
+            list = list.map { b ->
+                val d = defaults.firstOrNull { it.id == b.id } ?: return@map b
+                val resized = b.id in setOf("mouse", "hot_next", "hot_prev")
+                b.copy(
+                    fromRight = d.fromRight, fromBottom = d.fromBottom, centerX = d.centerX, x = d.x, y = d.y,
+                    size = if (resized) d.size else b.size, aspect = if (resized) d.aspect else b.aspect,
+                )
+            }
+        }
         return list
     }
 
@@ -166,10 +177,10 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 13
-        private const val MS = 16f // height of the Mouse button
+        private const val VERSION = 14
+        private const val MS = 30f // height of the Mouse button
 
-        private const val M = 2f // margin / gap between buttons
+        private const val M = 1f // margin / gap between buttons
         private const val U = 50f // square button
         private const val TH = 36f // height of the wide top-row buttons
         private const val TA = 2.0f // their width / height

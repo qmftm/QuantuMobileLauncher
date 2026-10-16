@@ -13,8 +13,8 @@ android {
         applicationId = "com.quantumobile.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 45
-        versionName = "0.9.3"
+        versionCode = 46
+        versionName = "0.10.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")

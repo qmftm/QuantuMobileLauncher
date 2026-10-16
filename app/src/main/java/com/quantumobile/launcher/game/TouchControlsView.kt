@@ -145,7 +145,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
             val cx = (cursorX / framebufferScale).toFloat()
             val cy = (cursorY / framebufferScale).toFloat()
             // A PC-style arrow pointer: the tip is the click position.
-            val u = density * 1.25f
+            val u = density * 0.63f
             val arrow = cursorArrow
             arrow.reset()
             arrow.moveTo(cx, cy)
