@@ -114,7 +114,9 @@ class LaunchPreparer(private val app: QuantumApp) {
                 runCatching {
                     val agent = File(paths.internalRoot, "qm-debug-agent.jar")
                     app.assets.open("qm-debug-agent.jar").use { src -> agent.outputStream().use { src.copyTo(it) } }
-                    add("-javaagent:${agent.absolutePath}")
+                    // The agent also fixes SRV server-address lookups (Android has no resolv.conf): it needs the name servers.
+                    val dns = dnsServers(app)
+                    add("-javaagent:${agent.absolutePath}" + if (dns.isNotEmpty()) "=dns=${dns.joinToString(",")}" else "")
                 }
                 nativesDir?.let {
                     add("-Dorg.lwjgl.openal.libname=${File(it, "libopenal.so").absolutePath}")
@@ -301,4 +303,13 @@ class LaunchPreparer(private val app: QuantumApp) {
             return out
         }
     }
+
+    /** The device's current DNS servers (IPv4 first), for lookups the JVM cannot do itself. */
+    private fun dnsServers(context: android.content.Context): List<String> = runCatching {
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
+        val net = cm.activeNetwork ?: return@runCatching emptyList<String>()
+        val all = cm.getLinkProperties(net)?.dnsServers.orEmpty()
+        (all.filterIsInstance<java.net.Inet4Address>() + all.filterIsInstance<java.net.Inet6Address>())
+            .mapNotNull { it.hostAddress?.substringBefore('%') }
+    }.getOrDefault(emptyList())
 }

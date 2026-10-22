@@ -2,11 +2,17 @@ import java.lang.instrument.Instrumentation;
 import java.util.Map;
 
 /**
- * Diagnostic java agent: prints the stack of every thread (Render thread first) a few times after start, to the game
+ * Launcher java agent. Fixes SRV server-address lookups (QmSrvPatch) and prints the stack of every thread (Render thread first) a few times after start, to the game
  * log, so a black screen can be told apart from a hung render thread. Built by tools/debug-agent/build.sh.
  */
 public final class QmDebugAgent {
     public static void premain(String args, Instrumentation inst) {
+        // Server-address SRV lookups (see QmSrvPatch): Android has no resolv.conf, so the game's own lookup never works.
+        try {
+            QmSrvPatch.install(args, inst);
+        } catch (Throwable t) {
+            System.out.println("[qm-srv] not installed: " + t);
+        }
         Thread t = new Thread(() -> {
             long[] waits = {20000, 20000, 30000};
             for (long w : waits) {
