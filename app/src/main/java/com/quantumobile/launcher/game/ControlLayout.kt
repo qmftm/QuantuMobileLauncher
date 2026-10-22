@@ -162,6 +162,17 @@ class ControlLayoutStore(private val file: File) {
                 )
             }
         }
+        if (from < 15) {
+            // 15: every top-row button is the same height (Mouse, gear, hotbar arrows included) and the click / jump buttons are one size.
+            val resized = setOf("hide", "mouse", "hot_next", "hot_prev", "attack", "use", "jump")
+            list = list.map { b ->
+                val d = defaults.firstOrNull { it.id == b.id } ?: return@map b
+                b.copy(
+                    fromRight = d.fromRight, fromBottom = d.fromBottom, centerX = d.centerX, x = d.x, y = d.y,
+                    size = if (b.id in resized) d.size else b.size, aspect = if (b.id in resized) d.aspect else b.aspect,
+                )
+            }
+        }
         return list
     }
 
@@ -177,8 +188,7 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 14
-        private const val MS = 30f // height of the Mouse button
+        private const val VERSION = 15
 
         private const val M = 1f // margin / gap between buttons
         private const val U = 50f // square button
@@ -199,11 +209,11 @@ class ControlLayoutStore(private val file: File) {
             key("tab", "Tab", Glfw.KEY_TAB, M, 2 * M + TH, size = TH, aspect = TA),
             key("view", "3rd", Glfw.KEY_F5, 2 * M + TH * TA, 2 * M + TH, size = TH, aspect = TA),
             // Top centre: the small GUI (hide/show all buttons) eye
-            ControlSpec("hide", "@eye", ControlKind.HIDE, showInMenus = true, centerX = true, x = 0f, y = 2f, size = 34f),
+            ControlSpec("hide", "@eye", ControlKind.HIDE, showInMenus = true, centerX = true, x = 0f, y = M, size = TH),
             // Top right: Mouse on/off at the far end, hotbar scroll next to it
-            ControlSpec("mouse", "Mouse", ControlKind.MOUSE_MODE, showInMenus = true, fromRight = true, x = M, y = M, size = MS, aspect = TA),
-            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + MS * TA, y = M, size = TH),
-            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = 3 * M + MS * TA + TH, y = M, size = TH),
+            ControlSpec("mouse", "Mouse", ControlKind.MOUSE_MODE, showInMenus = true, fromRight = true, x = M, y = M, size = TH, aspect = TA),
+            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + TH * TA, y = M, size = TH),
+            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = 3 * M + TH * TA + TH, y = M, size = TH),
             // WASD cross (bottom-left) with F and Q flanking S on the bottom row; Ctrl and Inventory flank W
             key("sprint", "Ctrl", Glfw.KEY_LEFT_CONTROL, M, 3 * M + 2 * U, bottom = true, toggle = true),
             key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true, menus = true),
@@ -215,9 +225,9 @@ class ControlLayoutStore(private val file: File) {
             key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true, menus = true),
             key("drop", "Q", Glfw.KEY_Q, 3 * M + 2 * U, M, bottom = true),
             // Right side, one cell up from the bottom: left click, Space, right click in one row (Space in the middle)
-            ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromRight = true, fromBottom = true, x = 3 * M + 2 * U, y = 2 * M + U),
+            ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromRight = true, fromBottom = true, x = 3 * M + 2 * U, y = 2 * M + U, size = U),
             key("jump", "@space", Glfw.KEY_SPACE, 2 * M + U, 2 * M + U, right = true, bottom = true, menus = true),
-            ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, showInMenus = true, fromRight = true, fromBottom = true, x = M, y = 2 * M + U),
+            ControlSpec("use", "SEC", ControlKind.MOUSE, Glfw.MOUSE_RIGHT, showInMenus = true, fromRight = true, fromBottom = true, x = M, y = 2 * M + U, size = U),
         )
 
         private fun key(
