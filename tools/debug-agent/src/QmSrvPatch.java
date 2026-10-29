@@ -20,6 +20,7 @@ final class QmSrvPatch {
 
     static void install(String args, Instrumentation inst) {
         QmSrvRedirect.configure(args);
+        System.getProperties().put(QmSrvRedirect.FACTORY_KEY, (java.util.function.Function<Class<?>, Object>) QmSrvRedirect::create);
         inst.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(ClassLoader loader, String name, Class<?> redefined, ProtectionDomain pd, byte[] bytes) {
@@ -39,11 +40,19 @@ final class QmSrvPatch {
     static byte[] patch(byte[] bytes) {
         ClassFile cf = ClassFile.of();
         ClassDesc handler = ClassDesc.of(TARGET.replace('/', '.'));
-        ClassDesc redirect = ClassDesc.of("QmSrvRedirect");
+        ClassDesc object = ClassDesc.of("java.lang.Object");
+        ClassDesc function = ClassDesc.of("java.util.function.Function");
+        ClassDesc props = ClassDesc.of("java.util.Properties");
+        // The game's class loader (Fabric's Knot) cannot see the agent's classes, so the new body only touches JDK types:
+        // it fetches a java.util.function.Function the agent stored in the system properties and asks it for the handler.
         CodeTransform drop = (builder, element) -> { };
         CodeTransform replaceBody = drop.andThen(CodeTransform.endHandler(b -> b
+                .invokestatic(ClassDesc.of("java.lang.System"), "getProperties", MethodTypeDesc.of(props))
+                .ldc(QmSrvRedirect.FACTORY_KEY)
+                .invokevirtual(props, "get", MethodTypeDesc.of(object, object))
+                .checkcast(function)
                 .ldc(handler)
-                .invokestatic(redirect, "create", MethodTypeDesc.of(ClassDesc.of("java.lang.Object"), ClassDesc.of("java.lang.Class")))
+                .invokeinterface(function, "apply", MethodTypeDesc.of(object, object))
                 .checkcast(handler)
                 .areturn()));
         return cf.transformClass(cf.parse(bytes), ClassTransform.transformingMethodBodies(

@@ -10,6 +10,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** The replacement SRV handler (see [QmSrvPatch]): a hand-rolled DNS SRV query over UDP. */
 public final class QmSrvRedirect {
+    static final String FACTORY_KEY = "qm.srv.factory";
+
     private static volatile List<String> servers = List.of("1.1.1.1", "8.8.8.8");
 
     static void configure(String args) {
@@ -30,6 +32,16 @@ public final class QmSrvRedirect {
 
     /** Called from the rewritten ServerRedirectHandler.createDnsSrvRedirectHandler(). */
     public static Object create(Class<?> iface) {
+        try {
+            return build(iface);
+        } catch (Throwable t) {
+            // Never break the game's own server-address resolution: fall back to "no redirect".
+            System.out.println("[qm-srv] handler failed, SRV lookups disabled: " + t);
+            try { return iface.getField("EMPTY").get(null); } catch (Throwable e) { throw new IllegalStateException(e); }
+        }
+    }
+
+    private static Object build(Class<?> iface) {
         return Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[]{iface}, (proxy, method, args) -> {
             if (!method.getName().equals("lookupRedirect")) {
                 switch (method.getName()) {
@@ -65,9 +77,9 @@ public final class QmSrvRedirect {
     static Target lookup(String host) {
         byte[] query = buildQuery("_minecraft._tcp." + host);
         for (String server : servers) {
-            for (int attempt = 0; attempt < 2; attempt++) {
+            for (int attempt = 0; attempt < 1; attempt++) {
                 try (DatagramSocket socket = new DatagramSocket()) {
-                    socket.setSoTimeout(2500);
+                    socket.setSoTimeout(1500);
                     socket.send(new DatagramPacket(query, query.length, InetAddress.getByName(server), 53));
                     byte[] buf = new byte[1500];
                     DatagramPacket reply = new DatagramPacket(buf, buf.length);
