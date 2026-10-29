@@ -232,6 +232,7 @@
     <string name="controls_label">Label</string>
     <string name="controls_action">Key / action</string>
     <string name="controls_size">Size</string>
+    <string name="controls_repeat">Repeat while held (like Q to drop item after item)</string>
     <string name="controls_toggle">Toggle (tap on / tap off)</string>
     <string name="controls_in_menus">Show in menus too</string>
     <string name="controls_delete">Delete</string>

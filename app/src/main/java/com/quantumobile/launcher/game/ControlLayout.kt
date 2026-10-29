@@ -38,6 +38,8 @@ data class ControlSpec(
     val aspect: Float = 1f,
     /** Anchored to the horizontal centre of the screen: [x] is then an offset from the centre (dp), not from an edge. */
     val centerX: Boolean = false,
+    /** While held, the button keeps firing (after the first press) like a held key on a keyboard: Q drops item after item. */
+    val repeat: Boolean = false,
 ) {
     /** Every key (or mouse button) this button presses. */
     val allCodes: List<Int> get() = listOf(code) + extraKeys
@@ -173,6 +175,11 @@ class ControlLayoutStore(private val file: File) {
                 )
             }
         }
+        if (from < 16) {
+            // 16: Q, F and the hotbar arrows keep firing while held.
+            val repeating = setOf("swap", "drop", "hot_next", "hot_prev")
+            list = list.map { b -> if (b.id in repeating) b.copy(repeat = true) else b }
+        }
         return list
     }
 
@@ -188,7 +195,7 @@ class ControlLayoutStore(private val file: File) {
     companion object {
         fun forContext(context: android.content.Context) = ControlLayoutStore(File(context.filesDir, "controls.json"))
 
-        private const val VERSION = 15
+        private const val VERSION = 16
 
         private const val M = 1f // margin / gap between buttons
         private const val U = 50f // square button
@@ -212,18 +219,18 @@ class ControlLayoutStore(private val file: File) {
             ControlSpec("hide", "@eye", ControlKind.HIDE, showInMenus = true, centerX = true, x = 0f, y = M, size = TH),
             // Top right: Mouse on/off at the far end, hotbar scroll next to it
             ControlSpec("mouse", "Mouse", ControlKind.MOUSE_MODE, showInMenus = true, fromRight = true, x = M, y = M, size = TH, aspect = TA),
-            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + TH * TA, y = M, size = TH),
-            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = 3 * M + TH * TA + TH, y = M, size = TH),
+            ControlSpec("hot_next", "▶", ControlKind.SCROLL_DOWN, fromRight = true, x = 2 * M + TH * TA, y = M, size = TH, repeat = true),
+            ControlSpec("hot_prev", "◀", ControlKind.SCROLL_UP, fromRight = true, x = 3 * M + TH * TA + TH, y = M, size = TH, repeat = true),
             // WASD cross (bottom-left) with F and Q flanking S on the bottom row; Ctrl and Inventory flank W
             key("sprint", "Ctrl", Glfw.KEY_LEFT_CONTROL, M, 3 * M + 2 * U, bottom = true, toggle = true),
             key("w", "▲", Glfw.KEY_W, 2 * M + U, 3 * M + 2 * U, bottom = true, menus = true),
             key("inv", "Inv", Glfw.KEY_E, 3 * M + 2 * U, 3 * M + 2 * U, bottom = true, menus = true),
             key("a", "◀", Glfw.KEY_A, M, 2 * M + U, bottom = true, menus = true),
             key("d", "▶", Glfw.KEY_D, 3 * M + 2 * U, 2 * M + U, bottom = true, menus = true),
-            key("swap", "F", Glfw.KEY_F, M, M, bottom = true, menus = true),
+            key("swap", "F", Glfw.KEY_F, M, M, bottom = true, menus = true, repeat = true),
             key("sneak", "@shift", Glfw.KEY_LEFT_SHIFT, 2 * M + U, 2 * M + U, bottom = true, toggle = true, menus = true),
             key("s", "▼", Glfw.KEY_S, 2 * M + U, M, bottom = true, menus = true),
-            key("drop", "Q", Glfw.KEY_Q, 3 * M + 2 * U, M, bottom = true),
+            key("drop", "Q", Glfw.KEY_Q, 3 * M + 2 * U, M, bottom = true, repeat = true),
             // Right side, one cell up from the bottom: left click, Space, right click in one row (Space in the middle)
             ControlSpec("attack", "PRI", ControlKind.MOUSE, Glfw.MOUSE_LEFT, showInMenus = true, fromRight = true, fromBottom = true, x = 3 * M + 2 * U, y = 2 * M + U, size = U),
             key("jump", "@space", Glfw.KEY_SPACE, 2 * M + U, 2 * M + U, right = true, bottom = true, menus = true),
@@ -233,8 +240,8 @@ class ControlLayoutStore(private val file: File) {
         private fun key(
             id: String, label: String, code: Int, x: Float, y: Float,
             right: Boolean = false, bottom: Boolean = false, toggle: Boolean = false, menus: Boolean = false, size: Float = U,
-            aspect: Float = 1f,
-        ) = ControlSpec(id, label, ControlKind.KEY, code, toggle, menus, right, bottom, x, y, size, aspect = aspect)
+            aspect: Float = 1f, repeat: Boolean = false,
+        ) = ControlSpec(id, label, ControlKind.KEY, code, toggle, menus, right, bottom, x, y, size, aspect = aspect, repeat = repeat)
     }
 }
 

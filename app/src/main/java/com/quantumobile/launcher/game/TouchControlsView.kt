@@ -24,6 +24,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         val rect = RectF()
         var pressed = false
         var pointerId = -1
+        var repeater: Runnable? = null
         val kind get() = spec.kind
         val code get() = spec.code
         val toggle get() = spec.toggle
@@ -197,8 +198,11 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
                     NativeBridge.sendCursorPos(cursorX, cursorY)
                 }
             }
-            ControlKind.SCROLL_UP -> NativeBridge.sendScroll(0.0, 1.0)
-            ControlKind.SCROLL_DOWN -> NativeBridge.sendScroll(0.0, -1.0)
+            ControlKind.SCROLL_UP, ControlKind.SCROLL_DOWN -> {
+                b.pointerId = pointer
+                fireScroll(b)
+                startRepeat(b, pointer)
+            }
             ControlKind.KEY, ControlKind.MOUSE -> {
                 if (b.toggle) {
                     b.pressed = !b.pressed
@@ -208,11 +212,36 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
                 b.pressed = true
                 b.pointerId = pointer
                 send(b, Glfw.PRESS)
+                startRepeat(b, pointer)
             }
         }
     }
 
+    private fun fireScroll(b: Button) {
+        NativeBridge.sendScroll(0.0, if (b.kind == ControlKind.SCROLL_UP) 1.0 else -1.0)
+    }
+
+    /** A held "repeat" button fires again after a short delay and then at a steady rate, like a keyboard's auto-repeat. */
+    private fun startRepeat(b: Button, pointer: Int) {
+        if (!b.spec.repeat) return
+        val tick = object : Runnable {
+            override fun run() {
+                if (b.pointerId != pointer) return
+                if (b.kind == ControlKind.SCROLL_UP || b.kind == ControlKind.SCROLL_DOWN) fireScroll(b) else send(b, Glfw.PRESS)
+                postDelayed(this, REPEAT_MS)
+            }
+        }
+        b.repeater = tick
+        postDelayed(tick, REPEAT_DELAY_MS)
+    }
+
+    private fun stopRepeat(b: Button) {
+        b.repeater?.let { removeCallbacks(it) }
+        b.repeater = null
+    }
+
     private fun releaseButton(b: Button) {
+        stopRepeat(b)
         b.pointerId = -1
         if (b.toggle || !b.pressed) return
         b.pressed = false
@@ -231,6 +260,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     /** Releases every pressed on-screen button and the camera finger (used when the screen goes to the background). */
     fun releaseAll() {
         buttons.forEach { b ->
+            stopRepeat(b)
             if (b.pressed) send(b, Glfw.RELEASE)
             b.pressed = false
             b.pointerId = -1
@@ -293,6 +323,8 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
 
     companion object {
         private const val HOLD_MS = 300L
+        private const val REPEAT_DELAY_MS = 450L
+        private const val REPEAT_MS = 70L
     }
 }
 

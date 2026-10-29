@@ -232,6 +232,7 @@
     <string name="controls_label">이름</string>
     <string name="controls_action">키 / 동작</string>
     <string name="controls_size">크기</string>
+    <string name="controls_repeat">꾹 누르면 반복 (Q로 아이템을 계속 버리는 것처럼)</string>
     <string name="controls_toggle">토글 (누르면 켜짐 / 다시 누르면 꺼짐)</string>
     <string name="controls_in_menus">메뉴에서도 보이기</string>
     <string name="controls_delete">삭제</string>
