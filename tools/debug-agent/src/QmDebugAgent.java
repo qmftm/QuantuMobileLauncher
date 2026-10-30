@@ -13,6 +13,7 @@ public final class QmDebugAgent {
         } catch (Throwable t) {
             System.out.println("[qm-srv] not installed: " + t);
         }
+        QmNetProbe.start();
         Thread t = new Thread(() -> {
             long[] waits = {20000, 20000, 30000};
             for (long w : waits) {
