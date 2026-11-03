@@ -355,4 +355,8 @@ Run the AFK host on a PC to keep servers joined from there, even with the phone 
     <string name="afk_world_dawn">Dawn</string>
     <string name="afk_world_players">%1$d online: %2$s</string>
     <string name="afk_world_players_unknown">No player list yet</string>
+    <!-- AFK chat -->
+    <string name="afk_chat_hint">Chat or /command</string>
+    <string name="afk_chat_send">Send</string>
+    <string name="afk_chat_not_connected">The bot is not in the server</string>
 </resources>

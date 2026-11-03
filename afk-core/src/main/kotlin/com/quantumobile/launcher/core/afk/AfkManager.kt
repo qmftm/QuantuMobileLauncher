@@ -23,7 +23,7 @@ class AfkManager(
     /** Called with a server's list icon each time its bot pings it. */
     private val onServerIcon: (String, ByteArray) -> Unit = { _, _ -> },
 ) {
-    private class Running(val server: AfkServer, val job: Job, val token: Any)
+    private class Running(val server: AfkServer, val job: Job, val token: Any, val bot: AfkBot)
 
     private val running = mutableMapOf<String, Running>()
     private var started = false
@@ -45,6 +45,14 @@ class AfkManager(
     val worlds: StateFlow<Map<String, AfkWorldInfo>> get() = _worlds
 
     fun world(id: String) = _worlds.value[id]
+
+    /** Sends chat or a "/command" as server [id]'s bot. False when that bot is not in the world. */
+    fun sendChat(id: String, text: String): Boolean {
+        val bot = synchronized(this) { running[id]?.bot } ?: return false
+        if (!bot.send(text)) return false
+        addLog(id, AfkLogLine(clock(), AfkLogKind.INFO, "▶ ${text.trim()}"))
+        return true
+    }
 
     private val _statuses = MutableStateFlow<Map<String, AfkStatus>>(emptyMap())
     /** Status per server ID; servers that are off are missing (treat as [AfkStatus.OFF]). */
@@ -100,7 +108,7 @@ class AfkManager(
             )
             // Registered before it starts, so its first status update is not taken for a stale one.
             val job = scope.launch(start = CoroutineStart.LAZY) { bot.run() }
-            running[id] = Running(server, job, token)
+            running[id] = Running(server, job, token, bot)
             job.start()
         }
     }

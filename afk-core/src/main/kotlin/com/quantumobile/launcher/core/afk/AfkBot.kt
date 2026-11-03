@@ -33,6 +33,10 @@ class AfkBot(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private var status = AfkStatus.OFF
+    @Volatile private var sender: ((String) -> Boolean)? = null
+
+    /** Sends chat or a command through the live connection; false if not in the world. */
+    fun send(text: String): Boolean = sender?.invoke(text) ?: false
 
     private fun set(status: AfkStatus) {
         this.status = status
@@ -61,6 +65,8 @@ class AfkBot(
         override fun log(kind: AfkLogKind, text: String) = this@AfkBot.log(kind, text)
 
         override fun world(info: AfkWorldInfo) = onWorld(info)
+
+        override fun chatSender(send: ((String) -> Boolean)?) { sender = send }
     }
 
     suspend fun run() {

@@ -54,6 +54,11 @@ object TextComponent {
         val known = when (key) {
             "chat.type.text" -> "<${a(0)}> ${a(1)}"
             "chat.square_brackets" -> "[${a(0)}]"
+            "commands.list.players" -> "접속 중 ${a(0)}/${a(1)}명: ${a(2)}"
+            "commands.message.display.outgoing" -> "나 → ${a(0)}: ${a(1)}"
+            "chat.disabled.missingProfileKey", "chat.disabled.profile", "chat.disabled.options" ->
+                "이 서버는 서명된 채팅만 받아요 (명령어는 보낼 수 있어요)"
+            "multiplayer.disconnect.unsigned_chat" -> "서명이 없는 채팅이라 추방됐어요"
             "gameMode.changed" -> "게임 모드가 ${a(0)}(으)로 바뀌었어요"
             "gameMode.survival" -> "서바이벌"
             "gameMode.creative" -> "크리에이티브"

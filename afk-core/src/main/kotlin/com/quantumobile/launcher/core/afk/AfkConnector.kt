@@ -18,6 +18,9 @@ interface AfkEvents {
 
     /** The bot's surroundings changed (position, health, players…). */
     fun world(info: AfkWorldInfo) {}
+
+    /** While in the world, a way to send chat or "/commands" (returns false if it could not); null once disconnected. */
+    fun chatSender(send: ((String) -> Boolean)?) {}
 }
 
 /** How a connection ended. [retry] is false when reconnecting cannot help (unsupported version, wrong account type). */

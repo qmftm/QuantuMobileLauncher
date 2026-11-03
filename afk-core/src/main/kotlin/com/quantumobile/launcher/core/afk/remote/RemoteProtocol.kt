@@ -72,6 +72,7 @@ object Ops {
     const val REMOVE = "remove"
     const val ICON = "icon"
     const val LOGS = "logs"
+    const val CHAT = "chat"
 }
 
 @Serializable
@@ -85,6 +86,8 @@ data class RemoteRequest(
     val enabled: Boolean? = null,
     /** Base64 PNG for a picked custom icon. */
     val iconPng: String? = null,
+    /** [Ops.CHAT]: the chat line or "/command" to send. */
+    val text: String? = null,
     /** [Ops.LOGS]: only lines newer than this (epoch ms on the PC). */
     val since: Long? = null,
 )

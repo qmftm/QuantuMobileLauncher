@@ -39,6 +39,8 @@ class AfkClientTest {
         val icons = CopyOnWriteArrayList<ByteArray>()
         val logs = CopyOnWriteArrayList<String>()
         @Volatile var world: com.quantumobile.launcher.core.afk.AfkWorldInfo? = null
+        @Volatile var sender: ((String) -> Boolean)? = null
+        override fun chatSender(send: ((String) -> Boolean)?) { if (send != null) sender = send }
         override fun world(info: com.quantumobile.launcher.core.afk.AfkWorldInfo) { world = info }
         override fun log(kind: com.quantumobile.launcher.core.afk.AfkLogKind, text: String) { logs += "$kind $text" }
         override fun connected(version: String) { connected += version }
@@ -63,6 +65,8 @@ class AfkClientTest {
         val sneaks: MutableList<Boolean> = Collections.synchronizedList(mutableListOf())
         var respawned = false
         var serverHash: String? = null
+        /** Called once the bot is in the world, to make it send chat (from the test). */
+        @Volatile var sendFromBot: (() -> Unit)? = null
 
         fun start(statusOnly: Boolean = false) = thread(isDaemon = true) {
             try {
@@ -201,6 +205,34 @@ class AfkClientTest {
             c.send(PacketWriter(ids.playKeepAlive).long(9))
             assertEquals(9L, c.expect(ids.playKeepAliveOut).long()) // all of the above was read without breaking the stream
 
+            // 65 signed chat messages: the bot must acknowledge them (servers kick past 4096 unacknowledged).
+            repeat(65) {
+                val signed = PacketWriter(ids.playPlayerChat)
+                if (protocol >= 770) signed.varInt(it)
+                signed.uuid(UUID.randomUUID()).varInt(it).bool(true).raw(ByteArray(256)).string("spam $it").long(0).long(0).varInt(0).bool(false).varInt(0)
+                signed.varInt(1).raw(text("Alex")).bool(false)
+                c.send(signed)
+            }
+            assertEquals(65, c.expect(ids.playChatAckOut).varInt())
+
+            // Chat and commands typed in the app.
+            sendFromBot?.invoke()
+            val chat = c.expect(ids.playChatOut)
+            assertEquals("안녕하세요 server", chat.string()); chat.long(); chat.long()
+            assertFalse(chat.bool()) // no signature
+            assertEquals(0, chat.varInt()) // nothing left to acknowledge
+            chat.bytes(3); if (protocol >= 770) chat.byte()
+            assertEquals(0, chat.remaining)
+            val plugin = c.expect(ids.playCommandOut)
+            assertEquals("spawn", plugin.string())
+            if (protocol < 766) { plugin.long(); plugin.long(); assertEquals(0, plugin.varInt()); plugin.varInt(); plugin.bytes(3) }
+            assertEquals(0, plugin.remaining)
+            val msg = c.expect(if (protocol >= 766) ids.playSignedCommandOut else ids.playCommandOut)
+            assertEquals("msg Alex hi", msg.string()); msg.long(); msg.long()
+            assertEquals(0, msg.varInt()) // no argument signatures
+            msg.varInt(); msg.bytes(3); if (protocol >= 770) msg.byte()
+            assertEquals(0, msg.remaining)
+
             // Wait for one sneak press and release, answering keep-alives like a real server would.
             val deadline = System.currentTimeMillis() + 5_000
             while (!(sneaks.contains(true) && sneaks.lastOrNull() == false) && System.currentTimeMillis() < deadline) {
@@ -219,6 +251,11 @@ class AfkClientTest {
 
     private fun run(server: FakeServer, account: Account, joined: MutableList<String> = mutableListOf()): Pair<AfkDisconnect, Recorder> {
         val events = Recorder()
+        server.sendFromBot = {
+            val send = events.sender!!
+            assertTrue(send("안녕하세요 server")); assertTrue(send("/spawn")); assertTrue(send("/msg Alex hi"))
+            assertFalse(send("   ")) // nothing to send
+        }
         val client = AfkClient(session = { acc, hash -> joined += "${acc.username}:$hash" }, timing = fast)
         val result = runBlocking { withTimeout(20_000) { client.run("127.0.0.1", server.port, account, events) } }
         return result to events
@@ -300,7 +337,8 @@ class AfkClientTest {
 
     private fun assertChat(events: Recorder) {
         val chat = events.logs.filter { it.startsWith("CHAT ") }.map { it.removePrefix("CHAT ") }
-        assertEquals(listOf("Server restarting soon", "<Alex> hello there", "<Server> hi from console"), chat)
+        assertEquals(listOf("Server restarting soon", "<Alex> hello there", "<Server> hi from console"), chat.take(3))
+        assertEquals("<Alex> spam 64", chat.last())
     }
 
     @Test

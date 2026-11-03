@@ -100,6 +100,11 @@ class HostService(
                 val file = server?.let { iconFile(it) }
                 RemoteResponse(iconPng = file?.let { Base64.getEncoder().encodeToString(it.readBytes()) })
             }
+            Ops.CHAT -> {
+                val id = req.id ?: return RemoteResponse(ok = false, error = "서버 ID가 없어요")
+                if (manager.sendChat(id, req.text.orEmpty())) RemoteResponse()
+                else RemoteResponse(ok = false, error = "봇이 서버에 접속해 있지 않아요")
+            }
             Ops.LOGS -> RemoteResponse(
                 logs = req.id?.let { manager.logs(it, req.since ?: 0) }.orEmpty(),
                 world = req.id?.let { manager.world(it) },

@@ -354,4 +354,8 @@ PC에서 AFK 호스트를 실행하면 서버를 PC에서 돌릴 수 있어요. 
     <string name="afk_world_dawn">새벽</string>
     <string name="afk_world_players">%1$d명 접속 중: %2$s</string>
     <string name="afk_world_players_unknown">접속 중인 플레이어 정보 없음</string>
+    <!-- AFK chat -->
+    <string name="afk_chat_hint">채팅 또는 /명령어</string>
+    <string name="afk_chat_send">보내기</string>
+    <string name="afk_chat_not_connected">봇이 서버에 접속해 있지 않아요</string>
 </resources>

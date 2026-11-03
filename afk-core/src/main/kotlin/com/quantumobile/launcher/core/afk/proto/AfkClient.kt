@@ -221,6 +221,7 @@ class AfkClient(
             } finally {
                 watchdog.cancel()
                 sneakJob?.cancel()
+                events.chatSender(null)
             }
         }
 
@@ -336,6 +337,7 @@ class AfkClient(
                     dead = false
                     events.connected(version.name)
                     onJoined()
+                    events.chatSender(::sendChat)
                     runCatching { readLoginInfo(r) }
                 }
                 ids.playRespawn -> runCatching { readSpawnInfo(r) }
@@ -392,6 +394,51 @@ class AfkClient(
             return null
         }
 
+        // ---- sending chat ----
+
+        /** Signed chat messages received since the last acknowledgement (the server kicks past 4096 unacknowledged). */
+        private var pendingAcks = 0
+        private val random = java.security.SecureRandom()
+
+        @Synchronized
+        private fun acknowledgeLater() {
+            pendingAcks++
+            if (pendingAcks > 64) { // like the game client
+                conn.send(PacketWriter(ids.playChatAckOut).varInt(pendingAcks))
+                pendingAcks = 0
+            }
+        }
+
+        /** Last-seen update: we acknowledge by offset only and mark none as "seen" (valid without a chat session). */
+        private fun PacketWriter.lastSeen(): PacketWriter {
+            varInt(pendingAcks).raw(ByteArray(3))
+            pendingAcks = 0
+            if (protocol >= 770) byte(0) // checksum 0 = not checked
+            return this
+        }
+
+        /** Sends chat or a "/command" without a signature. Commands with message arguments use the signed-command form. */
+        @Synchronized
+        fun sendChat(input: String): Boolean {
+            if (state != State.PLAY || !joined) return false
+            val text = input.trim().take(256)
+            if (text.isEmpty()) return false
+            return runCatching {
+                if (text.startsWith("/")) {
+                    val command = text.drop(1)
+                    val root = command.substringBefore(' ').lowercase()
+                    if (protocol >= 766 && root !in SIGNABLE_COMMANDS) {
+                        conn.send(PacketWriter(ids.playCommandOut).string(command))
+                    } else {
+                        val id = if (protocol >= 766) ids.playSignedCommandOut else ids.playCommandOut
+                        conn.send(PacketWriter(id).string(command).long(System.currentTimeMillis()).long(random.nextLong()).varInt(0).lastSeen())
+                    }
+                } else {
+                    conn.send(PacketWriter(ids.playChatOut).string(text).long(System.currentTimeMillis()).long(random.nextLong()).bool(false).lastSeen())
+                }
+            }.isSuccess
+        }
+
         /** Logs a chat line; a message this client cannot read is skipped, never fatal. */
         private inline fun chat(read: () -> String?) {
             val text = runCatching(read).getOrNull()?.trim()
@@ -411,7 +458,10 @@ class AfkClient(
         private fun playerChat(r: PacketReader): String {
             if (protocol >= 770) r.varInt() // global index
             r.uuid(); r.varInt() // sender, index
-            if (r.bool()) r.bytes(256) // signature
+            if (r.bool()) { // signature
+                r.bytes(256)
+                acknowledgeLater()
+            }
             val plain = r.string()
             r.long(); r.long() // timestamp, salt
             repeat(r.varInt()) { if (r.varInt() == 0) r.bytes(256) } // last seen messages
@@ -441,6 +491,8 @@ class AfkClient(
 
     companion object {
         const val DEFAULT_PORT = 25565
+        /** Vanilla commands whose arguments are chat messages; sent as signed commands (with no signatures). */
+        private val SIGNABLE_COMMANDS = setOf("msg", "tell", "w", "say", "me", "teammsg", "tm")
         private const val PLAYER_INPUT_SINCE = 768 // 1.21.2: sneak moved from entity_action to player_input
         private const val INPUT_SHIFT = 0x20
         private const val TELEPORT_CONFIRM_HAS_POSITION = 777 // 26.3

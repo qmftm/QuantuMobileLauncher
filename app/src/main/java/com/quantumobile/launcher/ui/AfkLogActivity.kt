@@ -52,6 +52,10 @@ class AfkLogActivity : AppCompatActivity() {
         supportActionBar?.title = intent.getStringExtra(EXTRA_TITLE)
         binding.list.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
         binding.list.adapter = adapter
+        binding.send.setOnClickListener { sendChat() }
+        binding.chat.setOnEditorActionListener { _, action, _ ->
+            if (action == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) { sendChat(); true } else false
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -89,6 +93,26 @@ class AfkLogActivity : AppCompatActivity() {
                 binding.status.text = getString(R.string.afk_pc_offline, AfkRemote.describe(e))
             }
             delay(2_000)
+        }
+    }
+
+    /** Sends the typed chat or "/command" as the bot (here or on the PC). */
+    private fun sendChat() {
+        val text = binding.chat.text?.toString()?.trim().orEmpty()
+        if (text.isEmpty()) return
+        val host = hostId
+        lifecycleScope.launch {
+            val error = if (host == null) {
+                if (app.afk.sendChat(serverId, text)) null else getString(R.string.afk_chat_not_connected)
+            } else {
+                try {
+                    app.afkRemote.call(host, RemoteRequest(Ops.CHAT, 0, id = serverId, text = text)); null
+                } catch (e: Exception) {
+                    AfkRemote.describe(e)
+                }
+            }
+            if (error == null) binding.chat.text = null
+            else Snackbar.make(binding.root, error, Snackbar.LENGTH_SHORT).show()
         }
     }
 
