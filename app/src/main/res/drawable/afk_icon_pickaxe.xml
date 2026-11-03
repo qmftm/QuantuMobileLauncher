@@ -2,8 +2,9 @@
 <!-- Original 16x16 pixel art for AFK server icons. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp" android:height="48dp" android:viewportWidth="16" android:viewportHeight="16">
-    <path android:fillColor="#0B3B3A" android:pathData="M4,1h8v1h-8zM2,2h2v1h-2zM12,2h2v1h-2zM1,3h1v1h-1zM4,3h8v1h-8zM14,3h1v1h-1zM1,4h1v1h-1zM3,4h1v1h-1zM7,4h1v1h-1zM9,4h1v1h-1zM13,4h1v1h-1zM15,4h1v1h-1zM1,5h2v1h-2zM7,5h1v1h-1zM9,5h1v1h-1zM14,5h2v1h-2zM7,6h1v1h-1zM9,6h1v1h-1zM7,7h1v1h-1zM9,7h1v1h-1zM7,8h1v1h-1zM9,8h1v1h-1zM7,9h1v1h-1zM9,9h1v1h-1zM7,10h1v1h-1zM9,10h1v1h-1zM7,11h1v1h-1zM9,11h1v1h-1zM7,12h1v1h-1zM9,12h1v1h-1zM7,13h1v1h-1zM9,13h1v1h-1zM7,14h3v1h-3z" />
-    <path android:fillColor="#4DE8E0" android:pathData="M4,2h8v1h-8zM2,3h2v1h-2zM12,3h2v1h-2zM2,4h1v1h-1zM14,4h1v1h-1z" />
-    <path android:fillColor="#9A6A35" android:pathData="M8,4h1v1h-1zM8,5h1v1h-1zM8,6h1v1h-1zM8,7h1v1h-1zM8,8h1v1h-1zM8,9h1v1h-1zM8,10h1v1h-1zM8,11h1v1h-1z" />
-    <path android:fillColor="#6B4220" android:pathData="M8,12h1v1h-1zM8,13h1v1h-1z" />
+    <path android:fillColor="#0B3B3A" android:pathData="M3,1h10v1h-10zM2,2h1v1h-1zM13,2h1v1h-1zM1,3h1v1h-1zM4,3h8v1h-8zM14,3h1v1h-1zM1,4h1v1h-1zM3,4h1v1h-1zM6,4h1v1h-1zM9,4h1v1h-1zM12,4h1v1h-1zM14,4h1v1h-1zM1,5h2v1h-2zM6,5h1v1h-1zM9,5h1v1h-1zM13,5h2v1h-2zM6,6h1v1h-1zM9,6h1v1h-1zM6,7h1v1h-1zM9,7h1v1h-1zM6,8h1v1h-1zM9,8h1v1h-1zM6,9h1v1h-1zM9,9h1v1h-1zM6,10h1v1h-1zM9,10h1v1h-1zM6,11h1v1h-1zM9,11h1v1h-1zM6,12h1v1h-1zM9,12h1v1h-1zM6,13h1v1h-1zM9,13h1v1h-1zM6,14h4v1h-4z" />
+    <path android:fillColor="#4DE8E0" android:pathData="M3,2h9v1h-9zM2,3h2v1h-2zM12,3h2v1h-2zM2,4h1v1h-1zM13,4h1v1h-1z" />
+    <path android:fillColor="#E8FFFF" android:pathData="M12,2h1v1h-1z" />
+    <path android:fillColor="#A8763F" android:pathData="M7,4h2v1h-2zM7,5h2v1h-2zM7,6h2v1h-2zM7,7h2v1h-2zM7,8h2v1h-2zM7,9h2v1h-2zM7,10h2v1h-2zM7,11h1v1h-1zM7,12h1v1h-1z" />
+    <path android:fillColor="#6B4220" android:pathData="M8,11h1v1h-1zM8,12h1v1h-1zM7,13h2v1h-2z" />
 </vector>

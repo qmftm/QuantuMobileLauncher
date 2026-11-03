@@ -36,7 +36,7 @@ object AfkIcons {
     )
 
     /** Shown for "server icon" until the server has been reached once (or when it has no icon). */
-    val fallback get() = presets.first()
+    val fallback = Preset("server", R.drawable.afk_icon_server, R.string.afk_icon_server)
 
     private fun dir(context: Context) = File(context.filesDir, "afk-icons").apply { mkdirs() }
     fun serverFile(context: Context, id: String) = File(dir(context), "$id-server.png")
