@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "QuantuMobileLauncher"
 include(":app")
+include(":afk-core")
+include(":afk-host")

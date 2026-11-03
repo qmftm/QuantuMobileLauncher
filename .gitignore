@@ -1,14 +1,44 @@
-*.iml
+# Gradle / Android Studio
 .gradle/
-/local.properties
-.idea/
-.DS_Store
 build/
+/local.properties
 /captures
 .externalNativeBuild/
 .cxx/
+*.iml
+.idea/
+.kotlin/
+
+# Build outputs
 *.apk
+*.aab
+*.ap_
+*.dex
+/app/release/
+/app/debug/
+output-metadata.json
+
+# Signing: only the committed project key is tracked
 *.keystore
 *.jks
 !app/signing/quantumobile-release.jks
-.kotlin/
+keystore.properties
+
+# Native build scratch (third_party/natives scripts)
+/third_party/natives/out/
+
+# Logs / temp
+*.log
+*.tmp
+hs_err_pid*.log
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*~
+
+# Secrets
+.env
+.env.*

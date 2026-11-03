@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AFK server icon: white Material Symbols "bedtime" (Apache 2.0) on a coloured tile. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="960" android:viewportHeight="960">
+    <path android:fillColor="#5C6BC0" android:pathData="M0,0h960v960h-960z" />
+    <group android:pivotX="480" android:pivotY="480" android:scaleX="0.6" android:scaleY="0.6">
+        <group android:translateY="960">
+            <path android:fillColor="#FFFFFF" android:pathData="M484-80q-84 0-157.5-32t-128-86.5Q144-253 112-326.5T80-484q0-132 77.5-238T361-868q17-5 31 5t12 27q-7 88 23.5 169.5T521-522q63 63 145 94t170 24q17-2 26.5 13t4.5 32q-40 125-145.5 202T484-80Z" />
+        </group>
+    </group>
+</vector>

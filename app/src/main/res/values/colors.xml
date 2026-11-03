@@ -13,4 +13,5 @@
     <color name="text_secondary">#B4AEDC</color>
     <color name="warning">#FFC857</color>
     <color name="error">#FF6B7A</color>
+    <color name="success">#4ADE80</color>
 </resources>

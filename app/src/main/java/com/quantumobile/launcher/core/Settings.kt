@@ -21,6 +21,8 @@ class Settings(private val context: Context) {
     /** Download the Android LWJGL build automatically before the first launch. */
     val autoLwjgl: Boolean get() = prefs.getBoolean(KEY_AUTO_LWJGL, true)
     val showSnapshots: Boolean get() = prefs.getBoolean(KEY_SNAPSHOTS, false)
+    /** Turn the AFK bot back on after the phone restarts, for servers whose switch was on. */
+    val afkAutoStart: Boolean get() = prefs.getBoolean(KEY_AFK_AUTOSTART, true)
 
     /** Shared object passed to LWJGL as the OpenGL implementation. */
     val rendererLibrary: String
@@ -42,6 +44,7 @@ class Settings(private val context: Context) {
         const val KEY_AUTO_RUNTIME = "auto_runtime"
         const val KEY_CATALOG_URL = "runtime_catalog_url"
         const val KEY_SNAPSHOTS = "show_snapshots"
+        const val KEY_AFK_AUTOSTART = "afk_autostart"
 
         const val RENDERER_GL4ES = "gl4es"
         const val RENDERER_ZINK = "zink"

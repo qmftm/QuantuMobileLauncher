@@ -54,14 +54,14 @@ jobs:
             echo "No signing secrets set: using the project key committed in app/signing."
           fi
       - name: Test
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDebugUnitTest :afk-core:test :afk-host:test
       - name: Build APKs
-        run: ./gradlew assembleRelease assembleDebug
+        run: ./gradlew assembleRelease :afk-host:jar
       - name: Rename APKs
         run: |
           mkdir dist
           cp app/build/outputs/apk/release/app-release.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}-debug.apk"
+          cp afk-host/build/libs/afk-host.jar "dist/QuantuMobileLauncher-AFK-Host.jar"
       - name: Write release notes
         env:
           TAG: ${{ steps.version.outputs.tag }}
@@ -88,5 +88,7 @@ jobs:
           name: QuantuMobileLauncher ${{ steps.version.outputs.tag }}
           prerelease: false
           make_latest: true
-          files: dist/*.apk
+          files: |
+            dist/*.apk
+            dist/*.jar
           body_path: release-body.md

@@ -90,6 +90,21 @@
             app:iconSpaceReserved="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/cat_afk" app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            app:key="afk_autostart"
+            app:title="@string/afk_autostart"
+            app:summary="@string/afk_autostart_summary"
+            app:defaultValue="true"
+            app:icon="@drawable/ic_afk"
+            app:iconSpaceReserved="true" />
+        <Preference
+            app:key="afk_battery"
+            app:title="@string/afk_battery_pref"
+            app:icon="@drawable/ic_speed"
+            app:iconSpaceReserved="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/cat_runtime" app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
             app:key="auto_runtime"

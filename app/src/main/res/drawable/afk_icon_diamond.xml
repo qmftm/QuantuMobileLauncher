@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AFK server icon: white Material Symbols "diamond" (Apache 2.0) on a coloured tile. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="960" android:viewportHeight="960">
+    <path android:fillColor="#00ACC1" android:pathData="M0,0h960v960h-960z" />
+    <group android:pivotX="480" android:pivotY="480" android:scaleX="0.6" android:scaleY="0.6">
+        <group android:translateY="960">
+            <path android:fillColor="#FFFFFF" android:pathData="M358-625h244L497-840h-34L358-625Zm97 475v-425H101l354 425Zm50 0 354-425H505v425Zm153-475h209l-90-182q-8-15-22.5-24t-31.5-9H553l105 215Zm-565 0h209l105-215H237q-17 0-31.5 9T183-807L93-625Z" />
+        </group>
+    </group>
+</vector>

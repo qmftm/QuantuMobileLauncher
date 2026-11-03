@@ -19,12 +19,14 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDebugUnitTest :afk-core:test :afk-host:test
       - name: Lint
         run: ./gradlew lintDebug
       - name: Build APKs
-        run: ./gradlew assembleDebug assembleRelease
+        run: ./gradlew assembleDebug assembleRelease :afk-host:jar
       - uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: app/build/outputs/apk/**/*.apk
+          path: |
+            app/build/outputs/apk/**/*.apk
+            afk-host/build/libs/afk-host.jar

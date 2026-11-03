@@ -13,17 +13,22 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.quantumobile.launcher.R
 import com.quantumobile.launcher.core.GameLaunch
+import com.quantumobile.launcher.core.afk.AfkServer
+import com.quantumobile.launcher.core.afk.AfkStatus
 import com.quantumobile.launcher.core.tasks.TaskInfo
 import com.quantumobile.launcher.game.GameActivity
 import com.quantumobile.launcher.ui.MainActivity
+import com.quantumobile.launcher.ui.describe
 import java.util.concurrent.atomic.AtomicInteger
 
 object Notifications {
     const val CHANNEL_TASKS = "tasks"
     const val CHANNEL_GAME = "game"
     const val CHANNEL_DONE = "done"
+    const val CHANNEL_AFK = "afk"
     const val ID_TASKS = 1
     const val ID_GAME = 2
+    const val ID_AFK = 3
     private val nextDoneId = AtomicInteger(100)
 
     fun ensureChannels(context: Context) {
@@ -31,6 +36,7 @@ object Notifications {
         nm.createNotificationChannel(NotificationChannel(CHANNEL_TASKS, context.getString(R.string.channel_tasks), NotificationManager.IMPORTANCE_LOW))
         nm.createNotificationChannel(NotificationChannel(CHANNEL_GAME, context.getString(R.string.channel_game), NotificationManager.IMPORTANCE_LOW))
         nm.createNotificationChannel(NotificationChannel(CHANNEL_DONE, context.getString(R.string.channel_done), NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_AFK, context.getString(R.string.channel_afk), NotificationManager.IMPORTANCE_LOW))
     }
 
     private fun openApp(context: Context) = PendingIntent.getActivity(
@@ -57,6 +63,35 @@ object Notifications {
         val percent = if (tasks.size == 1) first!!.percent else -1
         if (percent >= 0) builder.setProgress(100, percent, false) else builder.setProgress(0, 0, true)
         return builder.build()
+    }
+
+    /** Ongoing AFK bot notification: how many servers are on, one line per server with its state and last reason. */
+    fun afk(context: Context, servers: List<AfkServer>, statuses: Map<String, AfkStatus>): Notification {
+        val on = servers.filter { it.enabled }
+        val lines = on.map { "${it.name}: ${(statuses[it.id] ?: AfkStatus.OFF).describe(context)}" }
+        val stopAll = PendingIntent.getService(
+            context, 2, Intent(context, AfkService::class.java).setAction(AfkService.ACTION_STOP_ALL),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val open = PendingIntent.getActivity(
+            context, 3, Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_TAB, R.id.nav_afk)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val style = NotificationCompat.InboxStyle()
+        lines.forEach { style.addLine(it) }
+        return NotificationCompat.Builder(context, CHANNEL_AFK)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.resources.getQuantityString(R.plurals.afk_running, on.size, on.size))
+            .setContentText(lines.firstOrNull())
+            .setStyle(style)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setContentIntent(open)
+            .addAction(0, context.getString(R.string.afk_stop_all), stopAll)
+            .build()
     }
 
     /** One-off notification for work that finished while the app was in the background. */

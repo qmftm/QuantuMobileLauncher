@@ -242,4 +242,97 @@
     <string name="game_crashed_title">The game closed unexpectedly</string>
     <string name="game_crashed_message">The last game session ended without finishing normally. Open the game log to see what happened, and share it if you need help.</string>
     <string name="android_unsupported_badge">May not work on Android</string>
+
+    <!-- AFK bot -->
+    <string name="nav_afk">AFK</string>
+    <string name="channel_afk">AFK bot</string>
+    <plurals name="afk_running">
+        <item quantity="one">AFK on %1$d server</item>
+        <item quantity="other">AFK on %1$d servers</item>
+    </plurals>
+    <string name="afk_stop_all">Stop all</string>
+    <string name="afk_off">Off</string>
+    <string name="afk_connecting">Connecting</string>
+    <string name="afk_connected">Connected</string>
+    <string name="afk_waiting">Waiting to reconnect</string>
+    <string name="afk_waiting_seconds">Reconnecting in %1$d s</string>
+    <string name="afk_error">Error</string>
+    <string name="afk_account_missing">The account for this server was removed. Edit the server and pick an account.</string>
+    <string name="afk_login_expired">The Microsoft sign-in expired. Sign in again in Accounts.</string>
+    <string name="afk_empty">Add a server to stay online on it without starting the game.\nThe bot only sneaks now and then, so you are not kicked for being idle.</string>
+    <string name="afk_add_server">Add server</string>
+    <string name="afk_edit_server">Edit server</string>
+    <string name="afk_edit">Edit</string>
+    <string name="afk_later">Later</string>
+    <string name="afk_no_account">No account</string>
+    <string name="afk_need_account">Add an account first (Microsoft or offline).</string>
+    <string name="afk_server_name">Name</string>
+    <string name="afk_server_address">Address</string>
+    <string name="afk_server_address_help">e.g. play.example.com or 1.2.3.4:25566</string>
+    <string name="afk_server_port">Port</string>
+    <string name="afk_bad_port">Port must be 1–65535</string>
+    <string name="afk_bad_address">Enter a server address</string>
+    <string name="afk_battery_title">Keep the AFK bot running?</string>
+    <string name="afk_battery_message">Android may cut the connection with the screen off. Allow the launcher to run in the background without battery restrictions.</string>
+    <string name="afk_battery_allow">Allow</string>
+    <string name="cat_afk">AFK bot</string>
+    <string name="afk_autostart">Start after reboot</string>
+    <string name="afk_autostart_summary">Turn servers that were on back on when the phone starts</string>
+    <string name="afk_battery_pref">Battery optimisation exemption</string>
+    <string name="afk_battery_on">Allowed: the bot can run with the screen off</string>
+    <string name="afk_battery_off">Restricted: tap to allow, otherwise Android may cut the connection</string>
+    <!-- AFK server icons -->
+    <string name="afk_icon_grass">Grass</string>
+    <string name="afk_icon_diamond">Diamond</string>
+    <string name="afk_icon_sword">Sword</string>
+    <string name="afk_icon_tools">Tools</string>
+    <string name="afk_icon_heart">Heart</string>
+    <string name="afk_icon_forest">Forest</string>
+    <string name="afk_icon_house">House</string>
+    <string name="afk_icon_fire">Fire</string>
+    <string name="afk_icon_chest">Chest</string>
+    <string name="afk_icon_moon">Night</string>
+    <string name="afk_icon_castle">Castle</string>
+    <string name="afk_icon_game">Game</string>
+    <string name="afk_icon_globe">Globe</string>
+    <string name="afk_icon_star">Star</string>
+    <string name="afk_icon_bolt">Bolt</string>
+    <string name="afk_icon">Icon</string>
+    <string name="afk_icon_change">Change</string>
+    <string name="afk_icon_pick">Choose an icon</string>
+    <string name="afk_icon_server">Server icon</string>
+    <string name="afk_icon_custom">My image</string>
+    <string name="afk_icon_add">Add image</string>
+    <string name="afk_icon_import_failed">Could not load the image</string>
+    <!-- AFK on a PC -->
+    <string name="afk_location">Runs on</string>
+    <string name="afk_location_help">On a PC it stays online even when the phone is off</string>
+    <string name="afk_location_phone">This phone</string>
+    <string name="afk_location_pc">PC: %1$s</string>
+    <string name="afk_pcs">PCs</string>
+    <string name="afk_pc_add">Add PC</string>
+    <string name="afk_pc_name">Name (blank = the PC\'s name)</string>
+    <string name="afk_pc_address">PC address</string>
+    <string name="afk_pc_address_help">Shown in the PC program window (e.g. 192.168.0.12:25580)</string>
+    <string name="afk_pc_code">Pairing code</string>
+    <string name="afk_pc_code_help">Shown in the PC program window (e.g. ABCD-EFGH-JKLM)</string>
+    <string name="afk_pc_checking">Connecting to the PC…</string>
+    <string name="afk_pc_added">Connected to %1$s</string>
+    <string name="afk_pc_none">No PC yet.
+
+Run the AFK host on a PC to keep servers joined from there, even with the phone off.
+
+1. Download QuantuMobileLauncher-AFK-Host.jar from the release page (needs Java 17+)
+2. Run java -jar QuantuMobileLauncher-AFK-Host.jar on the PC
+3. Enter the address and pairing code it shows</string>
+    <string name="afk_pc_online">Connected · %1$d server(s)</string>
+    <string name="afk_pc_offline">Not connected · %1$s</string>
+    <string name="afk_pc_remove_confirm">Forget %1$s? Servers on that PC stay there.</string>
+    <string name="afk_pc_offline_badge">PC offline</string>
+    <string name="afk_pc_tokens_title">Send the sign-in to the PC?</string>
+    <string name="afk_pc_tokens_message">To join with a Microsoft account from the PC, this account\'s sign-in tokens must be sent to it. They travel encrypted with the pairing code and are deleted when you remove the server from the PC. Only use a PC you trust.</string>
+    <string name="afk_pc_tokens_ok">Send</string>
+    <string name="afk_saving">Saving…</string>
+    <string name="afk_pc_failed">Could not save on the PC: %1$s</string>
+    <string name="afk_pc_row">PC: %1$s</string>
 </resources>

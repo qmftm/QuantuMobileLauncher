@@ -26,6 +26,7 @@ class LauncherPaths(
     val lwjglNatives = File(internalRoot, "lwjgl-natives")
     val accountsFile = File(internalRoot, "accounts.json")
     val instancesFile = File(internalRoot, "instances.json")
+    val afkFile = File(internalRoot, "afk.json")
     val latestLog get() = File(logs, "latest.log")
 
     fun versionJson(id: String) = File(versions, "$id/$id.json")

@@ -21,10 +21,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.bottomNav.setOnItemSelectedListener { item ->
+            binding.toolbar.navigationIcon = null // leaving Accounts by tapping a tab
             show(
                 when (item.itemId) {
                     R.id.nav_instances -> InstancesFragment()
                     R.id.nav_download -> DownloadFragment()
+                    R.id.nav_afk -> AfkFragment()
                     R.id.nav_settings -> SettingsFragment()
                     else -> HomeFragment()
                 },
@@ -32,9 +34,16 @@ class MainActivity : AppCompatActivity() {
             )
             true
         }
-        if (savedInstanceState == null) binding.bottomNav.selectedItemId = R.id.nav_home
+        if (savedInstanceState == null) binding.bottomNav.selectedItemId = intent.getIntExtra(EXTRA_TAB, R.id.nav_home)
         askNotificationPermission()
-        if (savedInstanceState == null) (application as com.quantumobile.launcher.QuantumApp).prefetchComponents()
+        val app = application as com.quantumobile.launcher.QuantumApp
+        if (savedInstanceState == null) app.prefetchComponents()
+        app.startAfk() // servers left on keep (or start again) idling after the app or phone restarted
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        if (intent.hasExtra(EXTRA_TAB)) navigateTo(intent.getIntExtra(EXTRA_TAB, R.id.nav_home))
     }
 
     override fun onResume() {
@@ -73,19 +82,24 @@ class MainActivity : AppCompatActivity() {
 
     /** Switches tabs from inside a fragment (e.g. the setup checklist on Home). */
     fun navigateTo(itemId: Int) {
-        if (itemId == R.id.nav_accounts) return showAccounts()
+        if (itemId == R.id.nav_accounts) return showOffBar(AccountsFragment(), getString(R.string.nav_accounts))
         binding.toolbar.navigationIcon = null
         binding.bottomNav.selectedItemId = itemId
     }
 
     /** Accounts is not a bottom tab (the bar holds five); it opens from the toolbar and from Home. */
-    private fun showAccounts() {
-        binding.bottomNav.menu.setGroupCheckable(0, true, false) // no tab highlighted while Accounts is open
+    private fun showOffBar(fragment: Fragment, title: String) {
+        binding.bottomNav.menu.setGroupCheckable(0, true, false) // no tab highlighted while it is open
         for (i in 0 until binding.bottomNav.menu.size()) binding.bottomNav.menu.getItem(i).isChecked = false
         binding.bottomNav.menu.setGroupCheckable(0, true, true)
         binding.toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
         binding.toolbar.setNavigationOnClickListener { navigateTo(R.id.nav_home) }
-        show(AccountsFragment(), getString(R.string.nav_accounts))
+        show(fragment, title)
+    }
+
+    companion object {
+        /** Bottom tab to open (e.g. [R.id.nav_afk] from the AFK notification). */
+        const val EXTRA_TAB = "tab"
     }
 
     private fun show(fragment: Fragment, title: CharSequence?) {

@@ -10,7 +10,21 @@ import com.quantumobile.launcher.core.LaunchState
 import com.quantumobile.launcher.core.LauncherPaths
 import com.quantumobile.launcher.core.MissingRuntimeException
 import com.quantumobile.launcher.core.Settings
+import com.quantumobile.launcher.core.afk.AfkFatalException
+import com.quantumobile.launcher.core.afk.AfkManager
+import com.quantumobile.launcher.core.afk.AfkServer
+import com.quantumobile.launcher.core.afk.proto.ServerPing
+import com.quantumobile.launcher.core.afk.proto.SrvLookup
+import com.quantumobile.launcher.ui.AfkIcons
+import com.quantumobile.launcher.ui.AfkRemote
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.quantumobile.launcher.core.afk.AfkStore
+import com.quantumobile.launcher.core.afk.proto.AfkClient
+import com.quantumobile.launcher.core.auth.Account
 import com.quantumobile.launcher.core.auth.AccountStore
+import com.quantumobile.launcher.core.auth.AuthException
+import com.quantumobile.launcher.core.auth.MicrosoftAuth
 import com.quantumobile.launcher.core.instance.Instance
 import com.quantumobile.launcher.core.instance.InstanceStore
 import com.quantumobile.launcher.core.lwjgl.LwjglInstaller
@@ -20,6 +34,8 @@ import com.quantumobile.launcher.core.runtime.RuntimeCatalog
 import com.quantumobile.launcher.core.runtime.RuntimeDownloader
 import com.quantumobile.launcher.core.runtime.RuntimeManager
 import com.quantumobile.launcher.core.tasks.TaskRunner
+import com.quantumobile.launcher.service.AfkService
+import com.quantumobile.launcher.service.NetworkMonitor
 import com.quantumobile.launcher.service.Notifications
 import com.quantumobile.launcher.service.TaskService
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +44,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class QuantumApp : Application() {
     val paths by lazy { LauncherPaths.from(this).also { it.ensureDirs() } }
@@ -36,6 +54,23 @@ class QuantumApp : Application() {
     val instances by lazy { InstanceStore(paths.instancesFile) }
     val versions by lazy { VersionRepository(paths) }
     val runtimes by lazy { RuntimeManager(paths.runtimes) }
+    val network by lazy { NetworkMonitor(this) }
+
+    /** AFK bots: one lightweight connection per server whose switch is on (no game client involved). */
+    val afk by lazy {
+        AfkManager(
+            store = AfkStore(paths.afkFile),
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+            connector = AfkClient(dnsServers = { network.dnsServers() }),
+            account = ::afkAccount,
+            network = network.online,
+            onServerIcon = { id, png -> runCatching { AfkIcons.saveServerIcon(this, id, png) } },
+        )
+    }
+    private val accountRefresh = Mutex()
+
+    /** PCs that run AFK bots for this phone. */
+    val afkRemote by lazy { AfkRemote(this) }
 
     /** Long-running work (game install, runtime and mod downloads) that must outlive any single screen. */
     val tasks by lazy {
@@ -165,6 +200,36 @@ class QuantumApp : Application() {
                     reporter.report(title, if (total > 0) (done * 100 / total).toInt() else -1)
                 }
             })
+        }
+    }
+
+    /** Resumes the AFK bots for servers whose switch is on and keeps them alive with [AfkService]. */
+    fun startAfk() {
+        afk.start()
+        if (afk.servers.value.any { it.enabled }) AfkService.start(this)
+    }
+
+    /** Pings [server] once to save its list icon (for servers that have not been switched on yet). */
+    fun fetchAfkServerIcon(server: AfkServer, onDone: () -> Unit = {}) {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching {
+                val srv = if (server.port == AfkServer.DEFAULT_PORT) SrvLookup.resolve(server.host, network.dnsServers()) else null
+                ServerPing.query(srv?.host ?: server.host, srv?.port ?: server.port, 8_000).favicon
+                    ?.let { AfkIcons.saveServerIcon(this@QuantumApp, server.id, it) }
+            }
+            withContext(Dispatchers.Main) { onDone() }
+        }
+    }
+
+    /** The account an AFK bot joins with, refreshed first if its Microsoft token is about to expire. */
+    suspend fun afkAccount(id: String): Account = accountRefresh.withLock {
+        val account = accounts.accounts.value.firstOrNull { it.id == id }
+            ?: throw AfkFatalException(getString(R.string.afk_account_missing))
+        if (!account.needsRefresh) return@withLock account
+        try {
+            MicrosoftAuth.refresh(account).also { accounts.upsert(it, select = false) }
+        } catch (e: AuthException) {
+            throw AfkFatalException(getString(R.string.afk_login_expired))
         }
     }
 

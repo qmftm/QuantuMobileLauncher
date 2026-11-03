@@ -48,6 +48,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
             runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
             true
         }
+        findPreference<Preference>("afk_battery")?.setOnPreferenceClickListener {
+            BatteryOptimization.request(requireContext())
+            true
+        }
         findPreference<Preference>("import_runtime")?.setOnPreferenceClickListener {
             pickRuntime.launch(arrayOf("application/x-xz", "application/x-tar", "application/gzip", "application/octet-stream", "*/*"))
             true
@@ -70,6 +74,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("manage_runtimes")?.setOnPreferenceClickListener { manageRuntimes(); true }
         findPreference<Preference>("game_dir")?.summary = app.paths.gameRoot.absolutePath
         updateSummaries()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // The user may come back from the battery screen with a new answer.
+        findPreference<Preference>("afk_battery")?.summary = getString(
+            if (BatteryOptimization.isIgnoring(requireContext())) R.string.afk_battery_on else R.string.afk_battery_off,
+        )
     }
 
     private fun updateSummaries() {
