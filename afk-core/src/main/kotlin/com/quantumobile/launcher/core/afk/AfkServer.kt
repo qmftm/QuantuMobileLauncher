@@ -1,6 +1,5 @@
 package com.quantumobile.launcher.core.afk
 
-import com.quantumobile.launcher.core.LauncherJson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -69,12 +68,12 @@ class AfkStore(private val file: File) {
     fun remove(id: String) = save(_servers.value.filterNot { it.id == id })
 
     private fun load(): List<AfkServer> =
-        runCatching { LauncherJson.decodeFromString<AfkFile>(file.readText()).servers }.getOrDefault(emptyList())
+        runCatching { AfkJson.decodeFromString<AfkFile>(file.readText()).servers }.getOrDefault(emptyList())
 
     private fun save(list: List<AfkServer>) {
         file.parentFile?.mkdirs()
         val tmp = File(file.path + ".tmp")
-        tmp.writeText(LauncherJson.encodeToString(AfkFile.serializer(), AfkFile(list)))
+        tmp.writeText(AfkJson.encodeToString(AfkFile.serializer(), AfkFile(list)))
         if (!tmp.renameTo(file)) { file.delete(); tmp.renameTo(file) }
         _servers.value = list
     }

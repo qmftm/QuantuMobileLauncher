@@ -2,7 +2,7 @@ package com.quantumobile.launcher.core.afk.proto
 
 import com.quantumobile.launcher.core.afk.AfkFatalException
 import com.quantumobile.launcher.core.auth.Account
-import com.quantumobile.launcher.core.net.Http
+import com.quantumobile.launcher.core.afk.SimpleHttp
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.io.IOException
@@ -28,7 +28,7 @@ object MojangSession : SessionJoiner {
             put("selectedProfile", account.uuid)
             put("serverId", serverHash)
         }.toString()
-        val res = Http.postJson(JOIN_URL, body)
+        val res = SimpleHttp.post(JOIN_URL, body)
         when {
             res.isSuccess -> Unit
             res.code == 401 || res.code == 403 ->
