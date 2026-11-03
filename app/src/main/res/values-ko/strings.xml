@@ -244,7 +244,7 @@
     <string name="android_unsupported_badge">안드로이드 미지원 가능</string>
 
     <!-- AFK bot -->
-    <string name="nav_afk">잠수</string>
+    <string name="nav_afk">AFK</string>
     <string name="channel_afk">잠수 봇</string>
     <plurals name="afk_running">
         <item quantity="other">%1$d개 서버 잠수 중</item>
