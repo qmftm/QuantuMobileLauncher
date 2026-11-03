@@ -12,6 +12,9 @@ interface AfkEvents {
 
     /** The server's list icon (64×64 PNG) from its status ping, when it has one. */
     fun serverIcon(png: ByteArray) {}
+
+    /** A line for the server's log (chat, joins, deaths…). */
+    fun log(kind: AfkLogKind, text: String) {}
 }
 
 /** How a connection ended. [retry] is false when reconnecting cannot help (unsupported version, wrong account type). */

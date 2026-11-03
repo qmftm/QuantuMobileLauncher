@@ -187,9 +187,11 @@ class AfkFragment : Fragment() {
         else -> null
     }
 
+    /** Tapping a server opens its log (edit is in the ⋮ menu). */
     private fun open(row: Row) {
         if (row.id.startsWith(HOST)) return managePcs()
-        target(row.id)?.let { editServer(it.server, it.hostId) }
+        val t = target(row.id) ?: return
+        startActivity(AfkLogActivity.intent(requireContext(), t.server.id, t.hostId, t.server.name))
     }
 
     private fun toggle(rowId: String, on: Boolean) {
@@ -235,13 +237,15 @@ class AfkFragment : Fragment() {
     private fun showMenu(row: Row, anchor: View) {
         if (row.id.startsWith(HOST)) return managePcs()
         PopupMenu(requireContext(), anchor).apply {
-            menu.add(0, 1, 0, R.string.afk_edit)
-            menu.add(0, 2, 1, R.string.remove)
+            menu.add(0, 3, 0, R.string.afk_log)
+            menu.add(0, 1, 1, R.string.afk_edit)
+            menu.add(0, 2, 2, R.string.remove)
             setOnMenuItemClickListener { item ->
                 val t = target(row.id) ?: return@setOnMenuItemClickListener true
                 when (item.itemId) {
                     1 -> editServer(t.server, t.hostId)
                     2 -> confirmDelete(t)
+                    3 -> open(row)
                 }
                 true
             }

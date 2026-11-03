@@ -43,6 +43,10 @@
             android:label="@string/add_microsoft" />
 
         <activity
+            android:name=".ui.AfkLogActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.LogActivity"
             android:exported="false"
             android:label="@string/game_log" />

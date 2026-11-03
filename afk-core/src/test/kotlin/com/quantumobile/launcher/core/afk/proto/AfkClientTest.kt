@@ -37,6 +37,8 @@ class AfkClientTest {
         val connected = CopyOnWriteArrayList<String>()
         val notes = CopyOnWriteArrayList<String>()
         val icons = CopyOnWriteArrayList<ByteArray>()
+        val logs = CopyOnWriteArrayList<String>()
+        override fun log(kind: com.quantumobile.launcher.core.afk.AfkLogKind, text: String) { logs += "$kind $text" }
         override fun connected(version: String) { connected += version }
         override fun note(message: String) { notes += message }
         override fun serverIcon(png: ByteArray) { icons += png }
@@ -161,6 +163,23 @@ class AfkClientTest {
             c.send(PacketWriter(ids.playKeepAlive).long(7))
             assertEquals(7L, c.expect(ids.playKeepAliveOut).long())
 
+            // Chat the bot should log: a system message, an action bar (skipped), a player message, an anonymous one.
+            fun text(s: String) = if (protocol >= 765) {
+                val b = s.toByteArray(); PacketWriter(0).byte(8).short(b.size).raw(b).toByteArray().drop(1).toByteArray()
+            } else {
+                PacketWriter(0).string("\"$s\"").toByteArray().drop(1).toByteArray()
+            }
+            c.send(PacketWriter(ids.playSystemChat).raw(text("Server restarting soon")).bool(false))
+            c.send(PacketWriter(ids.playSystemChat).raw(text("action bar spam")).bool(true))
+            val pc = PacketWriter(ids.playPlayerChat)
+            if (protocol >= 770) pc.varInt(3)
+            pc.uuid(UUID.randomUUID()).varInt(0).bool(false).string("hello there").long(0).long(0).varInt(0).bool(false).varInt(0)
+            pc.varInt(1).raw(text("Alex")).bool(false)
+            c.send(pc)
+            c.send(PacketWriter(ids.playDisguisedChat).raw(text("hi from console")).varInt(1).raw(text("Server")).bool(false))
+            c.send(PacketWriter(ids.playKeepAlive).long(9))
+            assertEquals(9L, c.expect(ids.playKeepAliveOut).long()) // all of the above was read without breaking the stream
+
             // Wait for one sneak press and release, answering keep-alives like a real server would.
             val deadline = System.currentTimeMillis() + 5_000
             while (!(sneaks.contains(true) && sneaks.lastOrNull() == false) && System.currentTimeMillis() < deadline) {
@@ -201,6 +220,7 @@ class AfkClientTest {
         assertEquals(listOf(0x89, 0x50, 0x4E, 0x47), events.icons.single().take(4).map { it.toInt() and 0xFF })
         assertTrue(server.respawned)
         assertTrue(events.notes.any { "리스폰" in it })
+        assertChat(events)
         // Sneak goes through player_input on 1.21.2+: pressed, then released.
         assertTrue(server.sneaks.contains(true))
         assertEquals(false, server.sneaks.last())
@@ -216,6 +236,7 @@ class AfkClientTest {
 
         assertEquals("bye", result.reason)
         assertEquals(listOf("1.20.4"), events.connected)
+        assertChat(events)
         assertTrue(server.sneaks.contains(true))
         assertEquals(false, server.sneaks.last())
     }
@@ -239,6 +260,12 @@ class AfkClientTest {
         server.failure.get()?.let { throw it }
         assertEquals("bye", result.reason)
         assertEquals(listOf("26.3"), events.connected)
+        assertChat(events)
+    }
+
+    private fun assertChat(events: Recorder) {
+        val chat = events.logs.filter { it.startsWith("CHAT ") }.map { it.removePrefix("CHAT ") }
+        assertEquals(listOf("Server restarting soon", "<Alex> hello there", "<Server> hi from console"), chat)
     }
 
     @Test

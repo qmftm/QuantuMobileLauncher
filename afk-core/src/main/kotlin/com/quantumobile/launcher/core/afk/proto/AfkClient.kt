@@ -3,6 +3,7 @@ package com.quantumobile.launcher.core.afk.proto
 import com.quantumobile.launcher.core.afk.AfkConnector
 import com.quantumobile.launcher.core.afk.AfkDisconnect
 import com.quantumobile.launcher.core.afk.AfkEvents
+import com.quantumobile.launcher.core.afk.AfkLogKind
 import com.quantumobile.launcher.core.afk.AfkTiming
 import com.quantumobile.launcher.core.auth.Account
 import com.quantumobile.launcher.core.auth.AccountType
@@ -276,6 +277,15 @@ class AfkClient(
                     }
                 }
                 ids.playResourcePack -> answerResourcePack(r, ids.playResourcePackOut)
+                ids.playSystemChat -> chat {
+                    val text = readText(r)
+                    if (r.bool()) null else text // action-bar messages flicker constantly; leave them out
+                }
+                ids.playPlayerChat -> chat { playerChat(r) }
+                ids.playDisguisedChat -> chat {
+                    val message = readText(r)
+                    if (!readChatType(r)) message else "<${readText(r)}> $message"
+                }
                 ids.playStartConfiguration -> {
                     conn.send(PacketWriter(ids.playConfigurationAckOut))
                     state = State.CONFIG
@@ -285,6 +295,36 @@ class AfkClient(
                 }
             }
             return null
+        }
+
+        /** Logs a chat line; a message this client cannot read is skipped, never fatal. */
+        private inline fun chat(read: () -> String?) {
+            val text = runCatching(read).getOrNull()?.trim()
+            if (!text.isNullOrEmpty()) events.log(AfkLogKind.CHAT, text)
+        }
+
+        private fun readText(r: PacketReader): String =
+            if (protocol >= 765) TextComponent.fromNbt(r) else TextComponent.fromJson(r.string())
+
+        /** Skips a chat type; false when it is sent inline (rare) and the rest cannot be read reliably. */
+        private fun readChatType(r: PacketReader): Boolean {
+            val id = r.varInt()
+            return protocol < 768 || id != 0
+        }
+
+        /** "<name> message" from a signed player chat packet (same layout 1.20.2 – 26.3, plus a counter from 1.21.5). */
+        private fun playerChat(r: PacketReader): String {
+            if (protocol >= 770) r.varInt() // global index
+            r.uuid(); r.varInt() // sender, index
+            if (r.bool()) r.bytes(256) // signature
+            val plain = r.string()
+            r.long(); r.long() // timestamp, salt
+            repeat(r.varInt()) { if (r.varInt() == 0) r.bytes(256) } // last seen messages
+            val unsigned = if (r.bool()) readText(r) else null
+            if (r.varInt() == 2) repeat(r.varInt()) { r.long() } // filter mask
+            val shown = unsigned ?: plain
+            if (!readChatType(r)) return shown
+            return "<${readText(r)}> $shown"
         }
 
         /** Says "accepted" then "loaded" without downloading anything, so servers that require a pack let us stay. */

@@ -28,6 +28,18 @@ class AfkManager(
     private val running = mutableMapOf<String, Running>()
     private var started = false
 
+    /** Per-server logs (kept while the app or host runs). [logVersion] changes whenever a line is added. */
+    val logBook = AfkLogBook()
+    private val _logVersion = MutableStateFlow(0L)
+    val logVersion: StateFlow<Long> get() = _logVersion
+
+    private fun addLog(id: String, line: AfkLogLine) {
+        logBook.add(id, line)
+        _logVersion.update { it + 1 }
+    }
+
+    fun logs(id: String, since: Long = 0) = logBook.get(id, since)
+
     private val _statuses = MutableStateFlow<Map<String, AfkStatus>>(emptyMap())
     /** Status per server ID; servers that are off are missing (treat as [AfkStatus.OFF]). */
     val statuses: StateFlow<Map<String, AfkStatus>> get() = _statuses
@@ -47,7 +59,10 @@ class AfkManager(
     /** Adds or edits a server; a running bot reconnects if its address or account changed. */
     fun upsert(server: AfkServer) = store.upsert(server)
 
-    fun remove(id: String) = store.remove(id)
+    fun remove(id: String) {
+        store.remove(id)
+        logBook.remove(id)
+    }
 
     fun stopAll() = store.disableAll()
 
@@ -63,6 +78,7 @@ class AfkManager(
                 run.job.cancel()
                 running.remove(id)
                 _statuses.update { it - id }
+                if (servers.any { it.id == id }) addLog(id, AfkLogLine(clock(), AfkLogKind.INFO, if (now == null) "꺼짐" else "설정이 바뀌어 다시 접속해요"))
             }
         }
         for ((id, server) in wanted) {
@@ -70,7 +86,8 @@ class AfkManager(
             val token = Any()
             val bot = AfkBot(
                 server, connector, account, network,
-                onStatus = { s -> publish(id, token, s) }, onIcon = { png -> onServerIcon(id, png) }, clock = clock,
+                onStatus = { s -> publish(id, token, s) }, onIcon = { png -> onServerIcon(id, png) },
+                onLog = { line -> synchronized(this) { if (running[id]?.token === token) addLog(id, line) } }, clock = clock,
             )
             // Registered before it starts, so its first status update is not taken for a stale one.
             val job = scope.launch(start = CoroutineStart.LAZY) { bot.run() }

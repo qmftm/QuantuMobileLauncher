@@ -100,6 +100,7 @@ class HostService(
                 val file = server?.let { iconFile(it) }
                 RemoteResponse(iconPng = file?.let { Base64.getEncoder().encodeToString(it.readBytes()) })
             }
+            Ops.LOGS -> RemoteResponse(logs = req.id?.let { manager.logs(it, req.since ?: 0) }.orEmpty())
             else -> RemoteResponse(ok = false, error = "알 수 없는 요청 (${req.op}). 앱이나 PC 프로그램을 업데이트해 주세요")
         }
     }

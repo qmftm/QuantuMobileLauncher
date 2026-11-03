@@ -89,7 +89,8 @@ class AfkRemote(private val context: Context) {
     suspend fun call(hostId: String, req: RemoteRequest): RemoteResponse {
         val host = host(hostId) ?: throw IllegalStateException("PC가 목록에 없어요")
         val res = withTimeout(30_000) { withHost(host) { it.call(req) } }
-        if (req.op != Ops.ICON && req.op != Ops.HELLO) setState(hostId, HostState(servers = res.servers))
+        // Only these answers carry the PC's server list.
+        if (req.op in setOf(Ops.LIST, Ops.UPSERT, Ops.SET_ENABLED, Ops.REMOVE)) setState(hostId, HostState(servers = res.servers))
         return res
     }
 

@@ -334,4 +334,10 @@ PC에서 AFK 호스트를 실행하면 서버를 PC에서 돌릴 수 있어요. 
     <string name="afk_saving">저장하는 중…</string>
     <string name="afk_pc_failed">PC에 저장하지 못했어요: %1$s</string>
     <string name="afk_pc_row">PC: %1$s</string>
+    <!-- AFK log -->
+    <string name="afk_log">로그</string>
+    <string name="afk_log_empty">아직 기록이 없어요.\n서버를 켜면 접속 과정과 채팅이 여기에 나와요.</string>
+    <string name="afk_log_chat_only">채팅만 보기</string>
+    <string name="afk_log_phone">이 폰에서 실행 중 · 앱을 다시 켜면 이전 기록은 지워져요</string>
+    <string name="afk_log_pc">PC: %1$s 에서 실행 중</string>
 </resources>

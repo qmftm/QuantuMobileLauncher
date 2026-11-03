@@ -30,6 +30,7 @@ class LiveAfkServerTest {
         val events = object : AfkEvents {
             override fun connected(version: String) { connected += version; log("connected: $version") }
             override fun note(message: String) = log("note: $message")
+            override fun log(kind: com.quantumobile.launcher.core.afk.AfkLogKind, text: String) = log("log $kind: $text")
         }
         val account = Account.offline(System.getenv("QML_AFK_NAME") ?: "AfkBot")
         val ended: AfkDisconnect? = withTimeoutOrNull(seconds * 1000) {

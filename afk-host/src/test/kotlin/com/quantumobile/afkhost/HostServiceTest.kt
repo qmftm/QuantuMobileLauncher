@@ -51,6 +51,7 @@ class HostServiceTest {
             joined += "$host as ${account.username} (${account.accessToken})"
             events.serverIcon(byteArrayOf(1, 2, 3))
             events.connected("26.3")
+            events.log(com.quantumobile.launcher.core.afk.AfkLogKind.CHAT, "<Steve> hello PC")
             awaitCancellation()
         },
         refresh = refresh,
@@ -91,6 +92,11 @@ class HostServiceTest {
         assertNotNull(list.single().iconHash)
         val icon = client.call(RemoteRequest(Ops.ICON, 0, id = server.id)).iconPng
         assertEquals(listOf<Byte>(1, 2, 3), Base64.getDecoder().decode(icon).toList())
+
+        // The phone can read the PC's log for that server, and only newer lines when it asks again.
+        val logs = client.call(RemoteRequest(Ops.LOGS, 0, id = server.id)).logs
+        assertTrue(logs.any { it.text == "<Steve> hello PC" })
+        assertTrue(client.call(RemoteRequest(Ops.LOGS, 0, id = server.id, since = logs.last().time)).logs.isEmpty())
 
         client.call(RemoteRequest(Ops.SET_ENABLED, 0, id = server.id, enabled = false))
         assertEquals(AfkPhase.OFF, client.list().single().phase)

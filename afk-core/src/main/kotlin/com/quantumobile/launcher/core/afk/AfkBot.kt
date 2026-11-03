@@ -27,6 +27,7 @@ class AfkBot(
     private val network: StateFlow<Boolean>,
     private val onStatus: (AfkStatus) -> Unit,
     private val onIcon: (ByteArray) -> Unit = {},
+    private val onLog: (AfkLogLine) -> Unit = {},
     private val backoff: Backoff = Backoff(),
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
@@ -37,6 +38,8 @@ class AfkBot(
         onStatus(status)
     }
 
+    private fun log(kind: AfkLogKind, text: String) = onLog(AfkLogLine(clock(), kind, text))
+
     private fun set(phase: AfkPhase, message: String? = null, retryAt: Long = 0) =
         set(AfkStatus(phase, message, status.version, retryAt, since = clock()))
 
@@ -44,27 +47,37 @@ class AfkBot(
         override fun connected(version: String) {
             backoff.reset()
             set(AfkStatus(AfkPhase.CONNECTED, null, version.ifEmpty { null }, since = clock()))
+            log(AfkLogKind.INFO, "접속됨${if (version.isNotEmpty()) " ($version)" else ""} — 월드에 들어갔어요")
         }
 
-        override fun note(message: String) = set(status.copy(message = message))
+        override fun note(message: String) {
+            set(status.copy(message = message))
+            log(AfkLogKind.INFO, message)
+        }
 
         override fun serverIcon(png: ByteArray) = onIcon(png)
+
+        override fun log(kind: AfkLogKind, text: String) = this@AfkBot.log(kind, text)
     }
 
     suspend fun run() {
         while (true) {
             if (!network.value) {
                 set(AfkPhase.WAITING, MSG_NO_NETWORK)
+                log(AfkLogKind.WARN, MSG_NO_NETWORK)
                 network.first { it }
             }
             set(AfkPhase.CONNECTING)
+            log(AfkLogKind.INFO, "${server.address} 에 접속하는 중")
             val result = connectOnce()
             if (!result.retry) {
                 set(AfkPhase.ERROR, result.reason)
+                log(AfkLogKind.ERROR, "${result.reason} — 재접속하지 않아요")
                 return
             }
             val wait = backoff.nextDelayMs()
             set(AfkPhase.WAITING, result.reason, retryAt = clock() + wait)
+            log(AfkLogKind.WARN, "연결 끊김: ${result.reason} — ${wait / 1000}초 뒤 다시 접속")
             waitBeforeRetry(wait)
         }
     }
