@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +35,7 @@ class AfkClient(
     private val timing: AfkTiming = AfkTiming(),
     private val connectTimeoutMs: Int = 15_000,
     private val readTimeoutMs: Int = 35_000,
+    private val joinTimeoutMs: Long = 60_000,
 ) : AfkConnector {
 
     override suspend fun run(host: String, port: Int, account: Account, events: AfkEvents): AfkDisconnect =
@@ -81,22 +83,67 @@ class AfkClient(
         private var loadedSent = false
         private var sneakJob: Job? = null
 
+        // Last position the server put us at (only needed to echo back in teleport confirmations).
+        private var x = 0.0
+        private var y = 0.0
+        private var z = 0.0
+        private var yaw = 0f
+        private var pitch = 0f
+
+        /** 1.21.2+ Player Position: id, position, velocity, rotation, then flags saying which values are relative. */
+        private fun readTeleport(r: PacketReader): Int {
+            val id = r.varInt()
+            val nx = r.double(); val ny = r.double(); val nz = r.double()
+            r.double(); r.double(); r.double() // velocity
+            val nYaw = r.float(); val nPitch = r.float()
+            val relative = r.int()
+            x = if (relative and 0x01 != 0) x + nx else nx
+            y = if (relative and 0x02 != 0) y + ny else ny
+            z = if (relative and 0x04 != 0) z + nz else nz
+            yaw = if (relative and 0x08 != 0) yaw + nYaw else nYaw
+            pitch = if (relative and 0x10 != 0) pitch + nPitch else nPitch
+            return id
+        }
+
+        @Volatile private var joined = false
+        @Volatile private var stalled = false
+
         suspend fun run(): AfkDisconnect = coroutineScope {
+            // If the server never lets us into the world (e.g. a newer version whose packets we misread and it waits
+            // for an answer we never send), give up with a clear reason instead of sitting there forever.
+            val watchdog = launch {
+                delay(joinTimeoutMs)
+                if (!joined) { stalled = true; conn.close() }
+            }
             try {
                 conn.send(ServerPing.handshake(protocol, host, port, nextState = 2))
                 conn.send(PacketWriter(0x00).string(account.username).uuid(uuidOf(account.uuid)))
                 while (isActive) {
-                    val packet = conn.receive()
+                    val packet = try { conn.receive() } catch (e: java.io.IOException) {
+                        if (stalled) return@coroutineScope stalledReason()
+                        ensureActive() // closed because we were cancelled: report the cancellation, not a socket error
+                        throw e
+                    }
                     val ended = when (state) {
                         State.LOGIN -> login(packet)
                         State.CONFIG -> config(packet)
-                        State.PLAY -> play(packet) { startSneaking() }
+                        State.PLAY -> play(packet) { joined = true; startSneaking() }
                     }
                     if (ended != null) return@coroutineScope ended
                 }
                 AfkDisconnect("중지됨")
             } finally {
+                watchdog.cancel()
                 sneakJob?.cancel()
+            }
+        }
+
+        private fun stalledReason(): AfkDisconnect {
+            val name = version.name.ifEmpty { "프로토콜 $protocol" }
+            return if (PacketIds.exact(protocol) == null) {
+                AfkDisconnect("이 서버 버전($name)은 아직 지원 목록에 없어요. 앱 업데이트가 필요해요", retry = false)
+            } else {
+                AfkDisconnect("서버 입장이 끝나지 않았어요 (시간 초과)")
             }
         }
 
@@ -205,8 +252,13 @@ class AfkClient(
                     onJoined()
                 }
                 ids.playPosition -> {
-                    val teleportId = if (protocol >= 768) r.varInt() else { r.bytes(33); r.varInt() }
-                    conn.send(PacketWriter(ids.playTeleportConfirmOut).varInt(teleportId))
+                    val teleportId = if (protocol >= 768) readTeleport(r) else { r.bytes(33); r.varInt() }
+                    val confirm = PacketWriter(ids.playTeleportConfirmOut).varInt(teleportId)
+                    // 26.3 added the position to the confirmation (the server only checks the numbers are valid).
+                    if (protocol >= TELEPORT_CONFIRM_HAS_POSITION) {
+                        confirm.double(x).double(y).double(z).float(yaw).float(pitch)
+                    }
+                    conn.send(confirm)
                     if (!loadedSent && ids.playLoadedOut >= 0) {
                         conn.send(PacketWriter(ids.playLoadedOut))
                         loadedSent = true
@@ -255,6 +307,7 @@ class AfkClient(
         const val DEFAULT_PORT = 25565
         private const val PLAYER_INPUT_SINCE = 768 // 1.21.2: sneak moved from entity_action to player_input
         private const val INPUT_SHIFT = 0x20
+        private const val TELEPORT_CONFIRM_HAS_POSITION = 777 // 26.3
         private const val PACK_ACCEPTED = 3
         private const val PACK_LOADED = 0
 

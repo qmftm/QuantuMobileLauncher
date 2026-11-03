@@ -12,7 +12,7 @@ data class ServerVersion(val protocol: Int, val name: String)
 /** Server list ping (status state), used to learn which protocol version the server speaks. */
 object ServerPing {
     /** Protocol number sent in the status handshake; servers answer with their own version regardless. */
-    private const val STATUS_PROTOCOL = 775
+    private const val STATUS_PROTOCOL = PacketIds.NEWEST_KNOWN
 
     fun query(host: String, port: Int, timeoutMs: Int): ServerVersion =
         McConnection.open(host, port, timeoutMs, timeoutMs).use { conn ->

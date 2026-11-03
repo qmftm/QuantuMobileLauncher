@@ -36,6 +36,8 @@ class PacketWriter(id: Int) {
     fun int(value: Int) = apply { for (s in 24 downTo 0 step 8) out.write(value ushr s and 0xFF) }
     fun long(value: Long) = apply { for (s in 56 downTo 0 step 8) out.write((value ushr s).toInt() and 0xFF) }
     fun uuid(value: UUID) = apply { long(value.mostSignificantBits); long(value.leastSignificantBits) }
+    fun float(value: Float) = int(java.lang.Float.floatToRawIntBits(value))
+    fun double(value: Double) = long(java.lang.Double.doubleToRawLongBits(value))
 
     fun toByteArray(): ByteArray = out.toByteArray()
 }

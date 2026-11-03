@@ -5,6 +5,7 @@ import com.quantumobile.launcher.core.afk.AfkEvents
 import com.quantumobile.launcher.core.afk.AfkTiming
 import com.quantumobile.launcher.core.auth.Account
 import com.quantumobile.launcher.core.auth.AccountType
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
@@ -139,9 +140,19 @@ class AfkClientTest {
             // play
             c.send(PacketWriter(ids.playLogin).int(77).bool(false).raw(ByteArray(40)))
             val pos = PacketWriter(ids.playPosition)
-            if (protocol >= 768) pos.varInt(5).raw(ByteArray(8 * 6 + 4 * 2 + 4)) else pos.raw(ByteArray(33)).varInt(5)
+            if (protocol >= 768) {
+                pos.varInt(5).double(1.5).double(64.0).double(-2.5).raw(ByteArray(8 * 3)).float(90f).float(0f).int(0)
+            } else {
+                pos.raw(ByteArray(33)).varInt(5)
+            }
             c.send(pos)
-            assertEquals(5, c.expect(ids.playTeleportConfirmOut).varInt())
+            val confirm = c.expect(ids.playTeleportConfirmOut)
+            assertEquals(5, confirm.varInt())
+            if (protocol >= 777) { // 26.3 echoes the position back
+                assertEquals(1.5, confirm.double(), 0.0); assertEquals(64.0, confirm.double(), 0.0); assertEquals(-2.5, confirm.double(), 0.0)
+                assertEquals(90f, confirm.float(), 0f); assertEquals(0f, confirm.float(), 0f)
+            }
+            assertEquals(0, confirm.remaining)
             c.send(PacketWriter(ids.playHealth).raw(floatBytes(0f)).varInt(20).raw(floatBytes(5f)))
             assertEquals(0, c.expect(ids.playClientCommandOut).varInt())
             respawned = true
@@ -216,6 +227,17 @@ class AfkClientTest {
     }
 
     @Test
+    fun newest_26_3_withCompressionAndEncryption() {
+        val server = FakeServer(777, "26.3", online = true, compression = 256)
+        val t = server.start()
+        val (result, events) = run(server, microsoft)
+        t.join(5_000)
+        server.failure.get()?.let { throw it }
+        assertEquals("bye", result.reason)
+        assertEquals(listOf("26.3"), events.connected)
+    }
+
+    @Test
     fun oldServersAreRefusedWithAReason() {
         val server = FakeServer(763, "1.20.1", online = false, compression = -1)
         server.start(statusOnly = true)
@@ -233,6 +255,47 @@ class AfkClientTest {
         assertFalse(result.retry)
         assertTrue(result.reason.contains("마이크로소프트"))
         assertNull(server.serverHash)
+    }
+
+    @Test
+    fun aServerThatNeverLetsUsInGivesAClearReason() {
+        // A future version (778) whose server just waits: the client must not hang forever.
+        val socket = ServerSocket(0, 5, InetAddress.getLoopbackAddress())
+        thread(isDaemon = true) {
+            runCatching {
+                socket.accept().use { s ->
+                    val c = McConnection.wrap(s); c.receive(); c.receive()
+                    c.send(PacketWriter(0).string("""{"version":{"name":"27.1","protocol":778}}"""))
+                }
+                socket.accept().use { s -> val c = McConnection.wrap(s); while (true) c.receive() }
+            }
+            socket.close()
+        }
+        val client = AfkClient(timing = fast, joinTimeoutMs = 500)
+        val result = runBlocking { withTimeout(10_000) { client.run("127.0.0.1", socket.localPort, offline, Recorder()) } }
+        assertFalse(result.retry)
+        assertTrue(result.reason, "27.1" in result.reason && "업데이트" in result.reason)
+    }
+
+    @Test
+    fun cancellingAConnectedClientIsACleanStop() {
+        // A server that lets us in and then just keeps us there.
+        val server = FakeServer(769, "1.21.4", online = false, compression = -1)
+        server.start()
+        val joined = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val events = object : AfkEvents {
+            override fun connected(version: String) { joined.complete(Unit) }
+            override fun note(message: String) = Unit
+        }
+        val outcome = runBlocking {
+            val job = async(kotlinx.coroutines.Dispatchers.Default) {
+                runCatching { AfkClient(timing = AfkTiming(sneakMinMs = 60_000, sneakMaxMs = 60_000)).run("127.0.0.1", server.port, offline, events) }
+            }
+            withTimeout(10_000) { joined.await() }
+            job.cancel()
+            runCatching { job.await() }
+        }
+        assertTrue("expected cancellation, got $outcome", outcome.exceptionOrNull() is kotlinx.coroutines.CancellationException)
     }
 
     @Test

@@ -1,7 +1,9 @@
 package com.quantumobile.launcher.core.afk.proto
 
-// Generated from PrismarineJS/minecraft-data (data/pc/<version>/protocol.json). -1 = the packet does not exist in that version.
-// To add a version: add its protocol.json IDs for the same packets below and raise [PacketIds.NEWEST_KNOWN].
+// 764–775 generated from PrismarineJS/minecraft-data (data/pc/<version>/protocol.json); 776–777 from the vanilla server's
+// own report (`java -DbundlerMainClass=net.minecraft.data.Main -jar server.jar --reports` → reports/packets.json), which
+// also matches every row from 1.21 on. -1 = the packet does not exist in that version.
+// To add a version: take the same packets from its packets.json and raise [PacketIds.NEWEST_KNOWN].
 
 /** Packet IDs (configuration and play states) the AFK client needs, for one protocol version. */
 @Suppress("LongParameterList")
@@ -46,7 +48,7 @@ class PacketIds(
     companion object {
         /** Oldest protocol with a configuration state (1.20.2); older servers are not supported. */
         const val OLDEST = 764
-        const val NEWEST_KNOWN = 775
+        const val NEWEST_KNOWN = 777
 
         private val table: Map<Int, PacketIds> = listOf(
             PacketIds(764, "1.20.2", -1, 1, 2, 3, 4, 6, -1, -1, -1, 2, 3, 4, 5, -1, -1, 36, 51, 27, 66, 101, 89, 62, -1, 41, 0, 8, 20, 35, 39, 33, -1, 11, -1, -1),
@@ -61,6 +63,8 @@ class PacketIds(
             PacketIds(773, "1.21.9–1.21.10", 0, 2, 3, 4, 5, 9, 14, 19, 1, 3, 4, 5, 6, 7, 9, 43, 59, 32, 79, 116, 102, 70, 21, 48, 0, 11, 27, 44, 48, 41, 42, 15, 43, 20),
             PacketIds(774, "1.21.11", 0, 2, 3, 4, 5, 9, 14, 19, 1, 3, 4, 5, 6, 7, 9, 43, 59, 32, 79, 116, 102, 70, 21, 48, 0, 11, 27, 44, 48, 41, 42, 15, 43, 20),
             PacketIds(775, "26.1", 0, 2, 3, 4, 5, 9, 14, 19, 1, 3, 4, 5, 6, 7, 9, 44, 61, 32, 81, 118, 104, 72, 21, 49, 0, 12, 28, 45, 49, 42, 43, 16, 44, 21),
+            PacketIds(776, "26.2", 0, 2, 3, 4, 5, 9, 14, 19, 1, 3, 4, 5, 6, 7, 9, 44, 61, 32, 81, 118, 104, 72, 21, 49, 0, 12, 28, 45, 49, 42, 43, 16, 44, 21),
+            PacketIds(777, "26.3", 0, 2, 3, 4, 5, 9, 15, 20, 1, 3, 4, 5, 6, 7, 9, 45, 62, 32, 82, 120, 106, 73, 21, 50, 0, 12, 28, 45, 50, 42, 43, 16, 44, 21),
         ).associateBy { it.protocol }
 
         /** Exact table for [protocol], or null when this version is not known. */
