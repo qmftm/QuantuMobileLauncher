@@ -35,7 +35,7 @@ data class Row(
     /** A local image file for the icon (takes precedence over [icon]); [iconStamp] changes when the file does. */
     val iconFile: String? = null,
     val iconStamp: Long = 0,
-    /** Show [icon] in its own colours, filling the tile (e.g. pixel art), instead of tinted with padding. */
+    /** Show [icon] in its own colours, filling the tile, instead of tinted with padding. */
     val iconRaw: Boolean = false,
     /** Small coloured dot on the icon's corner (e.g. connection state). */
     val statusColor: Int? = null,
@@ -91,8 +91,7 @@ class SimpleListAdapter(
             b.icon.imageTintList = null
             b.icon.setImageDrawable(AfkIcons.pixelated(ctx, fileBitmap))
         } else if (row.iconRaw) {
-            val pad = (4 * ctx.resources.displayMetrics.density).toInt()
-            b.icon.setPadding(pad, pad, pad, pad)
+            b.icon.setPadding(0, 0, 0, 0)
             b.icon.imageTintList = null
             b.icon.setImageResource(row.icon)
         } else if (row.iconUrl != null && scope != null) {

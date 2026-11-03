@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Original 16x16 pixel art for AFK server icons. -->
+<!-- AFK server icon: white Material Symbols "grass" (Apache 2.0) on a coloured tile. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp" android:height="48dp" android:viewportWidth="16" android:viewportHeight="16">
-    <path android:fillColor="#7CC452" android:pathData="M0,0h2v1h-2zM3,0h1v1h-1zM6,0h1v1h-1zM10,0h1v1h-1zM13,0h1v1h-1zM5,1h1v1h-1zM12,1h1v1h-1z" />
-    <path android:fillColor="#5DA83A" android:pathData="M2,0h1v1h-1zM4,0h2v1h-2zM7,0h3v1h-3zM11,0h2v1h-2zM14,0h2v1h-2zM0,1h2v1h-2zM3,1h2v1h-2zM6,1h2v1h-2zM9,1h3v1h-3zM13,1h2v1h-2zM0,2h1v1h-1zM2,2h4v1h-4zM7,2h3v1h-3zM11,2h3v1h-3zM15,2h1v1h-1zM0,3h2v1h-2zM3,3h1v1h-1zM5,3h2v1h-2zM8,3h3v1h-3zM13,3h2v1h-2zM1,4h1v1h-1zM4,4h1v1h-1zM6,4h1v1h-1zM9,4h1v1h-1zM13,4h1v1h-1z" />
-    <path android:fillColor="#478A2A" android:pathData="M2,1h1v1h-1zM8,1h1v1h-1zM15,1h1v1h-1zM1,2h1v1h-1zM6,2h1v1h-1zM10,2h1v1h-1zM14,2h1v1h-1zM4,3h1v1h-1zM12,3h1v1h-1z" />
-    <path android:fillColor="#8B5A2B" android:pathData="M2,3h1v1h-1zM7,3h1v1h-1zM11,3h1v1h-1zM15,3h1v1h-1zM0,4h1v1h-1zM2,4h2v1h-2zM5,4h1v1h-1zM7,4h2v1h-2zM10,4h3v1h-3zM14,4h2v1h-2zM0,5h4v1h-4zM8,5h2v1h-2zM11,5h1v1h-1zM14,5h1v1h-1zM0,6h7v1h-7zM8,6h1v1h-1zM10,6h1v1h-1zM12,6h1v1h-1zM14,6h1v1h-1zM2,7h4v1h-4zM7,7h2v1h-2zM11,7h5v1h-5zM3,8h3v1h-3zM9,8h1v1h-1zM11,8h1v1h-1zM14,8h2v1h-2zM1,9h2v1h-2zM5,9h2v1h-2zM9,9h1v1h-1zM11,9h1v1h-1zM13,9h2v1h-2zM0,10h2v1h-2zM3,10h3v1h-3zM8,10h1v1h-1zM11,10h2v1h-2zM14,10h1v1h-1zM0,11h1v1h-1zM3,11h1v1h-1zM6,11h1v1h-1zM8,11h1v1h-1zM10,11h1v1h-1zM12,11h1v1h-1zM0,12h1v1h-1zM2,12h2v1h-2zM6,12h1v1h-1zM8,12h3v1h-3zM12,12h2v1h-2zM15,12h1v1h-1zM0,13h4v1h-4zM5,13h11v1h-11zM0,14h1v1h-1zM2,14h3v1h-3zM6,14h1v1h-1zM9,14h3v1h-3zM13,14h1v1h-1zM15,14h1v1h-1zM0,15h3v1h-3zM4,15h1v1h-1zM6,15h3v1h-3zM10,15h3v1h-3z" />
-    <path android:fillColor="#6B4220" android:pathData="M4,5h4v1h-4zM10,5h1v1h-1zM12,5h2v1h-2zM15,5h1v1h-1zM9,6h1v1h-1zM11,6h1v1h-1zM15,6h1v1h-1zM0,7h1v1h-1zM6,7h1v1h-1zM9,7h1v1h-1zM1,8h1v1h-1zM6,8h1v1h-1zM8,8h1v1h-1zM10,8h1v1h-1zM12,8h2v1h-2zM3,9h1v1h-1zM8,9h1v1h-1zM10,9h1v1h-1zM12,9h1v1h-1zM15,9h1v1h-1zM9,10h1v1h-1zM13,10h1v1h-1zM1,11h1v1h-1zM7,11h1v1h-1zM9,11h1v1h-1zM14,11h2v1h-2zM1,12h1v1h-1zM7,12h1v1h-1zM4,13h1v1h-1zM5,14h1v1h-1zM7,14h2v1h-2zM12,14h1v1h-1zM14,14h1v1h-1zM5,15h1v1h-1zM9,15h1v1h-1zM13,15h1v1h-1zM15,15h1v1h-1z" />
-    <path android:fillColor="#A8763F" android:pathData="M7,6h1v1h-1zM13,6h1v1h-1zM1,7h1v1h-1zM10,7h1v1h-1zM0,8h1v1h-1zM2,8h1v1h-1zM7,8h1v1h-1zM0,9h1v1h-1zM4,9h1v1h-1zM7,9h1v1h-1zM2,10h1v1h-1zM6,10h2v1h-2zM10,10h1v1h-1zM15,10h1v1h-1zM2,11h1v1h-1zM4,11h2v1h-2zM11,11h1v1h-1zM13,11h1v1h-1zM4,12h2v1h-2zM11,12h1v1h-1zM14,12h1v1h-1zM1,14h1v1h-1zM3,15h1v1h-1zM14,15h1v1h-1z" />
+    android:width="48dp" android:height="48dp" android:viewportWidth="960" android:viewportHeight="960">
+    <path android:fillColor="#43A047" android:pathData="M0,0h960v960h-960z" />
+    <group android:pivotX="480" android:pivotY="480" android:scaleX="0.6" android:scaleY="0.6">
+        <group android:translateY="960">
+            <path android:fillColor="#FFFFFF" android:pathData="M110-160q-13 0-21.5-8.5T80-190q0-13 8.5-21.5T110-220h210q-16-72-62-129.5T151-441q-23-13-20-26t29-13q134 0 227 93t93 227H110Zm430 0q0-42-8-73.5T512-296q40-88 120-136t168-48q26 0 29 13t-20 26q-63 35-109 93.5T640-220h210q13 0 21.5 8.5T880-190q0 13-8.5 21.5T850-160H540Zm-58-193q-14-128 51.5-223.5T704-705q25-8 33.5 4t-9.5 29q-38 36-67.5 82T621-494q-44 21-80 58.5T482-353Zm-61-76q-16-15-35-30t-32-23q3-12 4.5-26.5T360-532q0-55-13-106t-37-97q-13-23-1-31t33 8q45 34 77.5 81T468-573q-18 32-30.5 69.5T421-429Z" />
+        </group>
+    </group>
 </vector>

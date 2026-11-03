@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Original 16x16 pixel art for AFK server icons. -->
+<!-- AFK server icon: white Material Symbols "bedtime" (Apache 2.0) on a coloured tile. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp" android:height="48dp" android:viewportWidth="16" android:viewportHeight="16">
-    <path android:fillColor="#3A3460" android:pathData="M6,1h4v1h-4zM5,2h1v1h-1zM9,2h1v1h-1zM4,3h1v1h-1zM8,3h1v1h-1zM3,4h1v1h-1zM7,4h1v1h-1zM3,5h1v1h-1zM7,5h1v1h-1zM2,6h1v1h-1zM7,6h1v1h-1zM2,7h1v1h-1zM7,7h1v1h-1zM2,8h1v1h-1zM8,8h1v1h-1zM2,9h1v1h-1zM9,9h1v1h-1zM3,10h1v1h-1zM10,10h4v1h-4zM3,11h1v1h-1zM13,11h1v1h-1zM4,12h2v1h-2zM12,12h1v1h-1zM6,13h6v1h-6z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M14,1h1v1h-1zM12,7h1v1h-1zM1,14h1v1h-1z" />
-    <path android:fillColor="#F5E6A8" android:pathData="M6,2h3v1h-3zM5,3h3v1h-3zM4,4h3v1h-3zM4,5h3v1h-3zM3,6h4v1h-4zM3,7h4v1h-4zM3,8h5v1h-5zM3,9h6v1h-6zM4,10h6v1h-6zM4,11h9v1h-9zM6,12h6v1h-6z" />
+    android:width="48dp" android:height="48dp" android:viewportWidth="960" android:viewportHeight="960">
+    <path android:fillColor="#5C6BC0" android:pathData="M0,0h960v960h-960z" />
+    <group android:pivotX="480" android:pivotY="480" android:scaleX="0.6" android:scaleY="0.6">
+        <group android:translateY="960">
+            <path android:fillColor="#FFFFFF" android:pathData="M484-80q-84 0-157.5-32t-128-86.5Q144-253 112-326.5T80-484q0-132 77.5-238T361-868q17-5 31 5t12 27q-7 88 23.5 169.5T521-522q63 63 145 94t170 24q17-2 26.5 13t4.5 32q-40 125-145.5 202T484-80Z" />
+        </group>
+    </group>
 </vector>

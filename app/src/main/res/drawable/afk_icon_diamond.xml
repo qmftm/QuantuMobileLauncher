@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Original 16x16 pixel art for AFK server icons. -->
+<!-- AFK server icon: white Material Symbols "diamond" (Apache 2.0) on a coloured tile. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp" android:height="48dp" android:viewportWidth="16" android:viewportHeight="16">
-    <path android:fillColor="#0B3B3A" android:pathData="M5,3h6v1h-6zM4,4h1v1h-1zM11,4h1v1h-1zM3,5h1v1h-1zM12,5h1v1h-1zM2,6h1v1h-1zM13,6h1v1h-1zM2,7h12v1h-12zM3,8h1v1h-1zM12,8h1v1h-1zM4,9h1v1h-1zM11,9h1v1h-1zM5,10h1v1h-1zM10,10h1v1h-1zM6,11h1v1h-1zM9,11h1v1h-1zM7,12h2v1h-2z" />
-    <path android:fillColor="#E8FFFF" android:pathData="M5,4h1v1h-1zM4,5h2v1h-2zM5,8h1v1h-1z" />
-    <path android:fillColor="#4DE8E0" android:pathData="M6,4h4v1h-4zM6,5h4v1h-4zM3,6h8v1h-8zM4,8h1v1h-1zM6,8h5v1h-5zM5,9h5v1h-5zM6,10h3v1h-3zM7,11h1v1h-1z" />
-    <path android:fillColor="#1FA5A0" android:pathData="M10,4h1v1h-1zM10,5h2v1h-2zM11,6h2v1h-2zM11,8h1v1h-1zM10,9h1v1h-1zM9,10h1v1h-1zM8,11h1v1h-1z" />
+    android:width="48dp" android:height="48dp" android:viewportWidth="960" android:viewportHeight="960">
+    <path android:fillColor="#00ACC1" android:pathData="M0,0h960v960h-960z" />
+    <group android:pivotX="480" android:pivotY="480" android:scaleX="0.6" android:scaleY="0.6">
+        <group android:translateY="960">
+            <path android:fillColor="#FFFFFF" android:pathData="M358-625h244L497-840h-34L358-625Zm97 475v-425H101l354 425Zm50 0 354-425H505v425Zm153-475h209l-90-182q-8-15-22.5-24t-31.5-9H553l105 215Zm-565 0h209l105-215H237q-17 0-31.5 9T183-807L93-625Z" />
+        </group>
+    </group>
 </vector>

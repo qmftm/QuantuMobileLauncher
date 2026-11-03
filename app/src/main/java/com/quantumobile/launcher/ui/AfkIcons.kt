@@ -14,7 +14,7 @@ import com.quantumobile.launcher.core.afk.AfkServer
 import java.io.File
 
 /**
- * Icons for AFK servers: built-in pixel-art presets, the server's own list icon (saved when the bot pings it),
+ * Icons for AFK servers: built-in presets (white symbols on coloured tiles), the server's own list icon (saved when the bot pings it),
  * or an image the user picked (cropped to a square, saved in app storage).
  */
 object AfkIcons {
@@ -22,17 +22,20 @@ object AfkIcons {
 
     val presets = listOf(
         Preset("grass", R.drawable.afk_icon_grass, R.string.afk_icon_grass),
-        Preset("stone", R.drawable.afk_icon_stone, R.string.afk_icon_stone),
         Preset("diamond", R.drawable.afk_icon_diamond, R.string.afk_icon_diamond),
         Preset("sword", R.drawable.afk_icon_sword, R.string.afk_icon_sword),
-        Preset("pickaxe", R.drawable.afk_icon_pickaxe, R.string.afk_icon_pickaxe),
+        Preset("tools", R.drawable.afk_icon_tools, R.string.afk_icon_tools),
         Preset("heart", R.drawable.afk_icon_heart, R.string.afk_icon_heart),
-        Preset("apple", R.drawable.afk_icon_apple, R.string.afk_icon_apple),
-        Preset("tree", R.drawable.afk_icon_tree, R.string.afk_icon_tree),
+        Preset("forest", R.drawable.afk_icon_forest, R.string.afk_icon_forest),
         Preset("house", R.drawable.afk_icon_house, R.string.afk_icon_house),
         Preset("fire", R.drawable.afk_icon_fire, R.string.afk_icon_fire),
         Preset("chest", R.drawable.afk_icon_chest, R.string.afk_icon_chest),
         Preset("moon", R.drawable.afk_icon_moon, R.string.afk_icon_moon),
+        Preset("castle", R.drawable.afk_icon_castle, R.string.afk_icon_castle),
+        Preset("game", R.drawable.afk_icon_game, R.string.afk_icon_game),
+        Preset("globe", R.drawable.afk_icon_globe, R.string.afk_icon_globe),
+        Preset("star", R.drawable.afk_icon_star, R.string.afk_icon_star),
+        Preset("bolt", R.drawable.afk_icon_bolt, R.string.afk_icon_bolt),
     )
 
     /** Shown for "server icon" until the server has been reached once (or when it has no icon). */

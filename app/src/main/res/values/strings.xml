@@ -282,6 +282,21 @@
     <string name="afk_battery_on">Allowed: the bot can run with the screen off</string>
     <string name="afk_battery_off">Restricted: tap to allow, otherwise Android may cut the connection</string>
     <!-- AFK server icons -->
+    <string name="afk_icon_grass">Grass</string>
+    <string name="afk_icon_diamond">Diamond</string>
+    <string name="afk_icon_sword">Sword</string>
+    <string name="afk_icon_tools">Tools</string>
+    <string name="afk_icon_heart">Heart</string>
+    <string name="afk_icon_forest">Forest</string>
+    <string name="afk_icon_house">House</string>
+    <string name="afk_icon_fire">Fire</string>
+    <string name="afk_icon_chest">Chest</string>
+    <string name="afk_icon_moon">Night</string>
+    <string name="afk_icon_castle">Castle</string>
+    <string name="afk_icon_game">Game</string>
+    <string name="afk_icon_globe">Globe</string>
+    <string name="afk_icon_star">Star</string>
+    <string name="afk_icon_bolt">Bolt</string>
     <string name="afk_icon">Icon</string>
     <string name="afk_icon_change">Change</string>
     <string name="afk_icon_pick">Choose an icon</string>
@@ -289,16 +304,4 @@
     <string name="afk_icon_custom">My image</string>
     <string name="afk_icon_add">Add image</string>
     <string name="afk_icon_import_failed">Could not load the image</string>
-    <string name="afk_icon_grass">Grass</string>
-    <string name="afk_icon_stone">Stone</string>
-    <string name="afk_icon_diamond">Diamond</string>
-    <string name="afk_icon_sword">Sword</string>
-    <string name="afk_icon_pickaxe">Pickaxe</string>
-    <string name="afk_icon_heart">Heart</string>
-    <string name="afk_icon_apple">Apple</string>
-    <string name="afk_icon_tree">Tree</string>
-    <string name="afk_icon_house">House</string>
-    <string name="afk_icon_fire">Fire</string>
-    <string name="afk_icon_chest">Chest</string>
-    <string name="afk_icon_moon">Night</string>
 </resources>

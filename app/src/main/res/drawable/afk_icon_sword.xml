@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Original 16x16 pixel art for AFK server icons. -->
+<!-- AFK server icon: white Material Symbols "swords" (Apache 2.0) on a coloured tile. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp" android:height="48dp" android:viewportWidth="16" android:viewportHeight="16">
-    <path android:fillColor="#202028" android:pathData="M7,0h2v1h-2zM6,1h1v1h-1zM9,1h1v1h-1zM6,2h1v1h-1zM9,2h1v1h-1zM6,3h1v1h-1zM9,3h1v1h-1zM6,4h1v1h-1zM9,4h1v1h-1zM6,5h1v1h-1zM9,5h1v1h-1zM6,6h1v1h-1zM9,6h1v1h-1zM6,7h1v1h-1zM9,7h1v1h-1zM6,8h1v1h-1zM9,8h1v1h-1zM3,9h4v1h-4zM9,9h4v1h-4zM3,10h1v1h-1zM12,10h1v1h-1zM3,11h4v1h-4zM9,11h4v1h-4zM6,12h1v1h-1zM9,12h1v1h-1zM6,13h1v1h-1zM9,13h1v1h-1zM6,14h1v1h-1zM9,14h1v1h-1zM7,15h2v1h-2z" />
-    <path android:fillColor="#F0F0F0" android:pathData="M7,1h1v1h-1zM7,2h1v1h-1zM7,3h1v1h-1zM7,4h1v1h-1zM7,5h1v1h-1zM7,6h1v1h-1zM7,7h1v1h-1zM7,8h1v1h-1z" />
-    <path android:fillColor="#9AA0A8" android:pathData="M8,1h1v1h-1zM8,2h1v1h-1zM8,3h1v1h-1zM8,4h1v1h-1zM8,5h1v1h-1zM8,6h1v1h-1zM8,7h1v1h-1zM8,8h1v1h-1z" />
-    <path android:fillColor="#E8B830" android:pathData="M7,9h2v1h-2zM4,10h8v1h-8zM7,14h2v1h-2z" />
-    <path android:fillColor="#8B5A2B" android:pathData="M7,11h2v1h-2zM7,12h2v1h-2zM7,13h2v1h-2z" />
+    android:width="48dp" android:height="48dp" android:viewportWidth="960" android:viewportHeight="960">
+    <path android:fillColor="#607D8B" android:pathData="M0,0h960v960h-960z" />
+    <group android:pivotX="480" android:pivotY="480" android:scaleX="0.6" android:scaleY="0.6">
+        <group android:translateY="960">
+            <path android:fillColor="#FFFFFF" android:pathData="M769-88 645-212l-67 67q-19 19-35.5 4.5T514-167q-17-17-17-42t17-42l199-199q17-17 42-17t42 17q12 12 26.5 28.5T819-386l-67 67 123 124q9 9 9 21t-9 21l-64 65q-9 9-21 9t-21-9Zm102-627L427-271l19 20q30 30 15 57t-37 49q-9 9-21 9t-21-9l-67-67L191-88q-9 9-21 9t-21-9l-65-65q-9-9-9-21t9-21l124-124-67-67q-9-9-9-21t9-21q22-22 49-37t57 15l20 19 435-435q8-8 19.5-13t23.5-5h105q13 0 21.5 8.5T880-854v118q0 6-2 11t-7 10ZM257-547 98-706q-8-8-13-19.5T80-749v-105q0-13 8.5-21.5T110-884h105q12 0 23.5 5t19.5 13l159 159q9 9 9 21t-9 21L299-547q-9 9-21 9t-21-9Z" />
+        </group>
+    </group>
 </vector>
