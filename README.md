@@ -1,8 +1,11 @@
-<p align="center"><img src="docs/screenshots/banner.png" alt="QuantuMobileLauncher" /></p>
+QuantuMobileLauncher
+====================
 
 [![Android CI](https://github.com/qmftm/QuantuMobileLauncher/actions/workflows/android.yml/badge.svg)](https://github.com/qmftm/QuantuMobileLauncher/actions/workflows/android.yml)
 [![Latest release](https://img.shields.io/github/v/release/qmftm/QuantuMobileLauncher)](https://github.com/qmftm/QuantuMobileLauncher/releases/latest)
 [![Commit activity](https://img.shields.io/github/commit-activity/m/qmftm/QuantuMobileLauncher)](https://github.com/qmftm/QuantuMobileLauncher/commits)
+
+<p align="center"><img src="docs/screenshots/logo.png" width="200" alt="QuantuMobileLauncher 로고" /></p>
 
 *[Boardwalk](https://github.com/AndroidPojavLauncherTeam/boardwalk) 와 [PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher) 의 뒤를 잇는 또 하나의 안드로이드용 마인크래프트 런처, 여기 QuantuMobileLauncher 입니다!*
 
