@@ -2,4 +2,6 @@
 <resources>
     <!-- Accounts is opened from the toolbar and Home rather than from the bottom bar. -->
     <item name="nav_accounts" type="id" />
+    <!-- Settings moved to the toolbar so the bottom bar (max five tabs) has room for the AFK tab. -->
+    <item name="nav_settings" type="id" />
 </resources>

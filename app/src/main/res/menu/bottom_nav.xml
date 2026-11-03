@@ -4,5 +4,5 @@
     <item android:id="@+id/nav_instances" android:icon="@drawable/ic_layers" android:title="@string/nav_instances" />
     <item android:id="@+id/nav_mods" android:icon="@drawable/ic_extension" android:title="@string/nav_mods" />
     <item android:id="@+id/nav_visual" android:icon="@drawable/ic_palette" android:title="@string/nav_visual" />
-    <item android:id="@+id/nav_settings" android:icon="@drawable/ic_settings" android:title="@string/nav_settings" />
+    <item android:id="@+id/nav_afk" android:icon="@drawable/ic_afk" android:title="@string/nav_afk" />
 </menu>

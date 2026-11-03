@@ -32,6 +32,8 @@ data class Row(
     val actions: List<RowAction> = emptyList(),
     /** Shows a spinner instead of the buttons while something is being done for this row. */
     val busy: Boolean = false,
+    /** Lines the subtitle may wrap to (it may contain '\n'). */
+    val subtitleLines: Int = 1,
 )
 
 class SimpleListAdapter(
@@ -62,6 +64,7 @@ class SimpleListAdapter(
         b.title.text = row.title
         b.subtitle.text = row.subtitle
         b.subtitle.isVisible = row.subtitle.isNotEmpty()
+        b.subtitle.maxLines = row.subtitleLines
         b.badge.isVisible = row.badge != null
         b.badge.text = row.badge
         b.check.isVisible = row.selected
