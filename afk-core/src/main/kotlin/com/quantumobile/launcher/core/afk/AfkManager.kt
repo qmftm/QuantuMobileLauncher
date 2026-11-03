@@ -40,6 +40,12 @@ class AfkManager(
 
     fun logs(id: String, since: Long = 0) = logBook.get(id, since)
 
+    private val _worlds = MutableStateFlow<Map<String, AfkWorldInfo>>(emptyMap())
+    /** What each connected bot last reported about its surroundings. */
+    val worlds: StateFlow<Map<String, AfkWorldInfo>> get() = _worlds
+
+    fun world(id: String) = _worlds.value[id]
+
     private val _statuses = MutableStateFlow<Map<String, AfkStatus>>(emptyMap())
     /** Status per server ID; servers that are off are missing (treat as [AfkStatus.OFF]). */
     val statuses: StateFlow<Map<String, AfkStatus>> get() = _statuses
@@ -78,6 +84,7 @@ class AfkManager(
                 run.job.cancel()
                 running.remove(id)
                 _statuses.update { it - id }
+                _worlds.update { it - id }
                 if (servers.any { it.id == id }) addLog(id, AfkLogLine(clock(), AfkLogKind.INFO, if (now == null) "꺼짐" else "설정이 바뀌어 다시 접속해요"))
             }
         }
@@ -87,7 +94,9 @@ class AfkManager(
             val bot = AfkBot(
                 server, connector, account, network,
                 onStatus = { s -> publish(id, token, s) }, onIcon = { png -> onServerIcon(id, png) },
-                onLog = { line -> synchronized(this) { if (running[id]?.token === token) addLog(id, line) } }, clock = clock,
+                onLog = { line -> synchronized(this) { if (running[id]?.token === token) addLog(id, line) } },
+                onWorld = { info -> synchronized(this) { if (running[id]?.token === token) _worlds.update { it + (id to info) } } },
+                clock = clock,
             )
             // Registered before it starts, so its first status update is not taken for a stale one.
             val job = scope.launch(start = CoroutineStart.LAZY) { bot.run() }

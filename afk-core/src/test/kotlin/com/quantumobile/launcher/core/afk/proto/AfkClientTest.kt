@@ -38,6 +38,8 @@ class AfkClientTest {
         val notes = CopyOnWriteArrayList<String>()
         val icons = CopyOnWriteArrayList<ByteArray>()
         val logs = CopyOnWriteArrayList<String>()
+        @Volatile var world: com.quantumobile.launcher.core.afk.AfkWorldInfo? = null
+        override fun world(info: com.quantumobile.launcher.core.afk.AfkWorldInfo) { world = info }
         override fun log(kind: com.quantumobile.launcher.core.afk.AfkLogKind, text: String) { logs += "$kind $text" }
         override fun connected(version: String) { connected += version }
         override fun note(message: String) { notes += message }
@@ -142,7 +144,12 @@ class AfkClientTest {
             c.expect(ids.configFinishOut)
 
             // play
-            c.send(PacketWriter(ids.playLogin).int(77).bool(false).raw(ByteArray(40)))
+            // Login: entity id, hardcore, world names, limits, flags, then spawn info (dimension "the_nether", creative).
+            val login = PacketWriter(ids.playLogin).int(77).bool(false).varInt(1).string("minecraft:overworld")
+                .varInt(20).varInt(10).varInt(10).bool(false).bool(true).bool(false)
+            if (protocol <= 765) login.string("minecraft:the_nether") else login.varInt(1)
+            login.string("minecraft:the_nether").long(0).byte(1).raw(ByteArray(30))
+            c.send(login)
             val pos = PacketWriter(ids.playPosition)
             if (protocol >= 768) {
                 pos.varInt(5).double(1.5).double(64.0).double(-2.5).raw(ByteArray(8 * 3)).float(90f).float(0f).int(0)
@@ -177,6 +184,20 @@ class AfkClientTest {
             pc.varInt(1).raw(text("Alex")).bool(false)
             c.send(pc)
             c.send(PacketWriter(ids.playDisguisedChat).raw(text("hi from console")).varInt(1).raw(text("Server")).bool(false))
+            // World state: night time, two players join (bits: add_player, listed, latency), one leaves.
+            val time = PacketWriter(ids.playTime).long(1000)
+            when {
+                protocol >= 775 -> time.varInt(1).varInt(0).varLong(24_000L * 3 + 18_000).raw(ByteArray(8))
+                protocol >= 768 -> time.long(18_000).bool(true)
+                else -> time.long(18_000)
+            }
+            c.send(time)
+            val alex = UUID.randomUUID(); val steve = UUID.randomUUID()
+            val info = PacketWriter(ids.playInfoUpdate).byte(0b11001).varInt(2)
+            for ((id, name) in listOf(alex to "Alex", steve to "Steve")) info.uuid(id).string(name).varInt(0).bool(true).varInt(50)
+            c.send(info)
+            c.send(PacketWriter(ids.playInfoRemove).varInt(1).uuid(steve))
+            c.send(PacketWriter(ids.playHealth).raw(floatBytes(15.5f)).varInt(17).raw(floatBytes(2f)))
             c.send(PacketWriter(ids.playKeepAlive).long(9))
             assertEquals(9L, c.expect(ids.playKeepAliveOut).long()) // all of the above was read without breaking the stream
 
@@ -221,6 +242,7 @@ class AfkClientTest {
         assertTrue(server.respawned)
         assertTrue(events.notes.any { "리스폰" in it })
         assertChat(events)
+        assertWorld(events)
         // Sneak goes through player_input on 1.21.2+: pressed, then released.
         assertTrue(server.sneaks.contains(true))
         assertEquals(false, server.sneaks.last())
@@ -237,6 +259,7 @@ class AfkClientTest {
         assertEquals("bye", result.reason)
         assertEquals(listOf("1.20.4"), events.connected)
         assertChat(events)
+        assertWorld(events, positioned = false)
         assertTrue(server.sneaks.contains(true))
         assertEquals(false, server.sneaks.last())
     }
@@ -261,6 +284,18 @@ class AfkClientTest {
         assertEquals("bye", result.reason)
         assertEquals(listOf("26.3"), events.connected)
         assertChat(events)
+        assertWorld(events)
+    }
+
+    private fun assertWorld(events: Recorder, positioned: Boolean = true) {
+        val w = events.world!!
+        assertEquals("minecraft:the_nether", w.dimension)
+        assertEquals(1, w.gameMode)
+        assertEquals(18_000L, w.dayTime)
+        assertEquals(listOf("Alex"), w.players)
+        assertEquals(15.5f, w.health!!, 0f)
+        assertEquals(17, w.food)
+        if (positioned) assertEquals(listOf(1.5, 64.0, -2.5), listOf(w.x, w.y, w.z))
     }
 
     private fun assertChat(events: Recorder) {

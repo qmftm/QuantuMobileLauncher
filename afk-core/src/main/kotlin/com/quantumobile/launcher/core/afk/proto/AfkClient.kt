@@ -4,6 +4,7 @@ import com.quantumobile.launcher.core.afk.AfkConnector
 import com.quantumobile.launcher.core.afk.AfkDisconnect
 import com.quantumobile.launcher.core.afk.AfkEvents
 import com.quantumobile.launcher.core.afk.AfkLogKind
+import com.quantumobile.launcher.core.afk.AfkWorldInfo
 import com.quantumobile.launcher.core.afk.AfkTiming
 import com.quantumobile.launcher.core.auth.Account
 import com.quantumobile.launcher.core.auth.AccountType
@@ -92,6 +93,76 @@ class AfkClient(
         private var yaw = 0f
         private var pitch = 0f
 
+        // ---- what the status panel shows ----
+        private var world = AfkWorldInfo()
+        private val players = LinkedHashMap<UUID, String>()
+        private var lastWorldSent = 0L
+
+        /** Updates the status info; time-of-day ticks alone are sent at most every few seconds. */
+        private fun updateWorld(onlyTime: Boolean = false, change: (AfkWorldInfo) -> AfkWorldInfo) {
+            world = change(world)
+            val now = System.currentTimeMillis()
+            if (onlyTime && now - lastWorldSent < 5_000) return
+            lastWorldSent = now
+            world = world.copy(players = players.values.toList(), updatedAt = now)
+            events.world(world)
+        }
+
+        /** Dimension and game mode from Login / Respawn (CommonPlayerSpawnInfo). */
+        private fun readSpawnInfo(r: PacketReader) {
+            val dimension = if (protocol <= 765) { r.string(); r.string() } else { r.varInt(); r.string() }
+            r.long() // hashed seed
+            val mode = r.byte()
+            updateWorld { it.copy(dimension = dimension, gameMode = mode) }
+        }
+
+        private fun readLoginInfo(r: PacketReader) {
+            r.bool() // hardcore
+            repeat(r.varInt()) { r.string() } // world names
+            r.varInt(); r.varInt(); r.varInt() // max players, view and simulation distance
+            r.bool(); r.bool(); r.bool() // reduced debug, respawn screen, limited crafting
+            readSpawnInfo(r)
+        }
+
+        private fun readTime(r: PacketReader) {
+            r.long() // world age
+            val dayTime = if (protocol >= 775) {
+                // 26.1+: a list of world clocks; the first is the overworld day clock.
+                if (r.varInt() == 0) return
+                r.varInt()
+                r.varLong()
+            } else {
+                r.long()
+            }
+            updateWorld(onlyTime = true) { it.copy(dayTime = Math.floorMod(Math.abs(dayTime), 24_000L)) }
+        }
+
+        /** Player list (tab) updates. The actions are a bit set; each entry has the fields of the set actions in order. */
+        private fun readPlayerInfo(r: PacketReader) {
+            val actions = r.byte()
+            val count = when { protocol >= 769 -> 8; protocol >= 768 -> 7; else -> 6 }
+            repeat(r.varInt()) {
+                val id = r.uuid()
+                for (bit in 0 until count) {
+                    if (actions and (1 shl bit) == 0) continue
+                    when (bit) {
+                        0 -> { // add player: name + profile properties
+                            players[id] = r.string()
+                            repeat(r.varInt()) { r.string(); r.string(); if (r.bool()) r.string() }
+                        }
+                        1 -> if (r.bool()) { r.uuid(); r.long(); r.byteArray(); r.byteArray() } // chat session
+                        2 -> r.varInt() // game mode
+                        3 -> r.bool() // listed
+                        4 -> r.varInt() // latency
+                        5 -> if (r.bool()) readText(r) // display name
+                        6 -> r.varInt() // list order
+                        7 -> r.bool() // show hat
+                    }
+                }
+            }
+            updateWorld { it }
+        }
+
         /** 1.21.2+ Player Position: id, position, velocity, rotation, then flags saying which values are relative. */
         private fun readTeleport(r: PacketReader): Int {
             val id = r.varInt()
@@ -105,6 +176,19 @@ class AfkClient(
             yaw = if (relative and 0x08 != 0) yaw + nYaw else nYaw
             pitch = if (relative and 0x10 != 0) pitch + nPitch else nPitch
             return id
+        }
+
+        /** Before 1.21.2: x, y, z, yaw, pitch, a byte of relative flags, then the teleport id. */
+        private fun readOldTeleport(r: PacketReader): Int {
+            val nx = r.double(); val ny = r.double(); val nz = r.double()
+            val nYaw = r.float(); val nPitch = r.float()
+            val relative = r.byte()
+            x = if (relative and 0x01 != 0) x + nx else nx
+            y = if (relative and 0x02 != 0) y + ny else ny
+            z = if (relative and 0x04 != 0) z + nz else nz
+            yaw = if (relative and 0x08 != 0) yaw + nYaw else nYaw
+            pitch = if (relative and 0x10 != 0) pitch + nPitch else nPitch
+            return r.varInt()
         }
 
         @Volatile private var joined = false
@@ -252,9 +336,18 @@ class AfkClient(
                     dead = false
                     events.connected(version.name)
                     onJoined()
+                    runCatching { readLoginInfo(r) }
+                }
+                ids.playRespawn -> runCatching { readSpawnInfo(r) }
+                ids.playTime -> runCatching { readTime(r) }
+                ids.playInfoUpdate -> runCatching { readPlayerInfo(r) }
+                ids.playInfoRemove -> runCatching {
+                    repeat(r.varInt()) { players.remove(r.uuid()) }
+                    updateWorld { it }
                 }
                 ids.playPosition -> {
-                    val teleportId = if (protocol >= 768) readTeleport(r) else { r.bytes(33); r.varInt() }
+                    val teleportId = if (protocol >= 768) readTeleport(r) else readOldTeleport(r)
+                    updateWorld { it.copy(x = x, y = y, z = z) }
                     val confirm = PacketWriter(ids.playTeleportConfirmOut).varInt(teleportId)
                     // 26.3 added the position to the confirmation (the server only checks the numbers are valid).
                     if (protocol >= TELEPORT_CONFIRM_HAS_POSITION) {
@@ -268,6 +361,8 @@ class AfkClient(
                 }
                 ids.playHealth -> {
                     val health = r.float()
+                    val food = r.varInt()
+                    updateWorld { it.copy(health = health.coerceAtLeast(0f), food = food) }
                     if (health <= 0f && !dead) {
                         dead = true
                         conn.send(PacketWriter(ids.playClientCommandOut).varInt(0)) // perform respawn

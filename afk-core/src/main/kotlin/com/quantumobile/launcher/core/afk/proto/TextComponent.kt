@@ -53,6 +53,12 @@ object TextComponent {
         fun a(i: Int) = args.getOrElse(i) { "?" }
         val known = when (key) {
             "chat.type.text" -> "<${a(0)}> ${a(1)}"
+            "chat.square_brackets" -> "[${a(0)}]"
+            "gameMode.changed" -> "게임 모드가 ${a(0)}(으)로 바뀌었어요"
+            "gameMode.survival" -> "서바이벌"
+            "gameMode.creative" -> "크리에이티브"
+            "gameMode.adventure" -> "모험"
+            "gameMode.spectator" -> "관전"
             "chat.type.announcement" -> "[${a(0)}] ${a(1)}"
             "chat.type.emote" -> "* ${a(0)} ${a(1)}"
             "chat.type.admin" -> "[${a(0)}: ${a(1)}]"
@@ -88,6 +94,8 @@ object TextComponent {
         }
         return known
             ?: fallback
+            // Advancement names: "advancements.story.enter_the_nether.title" → "enter the nether"
+            ?: if (key.startsWith("advancements.") && key.endsWith(".title")) key.split('.').dropLast(1).last().replace('_', ' ') else null
             ?: if (key.startsWith("death.") && args.isNotEmpty()) "☠ ${args.joinToString(" / ")} ($key)"
             else if (args.isEmpty()) key else "$key (${args.joinToString()})"
     }

@@ -21,6 +21,7 @@ import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.R
 import com.quantumobile.launcher.core.afk.AfkLogKind
 import com.quantumobile.launcher.core.afk.AfkLogLine
+import com.quantumobile.launcher.core.afk.AfkWorldInfo
 import com.quantumobile.launcher.core.afk.remote.Ops
 import com.quantumobile.launcher.core.afk.remote.RemoteRequest
 import com.quantumobile.launcher.databinding.ActivityAfkLogBinding
@@ -57,7 +58,10 @@ class AfkLogActivity : AppCompatActivity() {
                 val host = hostId
                 if (host == null) {
                     binding.status.text = getString(R.string.afk_log_phone)
-                    app.afk.logVersion.collect { show(app.afk.logs(serverId)) }
+                    kotlinx.coroutines.flow.combine(app.afk.logVersion, app.afk.worlds) { _, w -> w[serverId] }.collect { world ->
+                        show(app.afk.logs(serverId))
+                        showWorld(world)
+                    }
                 } else {
                     binding.status.text = getString(R.string.afk_log_pc, app.afkRemote.host(host)?.name.orEmpty())
                     pollRemote(host)
@@ -71,7 +75,9 @@ class AfkLogActivity : AppCompatActivity() {
         var since = lines.lastOrNull()?.time ?: 0
         while (true) {
             try {
-                val new = app.afkRemote.call(hostId, RemoteRequest(Ops.LOGS, 0, id = serverId, since = since)).logs
+                val res = app.afkRemote.call(hostId, RemoteRequest(Ops.LOGS, 0, id = serverId, since = since))
+                val new = res.logs
+                showWorld(res.world)
                 binding.status.text = getString(R.string.afk_log_pc, app.afkRemote.host(hostId)?.name.orEmpty())
                 if (new.isNotEmpty()) {
                     since = new.last().time
@@ -84,6 +90,53 @@ class AfkLogActivity : AppCompatActivity() {
             }
             delay(2_000)
         }
+    }
+
+    /** The status panel: position, health and food, dimension, time of day, players online. */
+    private fun showWorld(w: AfkWorldInfo?) {
+        binding.worldCard.isVisible = w != null
+        if (w == null) return
+        val lines = mutableListOf<String>()
+        val place = listOfNotNull(
+            run {
+                val x = w.x; val y = w.y; val z = w.z
+                if (x != null && y != null && z != null) "📍 X ${x.toInt()}  Y ${y.toInt()}  Z ${z.toInt()}" else null
+            },
+            w.dimension?.let { dimensionName(it) },
+        )
+        if (place.isNotEmpty()) lines += place.joinToString(" · ")
+        val body = listOfNotNull(
+            w.health?.let { "❤ ${"%.1f".format(Locale.ROOT, it)} / 20" },
+            w.food?.let { "🍗 $it / 20" },
+            w.gameMode?.let { gameModeName(it) },
+        )
+        if (body.isNotEmpty()) lines += body.joinToString("   ")
+        w.dayTime?.let { lines += "🕒 ${timeOfDay(it)}" }
+        lines += if (w.players.isEmpty()) "👥 " + getString(R.string.afk_world_players_unknown)
+        else "👥 " + getString(R.string.afk_world_players, w.players.size, w.players.sorted().joinToString(", "))
+        binding.world.text = lines.joinToString("\n")
+    }
+
+    private fun dimensionName(id: String) = when (id.removePrefix("minecraft:")) {
+        "overworld" -> getString(R.string.afk_world_overworld)
+        "the_nether" -> getString(R.string.afk_world_nether)
+        "the_end" -> getString(R.string.afk_world_end)
+        else -> id
+    }
+
+    private fun gameModeName(mode: Int) = getString(
+        when (mode) { 1 -> R.string.afk_world_creative; 2 -> R.string.afk_world_adventure; 3 -> R.string.afk_world_spectator; else -> R.string.afk_world_survival },
+    )
+
+    /** Minecraft time (0 = 6:00) as "낮 09:12". */
+    private fun timeOfDay(ticks: Long): String {
+        val minutes = ((ticks + 6_000) % 24_000) * 60 / 1_000
+        val clock = "%02d:%02d".format(Locale.ROOT, minutes / 60, minutes % 60)
+        val part = getString(
+            when (ticks) { in 0 until 12_000 -> R.string.afk_world_day; in 12_000 until 13_800 -> R.string.afk_world_dusk
+                in 13_800 until 22_200 -> R.string.afk_world_night; else -> R.string.afk_world_dawn },
+        )
+        return "$part $clock"
     }
 
     private fun show(all: List<AfkLogLine>) {

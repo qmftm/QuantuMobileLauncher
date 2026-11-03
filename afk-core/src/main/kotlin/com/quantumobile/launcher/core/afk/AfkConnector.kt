@@ -15,6 +15,9 @@ interface AfkEvents {
 
     /** A line for the server's log (chat, joins, deaths…). */
     fun log(kind: AfkLogKind, text: String) {}
+
+    /** The bot's surroundings changed (position, health, players…). */
+    fun world(info: AfkWorldInfo) {}
 }
 
 /** How a connection ended. [retry] is false when reconnecting cannot help (unsupported version, wrong account type). */

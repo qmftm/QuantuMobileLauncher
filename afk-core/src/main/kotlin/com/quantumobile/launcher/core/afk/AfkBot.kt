@@ -28,6 +28,7 @@ class AfkBot(
     private val onStatus: (AfkStatus) -> Unit,
     private val onIcon: (ByteArray) -> Unit = {},
     private val onLog: (AfkLogLine) -> Unit = {},
+    private val onWorld: (AfkWorldInfo) -> Unit = {},
     private val backoff: Backoff = Backoff(),
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
@@ -58,6 +59,8 @@ class AfkBot(
         override fun serverIcon(png: ByteArray) = onIcon(png)
 
         override fun log(kind: AfkLogKind, text: String) = this@AfkBot.log(kind, text)
+
+        override fun world(info: AfkWorldInfo) = onWorld(info)
     }
 
     suspend fun run() {
