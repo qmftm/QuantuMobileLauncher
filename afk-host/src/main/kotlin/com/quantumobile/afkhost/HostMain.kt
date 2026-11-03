@@ -50,20 +50,60 @@ private fun useUtf8IfConsoleCannotShowKorean() {
     if (!ok) System.setOut(java.io.PrintStream(java.io.FileOutputStream(java.io.FileDescriptor.out), true, "UTF-8"))
 }
 
-private fun log(msg: String) = println("[${LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))}] $msg")
+/** Everything the host prints also goes to host.log in the config folder (the only output in background mode). */
+object HostLog {
+    private var file: java.io.PrintStream? = null
+    var console = true
+
+    fun open(dir: File): File {
+        val f = File(dir, "host.log")
+        if (f.length() > 1_000_000) { val old = File(dir, "host.log.1"); old.delete(); f.renameTo(old) }
+        val out = java.io.PrintStream(java.io.FileOutputStream(f, true), true, "UTF-8")
+        file = out
+        if (!console) System.setErr(out) // crashes in windowless mode end up in the log
+        return f
+    }
+
+    @Synchronized
+    fun line(msg: String) {
+        if (console) println(msg)
+        file?.println(msg)
+    }
+}
+
+private fun log(msg: String) = HostLog.line("[${LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))}] $msg")
+
+/** Holds host.lock while running, so a second copy (e.g. the autostarted one plus a double-click) does not start. */
+private fun lockInstance(dir: File): Any? = runCatching {
+    val ch = java.nio.channels.FileChannel.open(
+        File(dir, "host.lock").toPath(), java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE,
+    )
+    ch.tryLock() ?: run { ch.close(); null }
+}.getOrNull()
+
+/** Kept referenced so the lock lives as long as the process. */
+@Volatile private var instanceLock: Any? = null
+
+private const val ALREADY_RUNNING =
+    "QuantuMobile AFK 호스트가 이미 실행 중이에요.\n작업 표시줄 오른쪽 아래(숨겨진 아이콘 ^)의 AFK 아이콘을 확인하세요."
 
 fun main(args: Array<String>) {
-    useUtf8IfConsoleCannotShowKorean()
+    val background = Autostart.BACKGROUND_FLAG in args
+    HostLog.console = !background
+    if (!background) useUtf8IfConsoleCannotShowKorean()
     val dir = HostFiles.dir()
     val configFile = File(dir, "host.json")
+    val firstRun = !configFile.isFile
     var config = runCatching { AfkJson.decodeFromString(HostConfig.serializer(), configFile.readText()) }.getOrNull()
         ?: HostConfig(
             name = runCatching { InetAddress.getLocalHost().hostName }.getOrNull()?.takeIf { it.isNotBlank() } ?: "PC",
             code = RemoteProtocol.newCode(),
         )
     // Options: --port N, --name NAME, --new-code (forget the old pairing code; paired phones must re-enter it),
-    // --lan-only (no Cloudflare tunnel and no address posting: same Wi-Fi only).
+    // --lan-only (no Cloudflare tunnel and no address posting: same Wi-Fi only),
+    // --background (no console window: log to host.log, control from the tray icon), --autostart on|off.
     var lanOnly = false
+    var autostartWanted: Boolean? = null
     var i = 0
     while (i < args.size) {
         when (args[i]) {
@@ -71,33 +111,70 @@ fun main(args: Array<String>) {
             "--name" -> config = config.copy(name = args.getOrNull(++i) ?: config.name)
             "--new-code" -> config = config.copy(code = RemoteProtocol.newCode())
             "--lan-only" -> lanOnly = true
-            "--help", "-h" -> { println("사용법: java -jar afk-host.jar [--port 25580] [--name 이름] [--new-code] [--lan-only]"); return }
+            "--autostart" -> autostartWanted = when (args.getOrNull(++i)?.lowercase()) { "on", "true", "1" -> true; "off", "false", "0" -> false; else -> null }
+            "--help", "-h" -> {
+                println("사용법: java -jar afk-host.jar [--port 25580] [--name 이름] [--new-code] [--lan-only] [--background] [--autostart on|off]")
+                return
+            }
         }
         i++
     }
+    val autostart = Autostart(Autostart.currentCommand(if (lanOnly) listOf("--lan-only") else emptyList()))
+    if (autostartWanted != null) {
+        val result = runCatching { autostart.setEnabled(autostartWanted) }
+        println(result.exceptionOrNull()?.message ?: if (autostartWanted) "자동 실행을 켰어요. 다음 로그인부터 창 없이 실행돼요." else "자동 실행을 껐어요.")
+        return
+    }
+
+    val lock = lockInstance(dir).also { instanceLock = it }
+    if (lock == null) {
+        if (background) HostTray.message("QuantuMobile AFK", ALREADY_RUNNING)
+        else { println(ALREADY_RUNNING.replace("\n", " ")); Thread.sleep(10_000) }
+        return
+    }
     configFile.writeText(AfkJson.encodeToString(HostConfig.serializer(), config))
     HostFiles.restrictToOwner(configFile)
+    val logFile = HostLog.open(dir)
+    HostLog.line("===== ${java.time.LocalDateTime.now().withNano(0)} 시작 =====")
 
     val version = HostService::class.java.`package`?.implementationVersion ?: "dev"
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val service = HostService(dir, config.name, version, scope, AfkClient(dnsServers = ::systemDnsServers))
     service.start()
 
-    val server = startHttp(config.port, config.code, service)
+    val server = try {
+        startHttp(config.port, config.code, service)
+    } catch (e: java.net.BindException) {
+        val msg = "포트 ${config.port}을(를) 다른 프로그램이 쓰고 있어요. --port 로 다른 포트를 지정해 주세요."
+        log(msg)
+        if (background) HostTray.message("QuantuMobile AFK", msg) else Thread.sleep(10_000)
+        kotlin.system.exitProcess(1)
+    }
 
-    println("========================================================")
-    println(" QuantuMobile AFK 호스트 $version  (이름: ${config.name})")
-    println(" 앱 → AFK 탭 → PC 연결 → PC 추가 에 연결 코드만 넣으면 돼요")
-    println("   연결 코드: ${config.code}")
-    lanAddresses().ifEmpty { listOf("127.0.0.1") }.forEach { println("   (같은 와이파이 주소: $it:${config.port})") }
-    if (!lanOnly) println(" 다른 와이파이·LTE에서도 연결되도록 외부 주소를 여는 중…")
-    println(" 설정 폴더: ${dir.absolutePath}")
-    println(" 끄려면 이 창을 닫거나 Ctrl+C")
-    println("========================================================")
+    autostart.refresh()
+    val title = "QuantuMobile AFK 호스트 $version"
+    val tray = HostTray(title, config.code, logFile, dir, autostart)
+    val trayShown = tray.show()
+
+    HostLog.line("========================================================")
+    HostLog.line(" $title  (이름: ${config.name})")
+    HostLog.line(" 앱 → AFK 탭 → PC 연결 → PC 추가 에 연결 코드만 넣으면 돼요")
+    HostLog.line("   연결 코드: ${config.code}")
+    lanAddresses().ifEmpty { listOf("127.0.0.1") }.forEach { HostLog.line("   (같은 와이파이 주소: $it:${config.port})") }
+    if (!lanOnly) HostLog.line(" 다른 와이파이·LTE에서도 연결되도록 외부 주소를 여는 중…")
+    HostLog.line(" 설정 폴더: ${dir.absolutePath}")
+    if (trayShown) {
+        val auto = runCatching { autostart.isEnabled() }.getOrDefault(false)
+        HostLog.line(" 컴퓨터 켤 때 자동 실행: ${if (auto) "켜짐" else "꺼짐"} (작업 표시줄 오른쪽 아래 AFK 아이콘 → 메뉴)")
+    }
+    if (!background) HostLog.line(" 끄려면 이 창을 닫거나 Ctrl+C")
+    HostLog.line("========================================================")
+    // Windowless and never run before: nobody has seen the code yet.
+    if (background && firstRun && trayShown) tray.showCode()
 
     if (!lanOnly) startRemoteAccess(scope, config, dir)
 
-    // Log state changes (never tokens).
+    // Log state changes (never tokens) and keep the tray tooltip current.
     scope.launch {
         var last = emptyMap<String, String>()
         combine(service.manager.servers, service.manager.statuses) { s, st -> s to st }.collect { (servers, statuses) ->
@@ -113,6 +190,10 @@ fun main(args: Array<String>) {
             }
             for (s in servers) if (now[s.id] != last[s.id]) log("${s.name} (${s.address}): ${now[s.id]}")
             last = now
+            tray.update(
+                connected = servers.count { it.enabled && statuses[it.id]?.phase == AfkPhase.CONNECTED },
+                enabled = servers.count { it.enabled },
+            )
         }
     }
     Runtime.getRuntime().addShutdownHook(Thread { server.stop(0) })
