@@ -47,7 +47,10 @@ FFI_A="$WORK/libffi/b/.libs/libffi.a"; [ -f "$FFI_A" ]
 # ---- LWJGL ----
 git clone -q --depth 1 --branch "$TAG" https://github.com/LWJGL/lwjgl3.git "$WORK/lwjgl3"
 M="$WORK/lwjgl3/modules/lwjgl"
-CFLAGS="-O2 -fPIC -DNDEBUG -DLWJGL_MACOS -DLWJGL_arm64 -Wno-everything -I$JH/include -I$JH/include/darwin
+# The iOS SDK has the Objective-C runtime but not macOS's umbrella header for it.
+mkdir -p "$WORK/compat/objc"
+printf '#include <objc/runtime.h>\n#include <objc/message.h>\n' > "$WORK/compat/objc/objc-runtime.h"
+CFLAGS="-O2 -fPIC -DNDEBUG -DLWJGL_MACOS -DLWJGL_arm64 -Wno-everything -I$WORK/compat -I$JH/include -I$JH/include/darwin
  -I$M/core/src/main/c -I$M/core/src/main/c/macos -I$M/core/src/main/c/libffi -I$M/core/src/main/c/libffi/aarch64"
 
 # core: the macOS sources, minus CoreGraphics (display APIs iOS does not have; nothing on iOS calls them)
