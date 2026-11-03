@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Turns a checkout of Amethyst-iOS (GPL-3.0, see ../UPSTREAM for the pinned commit) into QuantuMobile for iPhone:
-# app name, bundle id and icons. Everything else is upstream code, unchanged. Runs on macOS (plutil, sips).
+# app name, bundle id and icons, plus the 26.x changes in patch_amethyst.py. Runs on macOS (plutil, sips).
 # Usage: apply.sh <amethyst-checkout>
 set -euo pipefail
 SRC="$(cd "$1" && pwd)"
@@ -33,4 +33,6 @@ for lang in en ko; do
   f="$res/$lang.lproj/Localizable.strings"
   [ -f "$f" ] && sed -i '' -e 's/Angel Aura Amethyst/QuantuMobile/g' -e 's/Amethyst/QuantuMobile/g' "$f"
 done
-echo "QuantuMobile branding applied to $SRC"
+# Minecraft 26.x support (SDL3 + LWJGL 3.4) and a MobileGlues shader fix
+python3 "$HERE/patch_amethyst.py" "$SRC"
+echo "QuantuMobile changes applied to $SRC"

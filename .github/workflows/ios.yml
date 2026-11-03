@@ -30,10 +30,13 @@ jobs:
           java-version: "8"
 
       - name: Install build tools
-        run: brew install ldid make
+        run: brew install ldid make autoconf automake libtool
 
       - name: Apply QuantuMobile branding
         run: ios/amethyst/apply.sh upstream
+
+      - name: Build the 26.x natives (LWJGL 3.4.3, SDL3 shim)
+        run: ios/natives/build-ios-natives.sh upstream/Natives/resources/lwjgl34
 
       - name: Build (.ipa for SideStore/AltStore)
         working-directory: upstream
