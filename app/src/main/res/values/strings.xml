@@ -256,6 +256,7 @@
     <string name="afk_connected">Connected</string>
     <string name="afk_waiting">Waiting to reconnect</string>
     <string name="afk_waiting_seconds">Reconnecting in %1$d s</string>
+    <string name="afk_waiting_minutes">Reconnecting in %1$d min %2$d s</string>
     <string name="afk_error">Error</string>
     <string name="afk_account_missing">The account for this server was removed. Edit the server and pick an account.</string>
     <string name="afk_login_expired">The Microsoft sign-in expired. Sign in again in Accounts.</string>

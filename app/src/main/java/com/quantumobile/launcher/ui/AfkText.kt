@@ -19,9 +19,14 @@ fun AfkStatus.label(context: Context): String = context.getString(
 /** State plus detail: "재접속 대기 (35초) · 서버가 종료됐어요". */
 fun AfkStatus.describe(context: Context, now: Long = System.currentTimeMillis()): String {
     val head = when {
-        phase == AfkPhase.WAITING && retryAt > now -> context.getString(R.string.afk_waiting_seconds, ((retryAt - now + 999) / 1000).toInt())
+        phase == AfkPhase.WAITING && retryAt > now -> waitingText(context, ((retryAt - now + 999) / 1000).toInt())
         phase == AfkPhase.CONNECTED && version != null -> "${label(context)} ($version)"
         else -> label(context)
     }
     return if (message.isNullOrBlank()) head else "$head · $message"
 }
+
+/** "재접속 대기 (35초)", or with minutes for the long waits: "재접속 대기 (4분 30초)". */
+private fun waitingText(context: Context, seconds: Int): String =
+    if (seconds < 60) context.getString(R.string.afk_waiting_seconds, seconds)
+    else context.getString(R.string.afk_waiting_minutes, seconds / 60, seconds % 60)

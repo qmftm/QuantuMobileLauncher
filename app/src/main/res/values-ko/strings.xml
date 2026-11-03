@@ -255,6 +255,7 @@
     <string name="afk_connected">접속됨</string>
     <string name="afk_waiting">재접속 대기</string>
     <string name="afk_waiting_seconds">재접속 대기 (%1$d초)</string>
+    <string name="afk_waiting_minutes">재접속 대기 (%1$d분 %2$d초)</string>
     <string name="afk_error">오류</string>
     <string name="afk_account_missing">이 서버에 쓰던 계정이 삭제됐어요. 서버를 수정해서 계정을 다시 골라 주세요</string>
     <string name="afk_login_expired">마이크로소프트 로그인이 만료됐어요. 계정 탭에서 다시 로그인해 주세요</string>

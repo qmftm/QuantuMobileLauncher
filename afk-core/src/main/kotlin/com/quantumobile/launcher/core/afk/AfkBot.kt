@@ -16,7 +16,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 /**
- * Keeps one server joined: connect, idle until the connection ends, wait (10 s → 60 s), repeat.
+ * Keeps one server joined: connect, idle until the connection ends, wait (10 s → 5 min), repeat.
  * Runs until cancelled (switch turned off) or until an error that retrying cannot fix.
  */
 class AfkBot(
@@ -86,7 +86,7 @@ class AfkBot(
             }
             val wait = backoff.nextDelayMs()
             set(AfkPhase.WAITING, result.reason, retryAt = clock() + wait)
-            log(AfkLogKind.WARN, "연결 끊김: ${result.reason} — ${wait / 1000}초 뒤 다시 접속")
+            log(AfkLogKind.WARN, "연결 끊김: ${result.reason} — ${Backoff.describe(wait)} 뒤 다시 접속")
             waitBeforeRetry(wait)
         }
     }
