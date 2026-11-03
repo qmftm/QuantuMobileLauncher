@@ -12,6 +12,15 @@ interface AfkEvents {
 
     /** The server's list icon (64×64 PNG) from its status ping, when it has one. */
     fun serverIcon(png: ByteArray) {}
+
+    /** A line for the server's log (chat, joins, deaths…). */
+    fun log(kind: AfkLogKind, text: String) {}
+
+    /** The bot's surroundings changed (position, health, players…). */
+    fun world(info: AfkWorldInfo) {}
+
+    /** While in the world, a way to send chat or "/commands" (returns false if it could not); null once disconnected. */
+    fun chatSender(send: ((String) -> Boolean)?) {}
 }
 
 /** How a connection ended. [retry] is false when reconnecting cannot help (unsupported version, wrong account type). */

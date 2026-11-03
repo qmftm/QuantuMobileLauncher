@@ -78,6 +78,26 @@ class AfkBotTest {
     }
 
     @Test
+    fun eventsAndChatGoToTheLog() = runTest {
+        val logs = mutableListOf<AfkLogLine>()
+        val bot = AfkBot(server, { _, _, _, events ->
+            events.connected("26.3")
+            events.log(AfkLogKind.CHAT, "<Alex> hi")
+            AfkDisconnect("Kicked by an operator")
+        }, { account }, online, { statuses += it }, onLog = { logs += it }, clock = { currentTime })
+        val job = launch { bot.run() }
+        runCurrent()
+        job.cancel()
+        assertEquals(
+            listOf(AfkLogKind.INFO, AfkLogKind.INFO, AfkLogKind.CHAT, AfkLogKind.WARN),
+            logs.map { it.kind },
+        )
+        assertTrue(logs[1].text.contains("26.3"))
+        assertEquals("<Alex> hi", logs[2].text)
+        assertTrue(logs[3].text.contains("Kicked by an operator") && logs[3].text.contains("10초"))
+    }
+
+    @Test
     fun errorsThatRetryingCannotFixStopTheBot() = runTest {
         val bot = bot { _, _, _, _ -> AfkDisconnect("unsupported", retry = false) }
         bot.run() // returns by itself

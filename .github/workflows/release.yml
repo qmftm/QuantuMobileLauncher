@@ -92,3 +92,55 @@ jobs:
             dist/*.apk
             dist/*.jar
           body_path: release-body.md
+
+  # Windows AFK host: the jar plus a trimmed Java runtime, packed by jpackage into a folder with
+  # QuantuMobile-AFK.exe (no Java install needed), zipped and attached to the same release.
+  windows-host:
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build host jar
+        env:
+          QML_HOST_ONLY: "1"
+        run: ./gradlew :afk-host:jar
+      - name: Package Windows app
+        run: |
+          VERSION="${{ steps.version.outputs.tag }}"; VERSION="${VERSION#v}"
+          mkdir -p pkg/in && cp afk-host/build/libs/afk-host.jar pkg/in/
+          jlink --add-modules java.base,java.instrument,jdk.httpserver,jdk.unsupported,jdk.crypto.ec,jdk.charsets \
+            --strip-debug --no-header-files --no-man-pages --output pkg/runtime
+          jpackage --type app-image --name QuantuMobile-AFK --input pkg/in --main-jar afk-host.jar \
+            --runtime-image pkg/runtime --win-console --app-version "$VERSION" \
+            --description "QuantuMobile AFK host" --vendor "QuantuMobileLauncher" --dest pkg/out
+          printf '%s\r\n' \
+            'QuantuMobile AFK 호스트 (윈도우)' '' \
+            '1. 이 폴더를 원하는 곳에 둡니다 (압축을 푼 그대로).' \
+            '2. QuantuMobile-AFK.exe 를 더블클릭합니다. 자바를 따로 설치할 필요가 없습니다.' \
+            '3. 창에 나온 연결 코드를 앱의 AFK 탭 > PC 연결 > PC 추가 에 넣습니다.' \
+            '4. 창을 닫으면 PC 쪽 AFK도 꺼집니다. 켜 둔 채로 두세요.' '' \
+            '방화벽 허용 창이 뜨면 허용을 눌러 주세요 (같은 와이파이에서 연결할 때 필요).' \
+            > "pkg/out/QuantuMobile-AFK/README.txt"
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path pkg/out/QuantuMobile-AFK -DestinationPath QuantuMobileLauncher-AFK-Host-Windows.zip
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: QuantuMobileLauncher-AFK-Host-Windows.zip

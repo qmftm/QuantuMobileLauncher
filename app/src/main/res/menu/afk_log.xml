@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/chat_only" android:checkable="true" android:title="@string/afk_log_chat_only" app:showAsAction="never" />
+    <item android:id="@+id/copy" android:icon="@drawable/ic_copy" android:title="@string/copy_action" app:showAsAction="ifRoom" />
+    <item android:id="@+id/share" android:title="@string/share" app:showAsAction="never" />
+</menu>

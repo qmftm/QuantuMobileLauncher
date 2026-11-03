@@ -335,4 +335,28 @@ Run the AFK host on a PC to keep servers joined from there, even with the phone 
     <string name="afk_saving">Saving…</string>
     <string name="afk_pc_failed">Could not save on the PC: %1$s</string>
     <string name="afk_pc_row">PC: %1$s</string>
+    <!-- AFK log -->
+    <string name="afk_log">Log</string>
+    <string name="afk_log_empty">Nothing yet.\nSwitch the server on to see the connection and chat here.</string>
+    <string name="afk_log_chat_only">Chat only</string>
+    <string name="afk_log_phone">Running on this phone · cleared when the app restarts</string>
+    <string name="afk_log_pc">Running on PC: %1$s</string>
+    <!-- AFK status panel -->
+    <string name="afk_world_overworld">Overworld</string>
+    <string name="afk_world_nether">Nether</string>
+    <string name="afk_world_end">The End</string>
+    <string name="afk_world_survival">Survival</string>
+    <string name="afk_world_creative">Creative</string>
+    <string name="afk_world_adventure">Adventure</string>
+    <string name="afk_world_spectator">Spectator</string>
+    <string name="afk_world_day">Day</string>
+    <string name="afk_world_dusk">Dusk</string>
+    <string name="afk_world_night">Night</string>
+    <string name="afk_world_dawn">Dawn</string>
+    <string name="afk_world_players">%1$d online: %2$s</string>
+    <string name="afk_world_players_unknown">No player list yet</string>
+    <!-- AFK chat -->
+    <string name="afk_chat_hint">Chat or /command</string>
+    <string name="afk_chat_send">Send</string>
+    <string name="afk_chat_not_connected">The bot is not in the server</string>
 </resources>

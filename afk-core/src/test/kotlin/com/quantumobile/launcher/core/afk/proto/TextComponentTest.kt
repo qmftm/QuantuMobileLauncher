@@ -11,6 +11,10 @@ class TextComponentTest {
         assertEquals("Server restarting in 5", TextComponent.fromJson("""{"text":"Server ","extra":[{"text":"restarting"}," in 5"]}"""))
         assertEquals("너무 오래 가만히 있어서 추방됐어요", TextComponent.fromJson("""{"translate":"multiplayer.disconnect.idling"}"""))
         assertEquals("some.unknown.key", TextComponent.fromJson("""{"translate":"some.unknown.key"}"""))
+        assertEquals("AfkBot 님이 발전 과제 달성: [enter the nether]", TextComponent.fromJson(
+            """{"translate":"chat.type.advancement.task","with":["AfkBot",{"translate":"chat.square_brackets","with":[{"translate":"advancements.story.enter_the_nether.title"}]}]}"""))
+        assertEquals("게임 모드가 크리에이티브(으)로 바뀌었어요", TextComponent.fromJson(
+            """{"translate":"gameMode.changed","with":[{"translate":"gameMode.creative"}]}"""))
         assertEquals("plain text, not JSON", TextComponent.fromJson("plain text, not JSON"))
     }
 

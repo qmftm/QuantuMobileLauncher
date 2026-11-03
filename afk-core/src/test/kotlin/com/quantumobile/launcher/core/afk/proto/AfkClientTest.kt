@@ -37,6 +37,12 @@ class AfkClientTest {
         val connected = CopyOnWriteArrayList<String>()
         val notes = CopyOnWriteArrayList<String>()
         val icons = CopyOnWriteArrayList<ByteArray>()
+        val logs = CopyOnWriteArrayList<String>()
+        @Volatile var world: com.quantumobile.launcher.core.afk.AfkWorldInfo? = null
+        @Volatile var sender: ((String) -> Boolean)? = null
+        override fun chatSender(send: ((String) -> Boolean)?) { if (send != null) sender = send }
+        override fun world(info: com.quantumobile.launcher.core.afk.AfkWorldInfo) { world = info }
+        override fun log(kind: com.quantumobile.launcher.core.afk.AfkLogKind, text: String) { logs += "$kind $text" }
         override fun connected(version: String) { connected += version }
         override fun note(message: String) { notes += message }
         override fun serverIcon(png: ByteArray) { icons += png }
@@ -59,6 +65,8 @@ class AfkClientTest {
         val sneaks: MutableList<Boolean> = Collections.synchronizedList(mutableListOf())
         var respawned = false
         var serverHash: String? = null
+        /** Called once the bot is in the world, to make it send chat (from the test). */
+        @Volatile var sendFromBot: (() -> Unit)? = null
 
         fun start(statusOnly: Boolean = false) = thread(isDaemon = true) {
             try {
@@ -140,7 +148,12 @@ class AfkClientTest {
             c.expect(ids.configFinishOut)
 
             // play
-            c.send(PacketWriter(ids.playLogin).int(77).bool(false).raw(ByteArray(40)))
+            // Login: entity id, hardcore, world names, limits, flags, then spawn info (dimension "the_nether", creative).
+            val login = PacketWriter(ids.playLogin).int(77).bool(false).varInt(1).string("minecraft:overworld")
+                .varInt(20).varInt(10).varInt(10).bool(false).bool(true).bool(false)
+            if (protocol <= 765) login.string("minecraft:the_nether") else login.varInt(1)
+            login.string("minecraft:the_nether").long(0).byte(1).raw(ByteArray(30))
+            c.send(login)
             val pos = PacketWriter(ids.playPosition)
             if (protocol >= 768) {
                 pos.varInt(5).double(1.5).double(64.0).double(-2.5).raw(ByteArray(8 * 3)).float(90f).float(0f).int(0)
@@ -161,6 +174,65 @@ class AfkClientTest {
             c.send(PacketWriter(ids.playKeepAlive).long(7))
             assertEquals(7L, c.expect(ids.playKeepAliveOut).long())
 
+            // Chat the bot should log: a system message, an action bar (skipped), a player message, an anonymous one.
+            fun text(s: String) = if (protocol >= 765) {
+                val b = s.toByteArray(); PacketWriter(0).byte(8).short(b.size).raw(b).toByteArray().drop(1).toByteArray()
+            } else {
+                PacketWriter(0).string("\"$s\"").toByteArray().drop(1).toByteArray()
+            }
+            c.send(PacketWriter(ids.playSystemChat).raw(text("Server restarting soon")).bool(false))
+            c.send(PacketWriter(ids.playSystemChat).raw(text("action bar spam")).bool(true))
+            val pc = PacketWriter(ids.playPlayerChat)
+            if (protocol >= 770) pc.varInt(3)
+            pc.uuid(UUID.randomUUID()).varInt(0).bool(false).string("hello there").long(0).long(0).varInt(0).bool(false).varInt(0)
+            pc.varInt(1).raw(text("Alex")).bool(false)
+            c.send(pc)
+            c.send(PacketWriter(ids.playDisguisedChat).raw(text("hi from console")).varInt(1).raw(text("Server")).bool(false))
+            // World state: night time, two players join (bits: add_player, listed, latency), one leaves.
+            val time = PacketWriter(ids.playTime).long(1000)
+            when {
+                protocol >= 775 -> time.varInt(1).varInt(0).varLong(24_000L * 3 + 18_000).raw(ByteArray(8))
+                protocol >= 768 -> time.long(18_000).bool(true)
+                else -> time.long(18_000)
+            }
+            c.send(time)
+            val alex = UUID.randomUUID(); val steve = UUID.randomUUID()
+            val info = PacketWriter(ids.playInfoUpdate).byte(0b11001).varInt(2)
+            for ((id, name) in listOf(alex to "Alex", steve to "Steve")) info.uuid(id).string(name).varInt(0).bool(true).varInt(50)
+            c.send(info)
+            c.send(PacketWriter(ids.playInfoRemove).varInt(1).uuid(steve))
+            c.send(PacketWriter(ids.playHealth).raw(floatBytes(15.5f)).varInt(17).raw(floatBytes(2f)))
+            c.send(PacketWriter(ids.playKeepAlive).long(9))
+            assertEquals(9L, c.expect(ids.playKeepAliveOut).long()) // all of the above was read without breaking the stream
+
+            // 65 signed chat messages: the bot must acknowledge them (servers kick past 4096 unacknowledged).
+            repeat(65) {
+                val signed = PacketWriter(ids.playPlayerChat)
+                if (protocol >= 770) signed.varInt(it)
+                signed.uuid(UUID.randomUUID()).varInt(it).bool(true).raw(ByteArray(256)).string("spam $it").long(0).long(0).varInt(0).bool(false).varInt(0)
+                signed.varInt(1).raw(text("Alex")).bool(false)
+                c.send(signed)
+            }
+            assertEquals(65, c.expect(ids.playChatAckOut).varInt())
+
+            // Chat and commands typed in the app.
+            sendFromBot?.invoke()
+            val chat = c.expect(ids.playChatOut)
+            assertEquals("안녕하세요 server", chat.string()); chat.long(); chat.long()
+            assertFalse(chat.bool()) // no signature
+            assertEquals(0, chat.varInt()) // nothing left to acknowledge
+            chat.bytes(3); if (protocol >= 770) chat.byte()
+            assertEquals(0, chat.remaining)
+            val plugin = c.expect(ids.playCommandOut)
+            assertEquals("spawn", plugin.string())
+            if (protocol < 766) { plugin.long(); plugin.long(); assertEquals(0, plugin.varInt()); plugin.varInt(); plugin.bytes(3) }
+            assertEquals(0, plugin.remaining)
+            val msg = c.expect(if (protocol >= 766) ids.playSignedCommandOut else ids.playCommandOut)
+            assertEquals("msg Alex hi", msg.string()); msg.long(); msg.long()
+            assertEquals(0, msg.varInt()) // no argument signatures
+            msg.varInt(); msg.bytes(3); if (protocol >= 770) msg.byte()
+            assertEquals(0, msg.remaining)
+
             // Wait for one sneak press and release, answering keep-alives like a real server would.
             val deadline = System.currentTimeMillis() + 5_000
             while (!(sneaks.contains(true) && sneaks.lastOrNull() == false) && System.currentTimeMillis() < deadline) {
@@ -179,6 +251,11 @@ class AfkClientTest {
 
     private fun run(server: FakeServer, account: Account, joined: MutableList<String> = mutableListOf()): Pair<AfkDisconnect, Recorder> {
         val events = Recorder()
+        server.sendFromBot = {
+            val send = events.sender!!
+            assertTrue(send("안녕하세요 server")); assertTrue(send("/spawn")); assertTrue(send("/msg Alex hi"))
+            assertFalse(send("   ")) // nothing to send
+        }
         val client = AfkClient(session = { acc, hash -> joined += "${acc.username}:$hash" }, timing = fast)
         val result = runBlocking { withTimeout(20_000) { client.run("127.0.0.1", server.port, account, events) } }
         return result to events
@@ -201,6 +278,8 @@ class AfkClientTest {
         assertEquals(listOf(0x89, 0x50, 0x4E, 0x47), events.icons.single().take(4).map { it.toInt() and 0xFF })
         assertTrue(server.respawned)
         assertTrue(events.notes.any { "리스폰" in it })
+        assertChat(events)
+        assertWorld(events)
         // Sneak goes through player_input on 1.21.2+: pressed, then released.
         assertTrue(server.sneaks.contains(true))
         assertEquals(false, server.sneaks.last())
@@ -216,6 +295,8 @@ class AfkClientTest {
 
         assertEquals("bye", result.reason)
         assertEquals(listOf("1.20.4"), events.connected)
+        assertChat(events)
+        assertWorld(events, positioned = false)
         assertTrue(server.sneaks.contains(true))
         assertEquals(false, server.sneaks.last())
     }
@@ -239,6 +320,25 @@ class AfkClientTest {
         server.failure.get()?.let { throw it }
         assertEquals("bye", result.reason)
         assertEquals(listOf("26.3"), events.connected)
+        assertChat(events)
+        assertWorld(events)
+    }
+
+    private fun assertWorld(events: Recorder, positioned: Boolean = true) {
+        val w = events.world!!
+        assertEquals("minecraft:the_nether", w.dimension)
+        assertEquals(1, w.gameMode)
+        assertEquals(18_000L, w.dayTime)
+        assertEquals(listOf("Alex"), w.players)
+        assertEquals(15.5f, w.health!!, 0f)
+        assertEquals(17, w.food)
+        if (positioned) assertEquals(listOf(1.5, 64.0, -2.5), listOf(w.x, w.y, w.z))
+    }
+
+    private fun assertChat(events: Recorder) {
+        val chat = events.logs.filter { it.startsWith("CHAT ") }.map { it.removePrefix("CHAT ") }
+        assertEquals(listOf("Server restarting soon", "<Alex> hello there", "<Server> hi from console"), chat.take(3))
+        assertEquals("<Alex> spam 64", chat.last())
     }
 
     @Test

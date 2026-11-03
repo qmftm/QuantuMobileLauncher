@@ -36,6 +36,14 @@ class PacketWriter(id: Int) {
     fun int(value: Int) = apply { for (s in 24 downTo 0 step 8) out.write(value ushr s and 0xFF) }
     fun long(value: Long) = apply { for (s in 56 downTo 0 step 8) out.write((value ushr s).toInt() and 0xFF) }
     fun uuid(value: UUID) = apply { long(value.mostSignificantBits); long(value.leastSignificantBits) }
+    fun varLong(value: Long) = apply {
+        var v = value
+        while (true) {
+            if (v and 0x7FL.inv() == 0L) { out.write(v.toInt()); return@apply }
+            out.write(((v and 0x7F) or 0x80).toInt())
+            v = v ushr 7
+        }
+    }
     fun float(value: Float) = int(java.lang.Float.floatToRawIntBits(value))
     fun double(value: Double) = long(java.lang.Double.doubleToRawLongBits(value))
 
@@ -62,6 +70,16 @@ class PacketReader(private val data: ByteArray, private var pos: Int = 0) {
     }
 
     fun int(): Int { var v = 0; repeat(4) { v = (v shl 8) or byte() }; return v }
+
+    fun varLong(): Long {
+        var result = 0L
+        for (i in 0 until 10) {
+            val b = byte()
+            result = result or ((b and 0x7F).toLong() shl (7 * i))
+            if (b and 0x80 == 0) return result
+        }
+        throw ProtocolException("VarLong too long")
+    }
     fun long(): Long { var v = 0L; repeat(8) { v = (v shl 8) or byte().toLong() }; return v }
     fun short(): Int { val v = (byte() shl 8) or byte(); return v.toShort().toInt() }
     fun float() = java.lang.Float.intBitsToFloat(int())

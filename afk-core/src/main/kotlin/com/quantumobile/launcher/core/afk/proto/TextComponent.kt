@@ -48,9 +48,38 @@ object TextComponent {
         }
     }
 
-    /** Korean text for the vanilla disconnect messages a player is most likely to see; other keys are shown as is. */
+    /** Korean text for the vanilla messages a player is most likely to see; other keys are shown as is. */
     private fun translate(key: String, args: List<String>, fallback: String?): String {
+        fun a(i: Int) = args.getOrElse(i) { "?" }
         val known = when (key) {
+            "chat.type.text" -> "<${a(0)}> ${a(1)}"
+            "chat.square_brackets" -> "[${a(0)}]"
+            "commands.list.players" -> "접속 중 ${a(0)}/${a(1)}명: ${a(2)}"
+            "commands.message.display.outgoing" -> "나 → ${a(0)}: ${a(1)}"
+            "chat.disabled.missingProfileKey", "chat.disabled.profile", "chat.disabled.options" ->
+                "이 서버는 서명된 채팅만 받아요 (명령어는 보낼 수 있어요)"
+            "multiplayer.disconnect.unsigned_chat" -> "서명이 없는 채팅이라 추방됐어요"
+            "gameMode.changed" -> "게임 모드가 ${a(0)}(으)로 바뀌었어요"
+            "gameMode.survival" -> "서바이벌"
+            "gameMode.creative" -> "크리에이티브"
+            "gameMode.adventure" -> "모험"
+            "gameMode.spectator" -> "관전"
+            "chat.type.announcement" -> "[${a(0)}] ${a(1)}"
+            "chat.type.emote" -> "* ${a(0)} ${a(1)}"
+            "chat.type.admin" -> "[${a(0)}: ${a(1)}]"
+            "commands.message.display.incoming" -> "${a(0)} → 나: ${a(1)}"
+            "multiplayer.player.joined" -> "${a(0)} 님이 들어왔어요"
+            "multiplayer.player.joined.renamed" -> "${a(0)} (${a(1)}) 님이 들어왔어요"
+            "multiplayer.player.left" -> "${a(0)} 님이 나갔어요"
+            "chat.type.advancement.task", "chat.type.advancement.goal", "chat.type.advancement.challenge" ->
+                "${a(0)} 님이 발전 과제 달성: ${a(1)}"
+            "death.attack.mob", "death.attack.player", "death.attack.arrow", "death.attack.mob.item", "death.attack.player.item" ->
+                "☠ ${a(0)} — ${a(1)} 에게 죽었어요"
+            "death.fell.accident.generic", "death.attack.fall" -> "☠ ${a(0)} — 떨어져 죽었어요"
+            "death.attack.lava" -> "☠ ${a(0)} — 용암에 빠졌어요"
+            "death.attack.drown" -> "☠ ${a(0)} — 익사했어요"
+            "death.attack.starve" -> "☠ ${a(0)} — 굶어 죽었어요"
+            "death.attack.genericKill", "death.attack.outOfWorld" -> "☠ ${a(0)} — 죽었어요"
             "multiplayer.disconnect.idling" -> "너무 오래 가만히 있어서 추방됐어요"
             "multiplayer.disconnect.duplicate_login" -> "같은 계정이 다른 곳에서 접속했어요"
             "multiplayer.disconnect.server_shutdown" -> "서버가 종료됐어요"
@@ -68,7 +97,12 @@ object TextComponent {
             "disconnect.spam" -> "스팸으로 추방됐어요"
             else -> null
         }
-        return known ?: fallback ?: if (args.isEmpty()) key else "$key (${args.joinToString()})"
+        return known
+            ?: fallback
+            // Advancement names: "advancements.story.enter_the_nether.title" → "enter the nether"
+            ?: if (key.startsWith("advancements.") && key.endsWith(".title")) key.split('.').dropLast(1).last().replace('_', ' ') else null
+            ?: if (key.startsWith("death.") && args.isNotEmpty()) "☠ ${args.joinToString(" / ")} ($key)"
+            else if (args.isEmpty()) key else "$key (${args.joinToString()})"
     }
 }
 

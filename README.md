@@ -13,9 +13,10 @@ QuantuMobileLauncher 는 안드로이드에서 **마인크래프트: 자바 에�
 안드로이드용으로 빌드된 OpenJDK 를 앱 프로세스 안에서 직접 실행하는 방식이고, 최신 **26.x (SDL3)** 까지 겨냥합니다.
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="260" alt="홈 화면" />
-  <img src="docs/screenshots/instances.png" width="260" alt="인스턴스 화면" />
-  <img src="docs/screenshots/mods.png" width="260" alt="다운로드 화면" />
+  <img src="docs/screenshots/home.png" width="200" alt="홈 화면" />
+  <img src="docs/screenshots/instances.png" width="200" alt="인스턴스 화면" />
+  <img src="docs/screenshots/mods.png" width="200" alt="다운로드 화면" />
+  <img src="docs/screenshots/afk-preview.png" width="200" alt="AFK 화면" />
 </p>
 
 ## 목차
@@ -26,6 +27,8 @@ QuantuMobileLauncher 는 안드로이드에서 **마인크래프트: 자바 에�
   - [빠른 빌드](#빠른-빌드-권장)
   - [자세한 빌드](#자세한-빌드)
 - [현재 상태](#현재-상태)
+- [AFK 봇](#afk-봇)
+  - [PC에서 돌리기](#afk를-pc에서-돌리기)
 - [알려진 문제](#알려진-문제)
 - [FAQ](#faq)
 - [기여하기](#기여하기)
@@ -38,7 +41,7 @@ QuantuMobileLauncher 는 안드로이드에서 **마인크래프트: 자바 에�
 - 마인크래프트 **1.21.x 이하**는 LWJGL 3.3 + GLFW 창(PojavLauncher 방식), **26.x** 는 SDL3 + LWJGL 3.4.3 + MobileGlues 경로로 실행합니다.
 - 마이크로소프트 로그인과 오프라인 계정을 지원합니다.
 - Fabric 을 원클릭으로 설치하고, Forge/Quilt 같은 프로필도 `inheritsFrom` 병합으로 직접 추가할 수 있습니다.
-- **AFK(잠수) 봇**: 게임을 켜지 않고 서버에 접속만 해 두고, PC에서 대신 돌릴 수도 있습니다 ([아래](#afk를-pc에서-돌리기)).
+- **AFK(잠수) 봇**: 게임을 켜지 않고 서버에 접속만 해 두고, PC에서 대신 돌릴 수도 있습니다 ([아래](#afk-봇)).
 - Modrinth 에서 모드·리소스팩·셰이더를 검색하고 한 번에 설치합니다 (**다운로드** 탭).
 - 버튼 배치를 직접 꾸미는 터치 조작판과, 물리 키보드/마우스를 지원합니다.
 - 필요한 Java 와 LWJGL 은 처음 켤 때 알아서 받습니다.
@@ -63,12 +66,13 @@ Android SDK (compileSdk 35), NDK 27.2, CMake 3.22.1, JDK 17 이상이 필요합�
 git clone https://github.com/qmftm/QuantuMobileLauncher.git
 cd QuantuMobileLauncher
 ./gradlew assembleDebug          # app/build/outputs/apk/debug/app-debug.apk
+./gradlew :afk-host:jar          # AFK PC 프로그램: afk-host/build/libs/afk-host.jar
 ```
 
 테스트와 린트:
 
 ```bash
-./gradlew testDebugUnitTest :app:lintDebug
+./gradlew testDebugUnitTest :afk-core:test :afk-host:test :app:lintDebug
 QML_NETWORK_TESTS=1 ./gradlew testDebugUnitTest   # 실제 모장/Fabric 서버를 쓰는 테스트 포함
 ```
 
@@ -113,12 +117,56 @@ GitHub Actions 가 푸시마다 테스트, lint, APK 빌드를 수행합니다.
 
 > ⚠️ 실기기 검증은 한정적입니다. 개발자가 쓰는 기기(Galaxy Z Flip6, Adreno 750) 위주로 확인하며, 다른 기기에서는 동작이 다를 수 있습니다.
 
-## AFK를 PC에서 돌리기
+## AFK 봇
+
+게임을 켜지 않고 마인크래프트 자바 서버에 **접속만 해 두는** 가벼운 봇입니다. 하단 **AFK** 탭에서 씁니다.
+화면을 그리지 않아서 배터리·데이터를 거의 쓰지 않고, 앱을 닫거나 화면을 꺼도 알림을 띄운 채 계속 접속해 있습니다.
+
+<p align="center">
+  <img src="docs/screenshots/afk.png" width="240" alt="AFK 탭" />
+  <img src="docs/screenshots/afk-log.png" width="240" alt="서버 로그" />
+  <img src="docs/screenshots/afk-server.png" width="300" alt="서버 추가/수정 창" />
+  <img src="docs/screenshots/afk-pc.png" width="300" alt="PC 추가 창" />
+</p>
+
+**쓰는 법**
+1. 계정 탭에서 계정을 추가합니다 (마이크로소프트 또는 오프라인).
+2. AFK 탭 → **서버 추가**: 이름, 주소(`play.example.com` 또는 `1.2.3.4:25566`), 계정, 아이콘, 실행 위치를 고릅니다.
+3. 서버 오른쪽 스위치를 켭니다. 서버마다 따로 켜고 끌 수 있습니다.
+4. 화면이 꺼져도 접속을 유지하려면 설정 → 잠수 봇 → **배터리 최적화 제외**를 허용하세요.
+
+**하는 일**
+- 접속한 뒤 20~45초마다 0.6초 **웅크리기**만 합니다. 이동·점프·시점 회전·공격은 하지 않습니다.
+- 죽으면 **자동 리스폰**, 리소스팩 요청·keep-alive 등 서버가 요구하는 응답을 처리합니다.
+- 끊기거나 추방되면 **10초 → 20초 → 40초 → 최대 60초** 간격으로 다시 접속합니다. 네트워크가 끊기면 기다렸다가 돌아오면 바로 접속합니다.
+- 폰을 재부팅하면 켜져 있던 서버에 다시 접속합니다 (설정에서 끌 수 있음).
+
+**로그와 상태 보기**
+- 서버를 누르면 맨 위에 **상태 정보**가 보입니다: 좌표, 차원(오버월드/네더/엔드), 체력·배고픔, 게임 모드, 서버 시간(낮/밤), 접속 중인 플레이어 목록.
+- 그 아래에 그 서버의 **로그**가 이어집니다: 접속·끊김(사유와 재접속 시간)·사망/리스폰 같은 기록과, 봇이 보는 **서버 채팅**(플레이어 채팅, 공지, 입장/퇴장, 사망 메시지).
+- 맨 아래 입력칸에서 **채팅이나 /명령어를 보낼 수 있습니다** (봇 이름으로). 명령어는 대부분 서버에서 되고, 일반 채팅은 서명 없이 보내므로 서명된 채팅만 받는 서버(`enforce-secure-profile=true`)에서는 거절됩니다 — 로그에 이유가 나옵니다.
+- 메뉴에서 **채팅만 보기**, 복사, 공유를 할 수 있습니다. PC에서 도는 서버의 로그도 똑같이 보입니다.
+- 로그는 최근 500줄까지 메모리에 보관됩니다 (앱이나 PC 프로그램을 다시 켜면 지워짐). 수정·삭제는 서버 오른쪽 ⋮ 메뉴에 있습니다.
+
+**화면 보는 법**
+- 아이콘 오른쪽 아래 점: 🟢 접속됨 · 🟡 접속 중/재접속 대기 · 🔴 오류 · ⚪ 꺼짐. 아래 줄에 마지막 사유(킥 메시지 등)가 나옵니다.
+- 아이콘: 기본은 **서버 목록에 뜨는 그 서버의 아이콘**, 또는 프리셋 15개(잔디·다이아·검·도구·하트·숲·집·불·상자·밤·성·게임·지구·별·번개), 또는 갤러리에서 고른 이미지.
+- 알림에 "N개 서버 잠수 중"과 서버별 상태, **모두 중지** 버튼이 있습니다.
+
+**지원 서버**: 1.20.2 ~ 26.3 정식 버전 (서버 버전은 자동 감지). 1.20.1 이하·스냅샷은 사유를 보여 주고 접속하지 않습니다.
+26.3 은 실제 서버에서 잠수 추방 시간 1분으로 두고 확인했습니다(추방 없음, 자동 리스폰, 킥 사유 표시).
+
+> 26.x 서버는 기본으로 화이트리스트가 켜져 있습니다. 봇 계정을 화이트리스트에 넣어야 접속됩니다.
+> 서버 규칙에서 잠수 봇을 금지할 수 있으니, 쓰기 전에 서버 규칙을 확인하세요.
+
+### AFK를 PC에서 돌리기
 
 서버마다 "실행 위치"를 **이 폰** 또는 **PC**로 고를 수 있습니다. PC에서 돌리면 폰을 꺼도 계속 접속해 있고, 앱은 리모컨처럼 켜기·끄기·상태 보기만 합니다. 폰이 PC와 **다른 와이파이나 LTE에 있어도** 연결됩니다.
 
-1. 릴리스 페이지에서 `QuantuMobileLauncher-AFK-Host.jar` 를 받습니다. (Java 17 이상 필요)
-2. PC에서 실행: `java -jar QuantuMobileLauncher-AFK-Host.jar` → 창에 **연결 코드**(예: `ABCD-EFGH-JKLM`)가 나옵니다.
+1. PC 프로그램을 받아 실행합니다.
+   - **윈도우 (간편)**: 릴리스 페이지에서 `QuantuMobileLauncher-AFK-Host-Windows.zip` 을 받아 압축을 풀고 `QuantuMobile-AFK.exe` 를 더블클릭합니다. 자바 설치가 필요 없습니다.
+   - **맥·리눅스 (또는 자바가 있는 윈도우)**: `QuantuMobileLauncher-AFK-Host.jar` 를 받아 `java -jar QuantuMobileLauncher-AFK-Host.jar` 로 실행합니다. (Java 17 이상)
+2. 창에 **연결 코드**(예: `ABCD-EFGH-JKLM`)가 나옵니다. 창을 닫으면 PC 쪽 AFK도 꺼지니 켜 둔 채로 두세요.
 3. 앱 → AFK 탭 → **PC 연결 → PC 추가** 에 **연결 코드만** 넣습니다.
 4. 서버 추가/수정 창의 **실행 위치**에서 그 PC를 고릅니다.
 

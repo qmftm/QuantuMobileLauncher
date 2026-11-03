@@ -30,6 +30,21 @@ class LiveAfkServerTest {
         val events = object : AfkEvents {
             override fun connected(version: String) { connected += version; log("connected: $version") }
             override fun note(message: String) = log("note: $message")
+            override fun log(kind: com.quantumobile.launcher.core.afk.AfkLogKind, text: String) = log("log $kind: $text")
+            var lastWorld = ""
+            override fun chatSender(send: ((String) -> Boolean)?) {
+                // QML_AFK_SAY="hello;/me waves" sends those lines a few seconds after joining.
+                val lines = System.getenv("QML_AFK_SAY")?.split(';')?.filter { it.isNotBlank() } ?: return
+                if (send == null) return
+                Thread {
+                    Thread.sleep(4_000)
+                    lines.forEach { log("send '$it' -> ${send(it)}"); Thread.sleep(500) }
+                }.start()
+            }
+            override fun world(info: com.quantumobile.launcher.core.afk.AfkWorldInfo) {
+                val w = "pos=${info.x?.toInt()},${info.y?.toInt()},${info.z?.toInt()} dim=${info.dimension} mode=${info.gameMode} hp=${info.health} food=${info.food} time=${info.dayTime} players=${info.players}"
+                if (w != lastWorld) { lastWorld = w; log("world $w") }
+            }
         }
         val account = Account.offline(System.getenv("QML_AFK_NAME") ?: "AfkBot")
         val ended: AfkDisconnect? = withTimeoutOrNull(seconds * 1000) {

@@ -1,6 +1,8 @@
 package com.quantumobile.launcher.core.afk.remote
 
 import com.quantumobile.launcher.core.afk.AfkJson
+import com.quantumobile.launcher.core.afk.AfkLogLine
+import com.quantumobile.launcher.core.afk.AfkWorldInfo
 import com.quantumobile.launcher.core.afk.AfkPhase
 import com.quantumobile.launcher.core.afk.AfkServer
 import com.quantumobile.launcher.core.auth.Account
@@ -69,6 +71,8 @@ object Ops {
     const val SET_ENABLED = "setEnabled"
     const val REMOVE = "remove"
     const val ICON = "icon"
+    const val LOGS = "logs"
+    const val CHAT = "chat"
 }
 
 @Serializable
@@ -82,6 +86,10 @@ data class RemoteRequest(
     val enabled: Boolean? = null,
     /** Base64 PNG for a picked custom icon. */
     val iconPng: String? = null,
+    /** [Ops.CHAT]: the chat line or "/command" to send. */
+    val text: String? = null,
+    /** [Ops.LOGS]: only lines newer than this (epoch ms on the PC). */
+    val since: Long? = null,
 )
 
 @Serializable
@@ -91,6 +99,9 @@ data class RemoteResponse(
     val host: HostInfo? = null,
     val servers: List<RemoteServer> = emptyList(),
     val iconPng: String? = null,
+    val logs: List<AfkLogLine> = emptyList(),
+    /** [Ops.LOGS]: the bot's current surroundings, if connected. */
+    val world: AfkWorldInfo? = null,
 )
 
 @Serializable
