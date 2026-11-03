@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Plain http is allowed only because the AFK PC host is reached on the local network at http://<ip>:25580 (it has no
+  certificate). Everything sent there is already encrypted end to end with the pairing code (AES-GCM).
+  All other traffic (Mojang, Microsoft, Modrinth, Cloudflare tunnel) uses https.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -312,19 +312,19 @@
     <string name="afk_pcs">PCs</string>
     <string name="afk_pc_add">Add PC</string>
     <string name="afk_pc_name">Name (blank = the PC\'s name)</string>
-    <string name="afk_pc_address">PC address</string>
-    <string name="afk_pc_address_help">Shown in the PC program window (e.g. 192.168.0.12:25580)</string>
+    <string name="afk_pc_address">PC address (optional)</string>
+    <string name="afk_pc_address_help">Usually leave blank: the pairing code finds the PC</string>
     <string name="afk_pc_code">Pairing code</string>
     <string name="afk_pc_code_help">Shown in the PC program window (e.g. ABCD-EFGH-JKLM)</string>
     <string name="afk_pc_checking">Connecting to the PC…</string>
     <string name="afk_pc_added">Connected to %1$s</string>
     <string name="afk_pc_none">No PC yet.
 
-Run the AFK host on a PC to keep servers joined from there, even with the phone off.
+Run the AFK host on a PC to keep servers joined from there, even with the phone off or on another network.
 
 1. Download QuantuMobileLauncher-AFK-Host.jar from the release page (needs Java 17+)
 2. Run java -jar QuantuMobileLauncher-AFK-Host.jar on the PC
-3. Enter the address and pairing code it shows</string>
+3. Enter the pairing code it shows</string>
     <string name="afk_pc_online">Connected · %1$d server(s)</string>
     <string name="afk_pc_offline">Not connected · %1$s</string>
     <string name="afk_pc_remove_confirm">Forget %1$s? Servers on that PC stay there.</string>

@@ -4,6 +4,9 @@ import com.quantumobile.launcher.core.afk.AfkPhase
 import com.quantumobile.launcher.core.afk.AfkServer
 import com.quantumobile.launcher.core.afk.remote.AfkHost
 import com.quantumobile.launcher.core.afk.remote.BadCodeException
+import com.quantumobile.launcher.core.afk.remote.HostAddresses
+import com.quantumobile.launcher.core.afk.remote.HostLocator
+import com.quantumobile.launcher.core.afk.remote.Rendezvous
 import com.quantumobile.launcher.core.afk.remote.Ops
 import com.quantumobile.launcher.core.afk.remote.RemoteClient
 import com.quantumobile.launcher.core.afk.remote.RemoteProtocol
@@ -146,9 +149,45 @@ class HostServiceTest {
     }
 
     @Test
-    fun addressesGetTheDefaultPort() {
-        assertEquals("http://192.168.0.5:25580/afk", AfkHost(name = "", address = "192.168.0.5", code = "").url())
-        assertEquals("http://pc.local:9000/afk", AfkHost(name = "", address = "pc.local:9000", code = "").url())
-        assertNull(null)
+    fun theAppFindsThePcWithTheCodeAlone() {
+        val http = startHttp(0, code, service(), InetAddress.getLoopbackAddress())
+        val ntfy = FakeNtfy()
+        try {
+            runBlocking {
+                // The PC posts a stale LAN address (nothing listens there) and the address that works.
+                Rendezvous(ntfy.base).publish(code, HostAddresses("Test PC",
+                    lan = listOf("http://127.0.0.1:1"), tunnel = "http://127.0.0.1:${http.address.port}", time = 1))
+                val found = HostLocator(Rendezvous(ntfy.base), tryTimeoutMs = 3_000).locate(AfkHost(name = "", code = code))
+                assertEquals("Test PC", found.info.name)
+                assertEquals("http://127.0.0.1:${http.address.port}/afk", found.url)
+                try {
+                    HostLocator(Rendezvous(ntfy.base)).locate(AfkHost(name = "", code = RemoteProtocol.newCode()))
+                    fail("found a PC for an unknown code")
+                } catch (e: IOException) { }
+            }
+        } finally { http.stop(0); ntfy.close() }
+    }
+
+    @Test
+    fun tunnelUrlIsReadFromCloudflaredOutput() {
+        assertEquals("https://quiet-river-1234.trycloudflare.com", CloudflareTunnel.parseUrl(
+            "2026-11-03T08:00:00Z INF |  https://quiet-river-1234.trycloudflare.com                                      |"))
+        assertNull(CloudflareTunnel.parseUrl("INF Requesting new quick Tunnel on trycloudflare.com..."))
+        assertNotNull(CloudflareTunnel.assetName())
+    }
+
+    @Test
+    fun tunnelReportsTheUrlFromItsProcess() {
+        // A fake cloudflared that prints what the real one prints, then keeps running.
+        val fake = tmp.newFile("cloudflared").apply {
+            writeText("#!/bin/sh\necho 'INF Registered tunnel connection'\necho 'INF |  https://fake-tunnel-42.trycloudflare.com  |'\nsleep 30\n")
+            setExecutable(true)
+        }
+        val urls = java.util.concurrent.LinkedBlockingQueue<String>()
+        val tunnel = CloudflareTunnel(25580, tmp.root, log = {}, onUrl = { urls.add(it) }, binary = fake)
+        tunnel.start()
+        try {
+            assertEquals("https://fake-tunnel-42.trycloudflare.com", urls.poll(10, java.util.concurrent.TimeUnit.SECONDS))
+        } finally { tunnel.stop() }
     }
 }

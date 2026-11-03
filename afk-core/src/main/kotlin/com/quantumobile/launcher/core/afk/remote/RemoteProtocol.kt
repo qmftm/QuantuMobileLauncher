@@ -115,13 +115,23 @@ data class RemoteServer(
 data class AfkHost(
     val id: String = java.util.UUID.randomUUID().toString(),
     val name: String,
-    /** "host" or "host:port". */
-    val address: String,
+    /** Optional fixed address: "ip", "ip:port" or a full http(s) URL. Blank = find it with [Rendezvous]. */
+    val address: String = "",
     val code: String,
 ) {
-    fun url(): String {
-        val a = address.trim().removePrefix("http://").removeSuffix("/")
-        val withPort = if (a.substringAfterLast(']').contains(':')) a else "$a:${RemoteProtocol.DEFAULT_PORT}"
-        return "http://$withPort${RemoteProtocol.PATH}"
+    /** The endpoint URL for [address], or null when there is none. */
+    fun url(): String? = endpoint(address)
+
+    companion object {
+        /** "ip" / "ip:port" / "http(s)://host[:port][/afk]" → the full endpoint URL. */
+        fun endpoint(address: String): String? {
+            val a = address.trim().removeSuffix("/")
+            if (a.isEmpty()) return null
+            if (a.startsWith("http://") || a.startsWith("https://")) {
+                return if (a.endsWith(RemoteProtocol.PATH)) a else a + RemoteProtocol.PATH
+            }
+            val withPort = if (a.substringAfterLast(']').contains(':')) a else "$a:${RemoteProtocol.DEFAULT_PORT}"
+            return "http://$withPort${RemoteProtocol.PATH}"
+        }
     }
 }
