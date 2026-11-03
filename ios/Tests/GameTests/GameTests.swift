@@ -87,4 +87,30 @@ final class GameTests: XCTestCase {
         XCTAssertEqual(idx.objects.first?.objectPath, "ab/abcdef")
         XCTAssertTrue(idx.isVirtual)
     }
+
+    func testLaunchPlanClasspathOrder() throws {
+        let v = try VersionInfo.parse(obj(#"{"id":"v","mainClass":"M","libraries":[{"name":"x:y:1"},{"name":"n:n:1:natives-macos"}]}"#))
+        let paths = GamePaths(root: URL(fileURLWithPath: "/r"))
+        let acc = AccountInfo(username: "S", uuid: "u", accessToken: "t", userType: "msa", xuid: "")
+        let plan = try LaunchPlanner.plan(version: v, account: acc, paths: paths, gameDir: URL(fileURLWithPath: "/g"),
+                                          width: 1, height: 1, memoryMb: 512)
+        XCTAssertEqual(plan.classpath, ["/r/libraries/x/y/1/y-1.jar", "/r/versions/v/v.jar"])
+        XCTAssertEqual(plan.nativesDir.path, "/g/natives")
+        XCTAssertEqual(plan.javaMajorVersion, 8)
+    }
+
+    func testResolverMergesParentFromDisk() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("qm-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let paths = GamePaths(root: dir)
+        try FileManager.default.createDirectory(at: paths.versionJSON("p").deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(#"{"id":"p","mainClass":"A","libraries":[{"name":"a:b:1"}]}"#.utf8).write(to: paths.versionJSON("p"))
+        let child = #"{"id":"c","inheritsFrom":"p","mainClass":"B","libraries":[]}"#
+        var resolver = VersionResolver(paths: paths)
+        resolver.fetch = { url in XCTAssertEqual(url, "http://x/c.json"); return Data(child.utf8) }
+        let v = try await resolver.resolve(id: "c", manifestURL: "http://x/c.json")
+        XCTAssertEqual(v.mainClass, "B")
+        XCTAssertEqual(v.jarId, "p")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: paths.versionJSON("c").path)) // cached
+    }
 }
