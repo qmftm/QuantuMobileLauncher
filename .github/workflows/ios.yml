@@ -1,0 +1,38 @@
+name: iOS build
+
+# Compiles the iPhone app (ios/) on a macOS runner and uploads an UNSIGNED .ipa for sideloading (AltStore, TrollStore, ...).
+# Run it by hand from the Actions tab; it also runs when ios/ changes.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate the Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build (no code signing)
+        working-directory: ios
+        run: |
+          xcodebuild -project QuantuMobile.xcodeproj -scheme QuantuMobile -configuration Release \
+            -sdk iphoneos -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tee build.log | tail -n 40
+      - name: Package the .ipa
+        working-directory: ios
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/QuantuMobile.app Payload/
+          zip -qr QuantuMobile-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuantuMobile-unsigned-ipa
+          path: ios/QuantuMobile-unsigned.ipa

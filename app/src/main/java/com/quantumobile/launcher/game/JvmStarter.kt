@@ -72,6 +72,11 @@ object JvmStarter {
             if (!JREUtils.dlopen(lib.path)) logLine("[launcher] preload failed: ${lib.path}")
         }
         l.libraryPaths.map { File(it, "libopenal.so") }.firstOrNull { it.isFile }?.let { JREUtils.dlopen(it.path) }
+        if (l.sdl) {
+            // Global scope, so MobileGlues' glXGetProcAddress can resolve its own gl* symbols by name (as PojavLauncher does).
+            val mg = File(l.nativeLibDir, "libmobileglues.so")
+            if (!JREUtils.dlopen(mg.path)) logLine("[launcher] could not load ${mg.path}")
+        }
         val chdir = JREUtils.chdir(l.gameDir)
         if (chdir != 0) logLine("[launcher] chdir failed: $chdir")
         logLine("[launcher] stage: starting JVM")

@@ -106,10 +106,22 @@ class LaunchPreparer(private val app: QuantumApp) {
                 val own = paths.nativeLibDir
                 add("-Dorg.lwjgl.librarypath=$own")
                 add("-Dorg.lwjgl.sdl.libname=$own/libSDL3.so")
+                // The jemalloc jar is on the classpath but its native library is not shipped: use the C allocator.
+                add("-Dorg.lwjgl.system.allocator=system")
+                // LWJGL finds GL entry points (glXGetProcAddress) in MobileGlues, the same library SDL uses as its EGL layer.
+                add("-Dorg.lwjgl.opengl.libname=$own/libmobileglues.so")
+                // Diagnostics: dump all thread stacks to the game log a few times after start (tells a black screen from a hang).
+                runCatching {
+                    val agent = File(paths.internalRoot, "qm-debug-agent.jar")
+                    app.assets.open("qm-debug-agent.jar").use { src -> agent.outputStream().use { src.copyTo(it) } }
+                    // The agent also fixes SRV server-address lookups (Android has no resolv.conf): it needs the name servers.
+                    val dns = dnsServers(app)
+                    add("-javaagent:${agent.absolutePath}" + if (dns.isNotEmpty()) "=dns=${dns.joinToString(",")}" else "")
+                }
                 nativesDir?.let {
                     add("-Dorg.lwjgl.openal.libname=${File(it, "libopenal.so").absolutePath}")
                     add("-Dorg.lwjgl.freetype.libname=${File(it, "libfreetype.so").absolutePath}")
-                    add("-Djna.boot.library.path=${it.absolutePath}")
+                    // (no jna.boot.library.path: the bundled JNA 6 native does not match the game's JNA 7)
                 }
             } else if (nativesDir != null) {
                 add("-Dorg.lwjgl.librarypath=${nativesDir.absolutePath}")
@@ -170,15 +182,26 @@ class LaunchPreparer(private val app: QuantumApp) {
             "LIBGL_ES=2",
             "FORCE_VSYNC=false",
             "MESA_GLSL_CACHE_DIR=${paths.cacheDir.absolutePath}",
-            "POJAV_RENDERER=opengles2",
             "AWTSTUB_WIDTH=$width",
             "AWTSTUB_HEIGHT=$height",
         )
 
+        // Only the GLFW/GL4ES path reads POJAV_RENDERER; Sodium refuses to start when it sees that variable.
+        if (!sdl) env += "POJAV_RENDERER=opengles2"
         if (sdl) {
             // MobileGlues is SDL's EGL library: it hands the game a desktop-GL-looking context on top of the phone's GLES driver.
             env += "SDL_EGL_LIBRARY=${paths.nativeLibDir}/libmobileglues.so"
-            env += "MG_DIR_PATH=${File(paths.internalRoot, "mobileglues").apply { mkdirs() }.absolutePath}"
+            val mgDir = File(paths.internalRoot, "mobileglues").apply { mkdirs() }
+            // MobileGlues rejects a context request above its configured GL version (default 4.0): allow up to 4.6.
+            // Minecraft 26.x's terrain shaders need compute / direct-state-access emulation; fill in only keys the user hasn't set.
+            val cfg = File(mgDir, "config.json")
+            runCatching {
+                val json = if (cfg.exists()) org.json.JSONObject(cfg.readText()) else org.json.JSONObject()
+                mapOf("customGLVersion" to 46, "enableExtComputeShader" to 1, "enableExtDirectStateAccess" to 1)
+                    .forEach { (k, v) -> if (!json.has(k)) json.put(k, v) }
+                cfg.writeText(json.toString(2) + "\n")
+            }
+            env += "MG_DIR_PATH=${mgDir.absolutePath}"
             env += "SDL_VIDEODRIVER=android"
             env += "SDL_AUDIODRIVER=android"
         }
@@ -280,4 +303,13 @@ class LaunchPreparer(private val app: QuantumApp) {
             return out
         }
     }
+
+    /** The device's current DNS servers (IPv4 first), for lookups the JVM cannot do itself. */
+    private fun dnsServers(context: android.content.Context): List<String> = runCatching {
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
+        val net = cm.activeNetwork ?: return@runCatching emptyList<String>()
+        val all = cm.getLinkProperties(net)?.dnsServers.orEmpty()
+        (all.filterIsInstance<java.net.Inet4Address>() + all.filterIsInstance<java.net.Inet6Address>())
+            .mapNotNull { it.hostAddress?.substringBefore('%') }
+    }.getOrDefault(emptyList())
 }

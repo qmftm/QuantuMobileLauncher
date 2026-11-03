@@ -24,9 +24,11 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
     private val density = resources.displayMetrics.density
     private val rect = RectF()
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * density; color = Color.rgb(120, 200, 255) }
+    private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * density; color = Color.rgb(46, 230, 214) }
     private val grid = Paint().apply { color = Color.argb(30, 255, 255, 255); strokeWidth = 1f }
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textAlign = Paint.Align.CENTER; textSize = 16 * density }
+
+    private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
 
     private var dragId: String? = null
     private var downX = 0f
@@ -41,13 +43,13 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
         while (x < width) { canvas.drawLine(x, 0f, x, height.toFloat(), grid); x += step }
         var y = step
         while (y < height) { canvas.drawLine(0f, y, width.toFloat(), y, grid); y += step }
-        val radius = 10 * density
-        for (b in buttons) {
+                for (b in buttons) {
             b.rect(width, height, density, rect)
             fill.color = Color.argb(150, 40, 40, 40)
-            canvas.drawRoundRect(rect, radius, radius, fill)
-            if (b.id == selectedId) canvas.drawRoundRect(rect, radius, radius, stroke)
-            canvas.drawText(b.label, rect.centerX(), rect.centerY() - (text.descent() + text.ascent()) / 2, text)
+            canvas.drawRoundRect(rect, rect.cornerRadius(), rect.cornerRadius(), fill)
+            if (b.id == selectedId) canvas.drawRoundRect(rect, rect.cornerRadius(), rect.cornerRadius(), stroke)
+            if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, b.label, rect, density, iconPaint)
+            else canvas.drawText(b.label, rect.centerX(), rect.centerY() - (text.descent() + text.ascent()) / 2, text)
         }
     }
 
@@ -83,3 +85,4 @@ class ControlsEditorView @JvmOverloads constructor(context: Context, attrs: Attr
         return true
     }
 }
+

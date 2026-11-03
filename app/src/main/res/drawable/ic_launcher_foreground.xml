@@ -11,7 +11,7 @@
         <path
             android:pathData="M21,54a33,11.5 0,0 1,66 0"
             android:strokeAlpha="0.55"
-            android:strokeColor="#FF3DDC97"
+            android:strokeColor="#FF2EE6D6"
             android:strokeLineCap="round"
             android:strokeWidth="2.6" />
     </group>
@@ -25,8 +25,8 @@
                 android:startX="32"
                 android:startY="28"
                 android:type="linear">
-                <item android:color="#FF8FF5C8" android:offset="0" />
-                <item android:color="#FF3DDC97" android:offset="1" />
+                <item android:color="#FF9BFFF2" android:offset="0" />
+                <item android:color="#FF2EE6D6" android:offset="1" />
             </gradient>
         </aapt:attr>
     </path>
@@ -38,8 +38,8 @@
                 android:startX="32"
                 android:startY="41"
                 android:type="linear">
-                <item android:color="#FF7C8CFF" android:offset="0" />
-                <item android:color="#FF4B5BE0" android:offset="1" />
+                <item android:color="#FFB794FF" android:offset="0" />
+                <item android:color="#FF7A4DE0" android:offset="1" />
             </gradient>
         </aapt:attr>
     </path>
@@ -51,8 +51,8 @@
                 android:startX="76"
                 android:startY="41"
                 android:type="linear">
-                <item android:color="#FF3F4CC4" android:offset="0" />
-                <item android:color="#FF22297A" android:offset="1" />
+                <item android:color="#FF5B35C8" android:offset="0" />
+                <item android:color="#FF2E1B7A" android:offset="1" />
             </gradient>
         </aapt:attr>
     </path>
@@ -69,7 +69,7 @@
     <group android:pivotX="54" android:pivotY="54" android:rotation="-28">
         <path
             android:pathData="M21,54a33,11.5 0,0 0,66 0"
-            android:strokeColor="#FF3DDC97"
+            android:strokeColor="#FF2EE6D6"
             android:strokeLineCap="round"
             android:strokeWidth="2.6" />
         <path

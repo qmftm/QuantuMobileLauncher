@@ -9,9 +9,6 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.core.GameLaunch
 import com.quantumobile.launcher.databinding.ActivityGameBinding
@@ -131,14 +128,6 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
         binding.controls.releaseAll()
         getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(binding.surface.windowToken, 0)
         super.onPause()
-    }
-
-    private fun hideSystemBars() {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
     }
 
     companion object {

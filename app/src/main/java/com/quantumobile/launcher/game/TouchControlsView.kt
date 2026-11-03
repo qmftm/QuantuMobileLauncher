@@ -24,6 +24,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         val rect = RectF()
         var pressed = false
         var pointerId = -1
+        var repeater: Runnable? = null
         val kind get() = spec.kind
         val code get() = spec.code
         val toggle get() = spec.toggle
@@ -55,16 +56,19 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         textSize = 16 * density
     }
 
+    private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+
     private var grabbed = false
     private val pollGrab = object : Runnable {
         override fun run() {
             val now = NativeBridge.isCursorGrabbed()
             if (now != grabbed) {
+                android.util.Log.w("QM", "grabbed $grabbed -> $now")
                 releaseAll()
                 grabbed = now
                 if (now) {
-                    cursorX = org.lwjgl.glfw.CallbackBridge.windowWidth / 2.0
-                    cursorY = org.lwjgl.glfw.CallbackBridge.windowHeight / 2.0
+                    cursorX = NativeBridge.windowWidth() / 2.0
+                    cursorY = NativeBridge.windowHeight() / 2.0
                     NativeBridge.sendCursorPos(cursorX, cursorY)
                 }
                 invalidate()
@@ -108,18 +112,49 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         for (b in buttons) b.spec.rect(width, height, density, b.rect)
     }
 
-    private fun visible(b: Button) = grabbed || b.spec.showInMenus
+    /** PojavLauncher's "GUI" button: hides every other button until pressed again. */
+    private var controlsHidden = false
+
+    /** The "Mouse" button: menus get a visible cursor moved by dragging, and a tap clicks where the cursor is. */
+    private var pointerMode = false
+    private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.2f * density; color = Color.BLACK; strokeJoin = Paint.Join.MITER }
+    private val cursorFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.WHITE }
+    private val cursorArrow = android.graphics.Path()
+
+    private fun visible(b: Button) =
+        if (controlsHidden) b.kind == ControlKind.HIDE else true
 
     override fun onDraw(canvas: Canvas) {
         val alpha = (opacity * 255).toInt()
         if (alpha == 0) return
-        val radius = 10 * density
         for (b in buttons) {
             if (!visible(b)) continue
-            fill.color = if (b.pressed) Color.argb(alpha, 120, 200, 255) else Color.argb(alpha / 2 + 20, 40, 40, 40)
-            canvas.drawRoundRect(b.rect, radius, radius, fill)
+            fill.color = if (b.pressed || (b.kind == ControlKind.MOUSE_MODE && pointerMode)) Color.argb(alpha, 46, 230, 214) else Color.argb(alpha / 2 + 20, 40, 40, 40)
+            canvas.drawRoundRect(b.rect, b.rect.cornerRadius(), b.rect.cornerRadius(), fill)
             text.alpha = (alpha + 80).coerceAtMost(255)
-            canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)
+            if (ControlIcons.isIcon(b.label)) ControlIcons.draw(canvas, if (b.kind == ControlKind.HIDE && controlsHidden) "@eyeoff" else b.label, b.rect, density, iconPaint)
+            else {
+                // Shrink the text a little when the label is wider than the button.
+                val fit = (b.rect.width() * 0.84f / text.measureText(b.label)).coerceAtMost(1f)
+                val size = text.textSize
+                text.textSize = size * fit
+                canvas.drawText(b.label, b.rect.centerX(), b.rect.centerY() - (text.descent() + text.ascent()) / 2, text)
+                text.textSize = size
+            }
+        }
+        if (pointerMode && !grabbed && !controlsHidden) {
+            val cx = (cursorX / framebufferScale).toFloat()
+            val cy = (cursorY / framebufferScale).toFloat()
+            // A PC-style arrow pointer: the tip is the click position.
+            val u = density * 0.63f
+            val arrow = cursorArrow
+            arrow.reset()
+            arrow.moveTo(cx, cy)
+            arrow.lineTo(cx, cy + 16 * u); arrow.lineTo(cx + 4 * u, cy + 12.5f * u); arrow.lineTo(cx + 7 * u, cy + 19 * u)
+            arrow.lineTo(cx + 9.8f * u, cy + 17.8f * u); arrow.lineTo(cx + 6.8f * u, cy + 11.4f * u); arrow.lineTo(cx + 11.5f * u, cy + 11.4f * u)
+            arrow.close()
+            canvas.drawPath(arrow, cursorFill)
+            canvas.drawPath(arrow, cursorPaint)
         }
     }
 
@@ -154,8 +189,20 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
         when (b.kind) {
             ControlKind.KEYBOARD -> onShowKeyboard()
-            ControlKind.SCROLL_UP -> NativeBridge.sendScroll(0.0, 1.0)
-            ControlKind.SCROLL_DOWN -> NativeBridge.sendScroll(0.0, -1.0)
+            ControlKind.HIDE -> { releaseAll(); controlsHidden = !controlsHidden }
+            ControlKind.MOUSE_MODE -> {
+                pointerMode = !pointerMode
+                if (pointerMode && !grabbed) {
+                    cursorX = NativeBridge.windowWidth() / 2.0
+                    cursorY = NativeBridge.windowHeight() / 2.0
+                    NativeBridge.sendCursorPos(cursorX, cursorY)
+                }
+            }
+            ControlKind.SCROLL_UP, ControlKind.SCROLL_DOWN -> {
+                b.pointerId = pointer
+                fireScroll(b)
+                startRepeat(b, pointer)
+            }
             ControlKind.KEY, ControlKind.MOUSE -> {
                 if (b.toggle) {
                     b.pressed = !b.pressed
@@ -165,11 +212,36 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
                 b.pressed = true
                 b.pointerId = pointer
                 send(b, Glfw.PRESS)
+                startRepeat(b, pointer)
             }
         }
     }
 
+    private fun fireScroll(b: Button) {
+        NativeBridge.sendScroll(0.0, if (b.kind == ControlKind.SCROLL_UP) 1.0 else -1.0)
+    }
+
+    /** A held "repeat" button fires again after a short delay and then at a steady rate, like a keyboard's auto-repeat. */
+    private fun startRepeat(b: Button, pointer: Int) {
+        if (!b.spec.repeat) return
+        val tick = object : Runnable {
+            override fun run() {
+                if (b.pointerId != pointer) return
+                if (b.kind == ControlKind.SCROLL_UP || b.kind == ControlKind.SCROLL_DOWN) fireScroll(b) else send(b, Glfw.PRESS)
+                postDelayed(this, REPEAT_MS)
+            }
+        }
+        b.repeater = tick
+        postDelayed(tick, REPEAT_DELAY_MS)
+    }
+
+    private fun stopRepeat(b: Button) {
+        b.repeater?.let { removeCallbacks(it) }
+        b.repeater = null
+    }
+
     private fun releaseButton(b: Button) {
+        stopRepeat(b)
         b.pointerId = -1
         if (b.toggle || !b.pressed) return
         b.pressed = false
@@ -177,13 +249,18 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
     }
 
     private fun send(b: Button, action: Int) {
-        if (b.kind == ControlKind.MOUSE) NativeBridge.sendMouseButton(b.code, action, 0)
-        else NativeBridge.sendKey(b.code, 0, action, 0)
+        val codes = b.spec.allCodes
+        // Several keys press in order and release in reverse (so Ctrl+Shift+X style combos behave).
+        for (c in if (action == Glfw.RELEASE) codes.asReversed() else codes) {
+            if (b.kind == ControlKind.MOUSE) NativeBridge.sendMouseButton(c, action, 0)
+            else NativeBridge.sendKey(c, 0, action, 0)
+        }
     }
 
     /** Releases every pressed on-screen button and the camera finger (used when the screen goes to the background). */
     fun releaseAll() {
         buttons.forEach { b ->
+            stopRepeat(b)
             if (b.pressed) send(b, Glfw.RELEASE)
             b.pressed = false
             b.pointerId = -1
@@ -197,7 +274,7 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         downTime = System.currentTimeMillis()
         if (grabbed) {
             postDelayed(holdRunnable, HOLD_MS)
-        } else {
+        } else if (!pointerMode) {
             cursorX = (x * framebufferScale).toDouble()
             cursorY = (y * framebufferScale).toDouble()
             NativeBridge.sendCursorPos(cursorX, cursorY)
@@ -209,6 +286,9 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
         if (grabbed) {
             cursorX += (x - lastX) * sensitivity * framebufferScale
             cursorY += (y - lastY) * sensitivity * framebufferScale
+        } else if (pointerMode) {
+            cursorX = (cursorX + (x - lastX) * sensitivity * framebufferScale).coerceIn(0.0, NativeBridge.windowWidth().toDouble())
+            cursorY = (cursorY + (y - lastY) * sensitivity * framebufferScale).coerceIn(0.0, NativeBridge.windowHeight().toDouble())
         } else {
             cursorX = (x * framebufferScale).toDouble()
             cursorY = (y * framebufferScale).toDouble()
@@ -228,6 +308,12 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
                 NativeBridge.sendMouseButton(Glfw.MOUSE_RIGHT, Glfw.PRESS, 0)
                 NativeBridge.sendMouseButton(Glfw.MOUSE_RIGHT, Glfw.RELEASE, 0)
             }
+        } else if (pointerMode) {
+            // A tap clicks at the cursor; a drag only moved it.
+            if (System.currentTimeMillis() - downTime < HOLD_MS && abs(lastX - downX) < 12 * density && abs(lastY - downY) < 12 * density) {
+                NativeBridge.sendMouseButton(Glfw.MOUSE_LEFT, Glfw.PRESS, 0)
+                NativeBridge.sendMouseButton(Glfw.MOUSE_LEFT, Glfw.RELEASE, 0)
+            }
         } else {
             NativeBridge.sendMouseButton(Glfw.MOUSE_LEFT, Glfw.RELEASE, 0)
         }
@@ -237,5 +323,10 @@ class TouchControlsView @JvmOverloads constructor(context: Context, attrs: Attri
 
     companion object {
         private const val HOLD_MS = 300L
+        private const val REPEAT_DELAY_MS = 450L
+        private const val REPEAT_MS = 70L
     }
 }
+
+/** Corners scale with the button so every button has the look of the 50dp click buttons. */
+internal fun android.graphics.RectF.cornerRadius() = 0.1f * minOf(width(), height())

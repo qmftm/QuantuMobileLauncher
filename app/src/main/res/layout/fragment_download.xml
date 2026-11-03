@@ -24,7 +24,7 @@
                 android:background="@drawable/bg_icon_tile"
                 android:contentDescription="@null"
                 android:padding="8dp"
-                android:src="@drawable/ic_cube"
+                android:src="@drawable/ic_download"
                 app:tint="@color/accent" />
 
             <TextView
@@ -36,6 +36,38 @@
                 android:textAppearance="?attr/textAppearanceBodyMedium" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+<com.google.android.material.chip.ChipGroup
+        android:id="@+id/types"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        app:selectionRequired="true"
+        app:singleSelection="true">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_mods"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/type_mods" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_packs"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/type_packs" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_shaders"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/type_shaders" />
+    </com.google.android.material.chip.ChipGroup>
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/mode"
@@ -94,36 +126,7 @@
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/types"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            app:selectionRequired="true"
-            app:singleSelection="true">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_mods"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="@string/type_mods" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_packs"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/type_packs" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_shaders"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/type_shaders" />
-        </com.google.android.material.chip.ChipGroup>
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
@@ -134,6 +137,26 @@
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
         android:text="@string/check_updates"
+        android:visibility="gone" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/add"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:text="@string/visual_add"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        android:textColor="@color/text_secondary"
         android:visibility="gone" />
 
     <FrameLayout

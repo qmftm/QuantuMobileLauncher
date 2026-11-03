@@ -111,6 +111,7 @@ class ControlsEditorActivity : AppCompatActivity() {
             }
         }
         val toggle = CheckBox(this).apply { text = getString(R.string.controls_toggle); isChecked = spec.toggle }
+        val repeat = CheckBox(this).apply { text = getString(R.string.controls_repeat); isChecked = spec.repeat }
         val menus = CheckBox(this).apply { text = getString(R.string.controls_in_menus); isChecked = spec.showInMenus }
 
         val content = LinearLayout(this).apply {
@@ -122,6 +123,7 @@ class ControlsEditorActivity : AppCompatActivity() {
             addView(sizeText)
             addView(size, LinearLayout.LayoutParams(lp, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(toggle)
+            addView(repeat)
             addView(menus)
         }
         val scroll = android.widget.ScrollView(this).apply { addView(content) }
@@ -131,7 +133,7 @@ class ControlsEditorActivity : AppCompatActivity() {
             .setView(scroll)
             .setPositiveButton(R.string.controls_save) { _, _ ->
                 val text = label.text.toString().ifBlank { spec.label }
-                val saved = spec.copy(label = text, toggle = toggle.isChecked, showInMenus = menus.isChecked)
+                val saved = spec.copy(label = text, toggle = toggle.isChecked, repeat = repeat.isChecked, showInMenus = menus.isChecked)
                 update(buttons.map { if (it.id == saved.id) saved else it })
             }
             .setNeutralButton(R.string.controls_delete) { _, _ ->

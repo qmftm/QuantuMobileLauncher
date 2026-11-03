@@ -17,21 +17,17 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         binding.toolbar.inflateMenu(R.menu.main_toolbar)
         binding.toolbar.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.action_accounts -> { navigateTo(R.id.nav_accounts); true }
-                R.id.action_settings -> { navigateTo(R.id.nav_settings); true }
-                else -> false
-            }
+            if (it.itemId == R.id.action_accounts) { navigateTo(R.id.nav_accounts); true } else false
         }
 
         binding.bottomNav.setOnItemSelectedListener { item ->
-            binding.toolbar.navigationIcon = null // leaving Accounts/Settings by tapping a tab
+            binding.toolbar.navigationIcon = null // leaving Accounts by tapping a tab
             show(
                 when (item.itemId) {
                     R.id.nav_instances -> InstancesFragment()
-                    R.id.nav_mods -> ModsFragment()
-                    R.id.nav_visual -> VisualFragment()
+                    R.id.nav_download -> DownloadFragment()
                     R.id.nav_afk -> AfkFragment()
+                    R.id.nav_settings -> SettingsFragment()
                     else -> HomeFragment()
                 },
                 item.title,
@@ -86,15 +82,12 @@ class MainActivity : AppCompatActivity() {
 
     /** Switches tabs from inside a fragment (e.g. the setup checklist on Home). */
     fun navigateTo(itemId: Int) {
-        when (itemId) {
-            R.id.nav_accounts -> return showOffBar(AccountsFragment(), getString(R.string.nav_accounts))
-            R.id.nav_settings -> return showOffBar(SettingsFragment(), getString(R.string.nav_settings))
-        }
+        if (itemId == R.id.nav_accounts) return showOffBar(AccountsFragment(), getString(R.string.nav_accounts))
         binding.toolbar.navigationIcon = null
         binding.bottomNav.selectedItemId = itemId
     }
 
-    /** Accounts and Settings are not bottom tabs (the bar holds five); they open from the toolbar and from Home. */
+    /** Accounts is not a bottom tab (the bar holds five); it opens from the toolbar and from Home. */
     private fun showOffBar(fragment: Fragment, title: String) {
         binding.bottomNav.menu.setGroupCheckable(0, true, false) // no tab highlighted while it is open
         for (i in 0 until binding.bottomNav.menu.size()) binding.bottomNav.menu.getItem(i).isChecked = false
