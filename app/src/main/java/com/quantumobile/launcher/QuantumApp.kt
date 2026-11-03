@@ -16,6 +16,7 @@ import com.quantumobile.launcher.core.afk.AfkServer
 import com.quantumobile.launcher.core.afk.proto.ServerPing
 import com.quantumobile.launcher.core.afk.proto.SrvLookup
 import com.quantumobile.launcher.ui.AfkIcons
+import com.quantumobile.launcher.ui.AfkRemote
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.quantumobile.launcher.core.afk.AfkStore
@@ -67,6 +68,9 @@ class QuantumApp : Application() {
         )
     }
     private val accountRefresh = Mutex()
+
+    /** PCs that run AFK bots for this phone. */
+    val afkRemote by lazy { AfkRemote(this) }
 
     /** Long-running work (game install, runtime and mod downloads) that must outlive any single screen. */
     val tasks by lazy {
@@ -218,7 +222,7 @@ class QuantumApp : Application() {
     }
 
     /** The account an AFK bot joins with, refreshed first if its Microsoft token is about to expire. */
-    private suspend fun afkAccount(id: String): Account = accountRefresh.withLock {
+    suspend fun afkAccount(id: String): Account = accountRefresh.withLock {
         val account = accounts.accounts.value.firstOrNull { it.id == id }
             ?: throw AfkFatalException(getString(R.string.afk_account_missing))
         if (!account.needsRefresh) return@withLock account

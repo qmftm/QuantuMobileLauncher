@@ -304,4 +304,35 @@
     <string name="afk_icon_custom">My image</string>
     <string name="afk_icon_add">Add image</string>
     <string name="afk_icon_import_failed">Could not load the image</string>
+    <!-- AFK on a PC -->
+    <string name="afk_location">Runs on</string>
+    <string name="afk_location_help">On a PC it stays online even when the phone is off</string>
+    <string name="afk_location_phone">This phone</string>
+    <string name="afk_location_pc">PC: %1$s</string>
+    <string name="afk_pcs">PCs</string>
+    <string name="afk_pc_add">Add PC</string>
+    <string name="afk_pc_name">Name (blank = the PC\'s name)</string>
+    <string name="afk_pc_address">PC address</string>
+    <string name="afk_pc_address_help">Shown in the PC program window (e.g. 192.168.0.12:25580)</string>
+    <string name="afk_pc_code">Pairing code</string>
+    <string name="afk_pc_code_help">Shown in the PC program window (e.g. ABCD-EFGH-JKLM)</string>
+    <string name="afk_pc_checking">Connecting to the PC…</string>
+    <string name="afk_pc_added">Connected to %1$s</string>
+    <string name="afk_pc_none">No PC yet.
+
+Run the AFK host on a PC to keep servers joined from there, even with the phone off.
+
+1. Download QuantuMobileLauncher-AFK-Host.jar from the release page (needs Java 17+)
+2. Run java -jar QuantuMobileLauncher-AFK-Host.jar on the PC
+3. Enter the address and pairing code it shows</string>
+    <string name="afk_pc_online">Connected · %1$d server(s)</string>
+    <string name="afk_pc_offline">Not connected · %1$s</string>
+    <string name="afk_pc_remove_confirm">Forget %1$s? Servers on that PC stay there.</string>
+    <string name="afk_pc_offline_badge">PC offline</string>
+    <string name="afk_pc_tokens_title">Send the sign-in to the PC?</string>
+    <string name="afk_pc_tokens_message">To join with a Microsoft account from the PC, this account\'s sign-in tokens must be sent to it. They travel encrypted with the pairing code and are deleted when you remove the server from the PC. Only use a PC you trust.</string>
+    <string name="afk_pc_tokens_ok">Send</string>
+    <string name="afk_saving">Saving…</string>
+    <string name="afk_pc_failed">Could not save on the PC: %1$s</string>
+    <string name="afk_pc_row">PC: %1$s</string>
 </resources>

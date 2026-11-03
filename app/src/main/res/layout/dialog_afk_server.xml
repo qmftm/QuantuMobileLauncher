@@ -121,5 +121,21 @@
                 android:layout_height="wrap_content"
                 android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/location_layout"
+            style="?attr/textInputOutlinedExposedDropdownMenuStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/afk_location"
+            app:helperText="@string/afk_location_help">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 </ScrollView>
