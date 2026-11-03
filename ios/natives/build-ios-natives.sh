@@ -37,7 +37,10 @@ compile() {  # compile <objects dir> <compiler> <flags> -- <sources...>
 }
 
 # ---- libffi (static), the callback layer of LWJGL 3.4; Apple arm64 builds use trampoline tables (no writable code) ----
-git clone -q --depth 1 --branch v3.5.2 https://github.com/libffi/libffi.git "$WORK/libffi"
+# (LWJGL 3.4 calls ffi_call_plan_*, which is newer than the last libffi release: pin a master commit that has it)
+git init -q "$WORK/libffi" && git -C "$WORK/libffi" fetch -q --depth 1 https://github.com/libffi/libffi.git d02afc25e8ea3aac9e78e227748e1fd7c9f14c82 2>/dev/null \
+  && git -C "$WORK/libffi" checkout -q FETCH_HEAD \
+  || { rm -rf "$WORK/libffi"; git clone -q --depth 1 https://github.com/libffi/libffi.git "$WORK/libffi"; }
 ( cd "$WORK/libffi" && ./autogen.sh >/dev/null 2>&1 || ./autogen.sh >/dev/null )
 mkdir "$WORK/libffi/b"
 ( cd "$WORK/libffi/b" && ../configure --host=aarch64-apple-darwin --disable-shared --enable-static --disable-docs \
