@@ -504,7 +504,10 @@ class AfkFragment : Fragment() {
             orientation = android.widget.LinearLayout.VERTICAL
             val pad = (20 * resources.displayMetrics.density).toInt()
             setPadding(pad, pad / 2, pad, 0)
-            addView(codeLayout); addView(addrLayout); addView(nameLayout)
+            val gap = (12 * resources.displayMetrics.density).toInt()
+            listOf(codeLayout, addrLayout, nameLayout).forEachIndexed { i, field ->
+                addView(field, android.widget.LinearLayout.LayoutParams(-1, -2).apply { if (i > 0) topMargin = gap })
+            }
         }
         val dialog = MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.afk_pc_add)
