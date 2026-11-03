@@ -56,12 +56,11 @@ jobs:
       - name: Test
         run: ./gradlew testDebugUnitTest
       - name: Build APKs
-        run: ./gradlew assembleRelease assembleDebug
+        run: ./gradlew assembleRelease
       - name: Rename APKs
         run: |
           mkdir dist
           cp app/build/outputs/apk/release/app-release.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "dist/QuantuMobileLauncher-${{ steps.version.outputs.tag }}-debug.apk"
       - name: Write release notes
         env:
           TAG: ${{ steps.version.outputs.tag }}
