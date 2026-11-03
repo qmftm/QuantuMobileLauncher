@@ -27,7 +27,6 @@ import com.quantumobile.launcher.databinding.ItemIconChoiceBinding
 import com.quantumobile.launcher.core.afk.remote.AfkHost
 import com.quantumobile.launcher.core.afk.remote.BadCodeException
 import com.quantumobile.launcher.core.afk.remote.Ops
-import com.quantumobile.launcher.core.afk.remote.RemoteClient
 import com.quantumobile.launcher.core.afk.remote.RemoteProtocol
 import com.quantumobile.launcher.core.afk.remote.RemoteRequest
 import com.google.android.material.textfield.TextInputEditText
@@ -468,9 +467,9 @@ class AfkFragment : Fragment() {
                 val line = when {
                     st?.servers != null -> getString(R.string.afk_pc_online, st.servers.size)
                     st?.error != null -> getString(R.string.afk_pc_offline, st.error)
-                    else -> h.address
+                    else -> h.address.ifBlank { getString(R.string.afk_pc_checking) }
                 }
-                "${h.name}  (${h.address})\n$line"
+                if (h.address.isBlank()) "${h.name}\n$line" else "${h.name}  (${h.address})\n$line"
             }
             builder.setItems(items.toTypedArray()) { _, which ->
                 val h = hosts[which]
@@ -498,14 +497,14 @@ class AfkFragment : Fragment() {
             layout.addView(input)
             return layout to input
         }
-        val (addrLayout, addr) = field(R.string.afk_pc_address, R.string.afk_pc_address_help)
         val (codeLayout, code) = field(R.string.afk_pc_code, R.string.afk_pc_code_help, caps = true)
+        val (addrLayout, addr) = field(R.string.afk_pc_address, R.string.afk_pc_address_help)
         val (nameLayout, nameInput) = field(R.string.afk_pc_name)
         val box = android.widget.LinearLayout(ctx).apply {
             orientation = android.widget.LinearLayout.VERTICAL
             val pad = (20 * resources.displayMetrics.density).toInt()
             setPadding(pad, pad / 2, pad, 0)
-            addView(addrLayout); addView(codeLayout); addView(nameLayout)
+            addView(codeLayout); addView(addrLayout); addView(nameLayout)
         }
         val dialog = MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.afk_pc_add)
@@ -518,16 +517,15 @@ class AfkFragment : Fragment() {
             addrLayout.error = null; codeLayout.error = null
             val address = addr.text.toString().trim()
             val pairing = code.text.toString().trim()
-            if (address.isEmpty()) { addrLayout.error = getString(R.string.afk_bad_address); return@setOnClickListener }
             if (RemoteProtocol.normalize(pairing).length != 12) { codeLayout.error = getString(R.string.afk_pc_code_help); return@setOnClickListener }
             ok.isEnabled = false
             ok.setText(R.string.afk_pc_checking)
             viewLifecycleOwner.lifecycleScope.launch {
                 val draft = AfkHost(name = nameInput.text.toString().trim(), address = address, code = pairing)
                 try {
-                    val info = withTimeout(10_000) { RemoteClient(draft).hello() }
-                    val host = draft.copy(name = draft.name.ifEmpty { info.name })
-                    remote.saveHost(host)
+                    val found = withTimeout(40_000) { remote.check(draft) }
+                    val host = draft.copy(name = draft.name.ifEmpty { found.info.name })
+                    remote.saveHost(host, found.url)
                     dialog.dismiss()
                     if (_binding != null) Snackbar.make(binding.root, getString(R.string.afk_pc_added, host.name), Snackbar.LENGTH_SHORT).show()
                     remote.poll()

@@ -4,6 +4,9 @@ import com.quantumobile.launcher.core.afk.AfkJson
 import com.quantumobile.launcher.core.afk.AfkPhase
 import com.quantumobile.launcher.core.afk.proto.AfkClient
 import com.quantumobile.launcher.core.afk.remote.BadCodeException
+import com.quantumobile.launcher.core.afk.remote.HostAddresses
+import com.quantumobile.launcher.core.afk.remote.Rendezvous
+import kotlinx.coroutines.delay
 import com.quantumobile.launcher.core.afk.remote.RemoteProtocol
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
@@ -58,14 +61,17 @@ fun main(args: Array<String>) {
             name = runCatching { InetAddress.getLocalHost().hostName }.getOrNull()?.takeIf { it.isNotBlank() } ?: "PC",
             code = RemoteProtocol.newCode(),
         )
-    // Options: --port N, --name NAME, --new-code (forget the old pairing code; paired phones must re-enter it).
+    // Options: --port N, --name NAME, --new-code (forget the old pairing code; paired phones must re-enter it),
+    // --lan-only (no Cloudflare tunnel and no address posting: same Wi-Fi only).
+    var lanOnly = false
     var i = 0
     while (i < args.size) {
         when (args[i]) {
             "--port" -> config = config.copy(port = args.getOrNull(++i)?.toIntOrNull() ?: config.port)
             "--name" -> config = config.copy(name = args.getOrNull(++i) ?: config.name)
             "--new-code" -> config = config.copy(code = RemoteProtocol.newCode())
-            "--help", "-h" -> { println("사용법: java -jar afk-host.jar [--port 25580] [--name 이름] [--new-code]"); return }
+            "--lan-only" -> lanOnly = true
+            "--help", "-h" -> { println("사용법: java -jar afk-host.jar [--port 25580] [--name 이름] [--new-code] [--lan-only]"); return }
         }
         i++
     }
@@ -81,12 +87,15 @@ fun main(args: Array<String>) {
 
     println("========================================================")
     println(" QuantuMobile AFK 호스트 $version  (이름: ${config.name})")
-    println(" 앱 → AFK 탭 → PC 연결 → 추가 에 아래 정보를 넣으세요")
-    lanAddresses().ifEmpty { listOf("127.0.0.1") }.forEach { println("   주소:      $it:${config.port}") }
+    println(" 앱 → AFK 탭 → PC 연결 → PC 추가 에 연결 코드만 넣으면 돼요")
     println("   연결 코드: ${config.code}")
+    lanAddresses().ifEmpty { listOf("127.0.0.1") }.forEach { println("   (같은 와이파이 주소: $it:${config.port})") }
+    if (!lanOnly) println(" 다른 와이파이·LTE에서도 연결되도록 외부 주소를 여는 중…")
     println(" 설정 폴더: ${dir.absolutePath}")
     println(" 끄려면 이 창을 닫거나 Ctrl+C")
     println("========================================================")
+
+    if (!lanOnly) startRemoteAccess(scope, config, dir)
 
     // Log state changes (never tokens).
     scope.launch {
@@ -139,6 +148,45 @@ private fun handle(ex: HttpExchange, key: ByteArray, service: HostService) {
         ex.responseBody.use { it.write(bytes) }
     } finally {
         ex.close()
+    }
+}
+
+/**
+ * Makes the PC reachable from other networks: opens a Cloudflare quick tunnel and posts this PC's current
+ * addresses (LAN + tunnel), encrypted with the pairing code, so the app finds it with the code alone.
+ * Re-posted when the tunnel URL changes and every 6 hours (the relay keeps messages about 12 hours).
+ */
+private fun startRemoteAccess(scope: CoroutineScope, config: HostConfig, dir: File) {
+    val rendezvous = Rendezvous(System.getenv("QML_AFK_RELAY") ?: Rendezvous.DEFAULT_BASE)
+    var tunnelUrl: String? = null
+    var lastPostFailed = false
+    fun post() = scope.launch {
+        val addresses = HostAddresses(
+            name = config.name,
+            lan = lanAddresses().map { "http://$it:${config.port}" },
+            tunnel = tunnelUrl,
+            time = System.currentTimeMillis(),
+        )
+        try {
+            rendezvous.publish(config.code, addresses)
+            if (lastPostFailed) log("주소 공유가 다시 됐어요")
+            lastPostFailed = false
+        } catch (e: Exception) {
+            if (!lastPostFailed) log("주소를 공유하지 못했어요 (${e.message}). 잠시 뒤 다시 시도해요.")
+            lastPostFailed = true
+        }
+    }
+    post()
+    CloudflareTunnel(config.port, File(dir, "bin"), ::log, onUrl = { url ->
+        tunnelUrl = url
+        log("외부 주소 준비됨: $url  (다른 와이파이·LTE에서도 연결돼요)")
+        post()
+    }).start()
+    scope.launch {
+        while (true) {
+            delay(if (lastPostFailed) 60_000L else 6 * 60 * 60_000L)
+            post()
+        }
     }
 }
 

@@ -5,6 +5,7 @@ import com.quantumobile.launcher.core.afk.AfkJson
 import com.quantumobile.launcher.core.afk.AfkStatus
 import com.quantumobile.launcher.core.afk.remote.AfkHost
 import com.quantumobile.launcher.core.afk.remote.BadCodeException
+import com.quantumobile.launcher.core.afk.remote.HostLocator
 import com.quantumobile.launcher.core.afk.remote.Ops
 import com.quantumobile.launcher.core.afk.remote.RemoteClient
 import com.quantumobile.launcher.core.afk.remote.RemoteRequest
@@ -38,6 +39,38 @@ class AfkRemote(private val context: Context) {
 
     fun host(id: String) = _hosts.value.firstOrNull { it.id == id }
 
+    private val locator = HostLocator()
+    /** The URL each PC last answered on (LAN or tunnel); found again through [HostLocator] when it stops working. */
+    private val prefs = context.getSharedPreferences("afk_hosts", Context.MODE_PRIVATE)
+
+    private fun workingUrl(hostId: String): String? = prefs.getString("url_$hostId", null)
+    private fun rememberUrl(hostId: String, url: String) = prefs.edit().putString("url_$hostId", url).apply()
+
+    /** Runs [block] against PC [host], re-locating it once if its last known address no longer answers. */
+    private suspend fun <T> withHost(host: AfkHost, block: suspend (RemoteClient) -> T): T {
+        val known = workingUrl(host.id) ?: host.url()
+        if (known != null) {
+            try {
+                return withTimeout(8_000) { block(RemoteClient(known, host.code)) }
+            } catch (e: BadCodeException) {
+                throw e
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
+            }
+        }
+        val found = locator.locate(host, known)
+        rememberUrl(host.id, found.url)
+        return block(RemoteClient(found.url, host.code))
+    }
+
+    /** Checks a new PC (code, optional address) and returns its name and the URL it answered on. */
+    suspend fun check(host: AfkHost): HostLocator.Found = locator.locate(host)
+
+    fun saveHost(host: AfkHost, url: String) {
+        rememberUrl(host.id, url)
+        saveHost(host)
+    }
+
     @Synchronized
     fun saveHost(host: AfkHost) {
         val list = _hosts.value
@@ -47,6 +80,7 @@ class AfkRemote(private val context: Context) {
     @Synchronized
     fun removeHost(id: String) {
         save(_hosts.value.filterNot { it.id == id })
+        prefs.edit().remove("url_$id").apply()
         _states.update { it - id }
         iconDir().listFiles()?.filter { it.name.startsWith("$id-") }?.forEach { it.delete() }
     }
@@ -54,7 +88,7 @@ class AfkRemote(private val context: Context) {
     /** Sends [req] to PC [hostId]; the answer's server list (if any) updates [states] at once. */
     suspend fun call(hostId: String, req: RemoteRequest): RemoteResponse {
         val host = host(hostId) ?: throw IllegalStateException("PC가 목록에 없어요")
-        val res = withTimeout(20_000) { RemoteClient(host).call(req) }
+        val res = withTimeout(30_000) { withHost(host) { it.call(req) } }
         if (req.op != Ops.ICON && req.op != Ops.HELLO) setState(hostId, HostState(servers = res.servers))
         return res
     }
@@ -64,7 +98,7 @@ class AfkRemote(private val context: Context) {
         _hosts.value.map { host ->
             async {
                 val state = try {
-                    val servers = withTimeout(8_000) { RemoteClient(host).list() }
+                    val servers = withTimeout(20_000) { withHost(host) { it.list() } }
                     servers.forEach { syncIcon(host, it) }
                     HostState(servers = servers)
                 } catch (e: BadCodeException) {
@@ -90,7 +124,7 @@ class AfkRemote(private val context: Context) {
         val hash = s.iconHash ?: return
         val target = File(iconDir(), "${host.id}-${s.server.id}-${hash.take(12)}.png")
         if (target.isFile) return
-        val png = RemoteClient(host).call(RemoteRequest(Ops.ICON, 0, id = s.server.id)).iconPng ?: return
+        val png = withHost(host) { it.call(RemoteRequest(Ops.ICON, 0, id = s.server.id)) }.iconPng ?: return
         iconDir().listFiles()?.filter { it.name.startsWith("${host.id}-${s.server.id}-") }?.forEach { it.delete() }
         target.writeBytes(Base64.getDecoder().decode(png))
     }
