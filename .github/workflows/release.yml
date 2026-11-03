@@ -144,3 +144,48 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           files: QuantuMobileLauncher-AFK-Host-Windows.zip
+
+  # iPhone app (Amethyst-iOS with QuantuMobile branding and 26.x support), attached to the same release.
+  ios:
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Fetch Amethyst-iOS at the pinned commit
+        run: |
+          url=$(sed -n 1p ios/amethyst/UPSTREAM); sha=$(sed -n 2p ios/amethyst/UPSTREAM)
+          git init -q upstream && cd upstream
+          git remote add origin "$url"
+          git fetch -q --depth 1 origin "$sha" && git checkout -q FETCH_HEAD
+          git submodule update --init --recursive --depth 1
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "8"
+      - name: Install build tools
+        run: brew install ldid make autoconf automake libtool
+      - name: Apply QuantuMobile changes
+        run: ios/amethyst/apply.sh upstream
+      - name: Build the 26.x natives
+        run: ios/natives/build-ios-natives.sh upstream/Natives/resources/lwjgl34
+      - name: Build .ipa and .tipa
+        run: |
+          mkdir -p out
+          (cd upstream && gmake -j"$(sysctl -n hw.ncpu)" package PLATFORM=2 BOOTJDK="$JAVA_HOME/bin")
+          mv upstream/artifacts/org.angelauramc.amethyst-*-ios.ipa "out/QuantuMobile-iOS-${{ steps.version.outputs.tag }}.ipa"
+          (cd upstream && gmake -j"$(sysctl -n hw.ncpu)" package PLATFORM=2 BOOTJDK="$JAVA_HOME/bin" TROLLSTORE_JIT_ENT=1)
+          mv upstream/artifacts/org.angelauramc.amethyst-*-ios-trollstore.tipa "out/QuantuMobile-iOS-${{ steps.version.outputs.tag }}-TrollStore.tipa"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: out/*
