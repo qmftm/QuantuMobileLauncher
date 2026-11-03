@@ -113,7 +113,7 @@ GitHub Actions 가 푸시마다 테스트, lint, APK 빌드를 수행합니다.
 - [ ] Java 8 (Pack200 `unpack200` 필요 → 1.16.5 이하는 더 높은 Java 로 시도하며 실패할 수 있음)
 - [ ] Vulkan(Zink), Sodium, Iris 를 26.x 에서 쓰기
 - [ ] AWT 가 필요한 모드
-- [ ] 아이폰 (보류)
+- [x] 아이폰 (실험 단계, Amethyst-iOS 기반) — [설치 방법](docs/ios-install.md)
 
 > ⚠️ 실기기 검증은 한정적입니다. 개발자가 쓰는 기기(Galaxy Z Flip6, Adreno 750) 위주로 확인하며, 다른 기기에서는 동작이 다를 수 있습니다.
 

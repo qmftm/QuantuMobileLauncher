@@ -1,4 +1,4 @@
-안드로이드용 마인크래프트 자바 에디션 런처입니다. 아이폰판(`QuantuMobile-iOS-*.ipa`, 실험 단계)도 함께 올립니다.
+안드로이드용 마인크래프트 자바 에디션 런처입니다. 아이폰판(`QuantuMobile-iOS-*.ipa`, 실험 단계)도 함께 올립니다 — [아이폰 설치 방법](https://github.com/qmftm/QuantuMobileLauncher/blob/main/docs/ios-install.md).
 
 **기능 요약**: 마이크로소프트/오프라인 계정 · 바닐라/스냅샷/Fabric · 인스턴스 · Modrinth 모드·리소스팩·셰이더 다운로드 · Java·LWJGL 자동 설치 · 백그라운드 설치/실행 · 터치 조작판 편집 · **잠수 봇**(게임 없이 서버 접속 유지) · 한국어/영어
 
