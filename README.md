@@ -155,8 +155,10 @@ GitHub Actions 가 푸시마다 테스트, lint, APK 빌드를 수행합니다.
 
 서버마다 "실행 위치"를 **이 폰** 또는 **PC**로 고를 수 있습니다. PC에서 돌리면 폰을 꺼도 계속 접속해 있고, 앱은 리모컨처럼 켜기·끄기·상태 보기만 합니다. 폰이 PC와 **다른 와이파이나 LTE에 있어도** 연결됩니다.
 
-1. 릴리스 페이지에서 `QuantuMobileLauncher-AFK-Host.jar` 를 받습니다. (Java 17 이상 필요)
-2. PC에서 실행: `java -jar QuantuMobileLauncher-AFK-Host.jar` → 창에 **연결 코드**(예: `ABCD-EFGH-JKLM`)가 나옵니다.
+1. PC 프로그램을 받아 실행합니다.
+   - **윈도우 (간편)**: 릴리스 페이지에서 `QuantuMobileLauncher-AFK-Host-Windows.zip` 을 받아 압축을 풀고 `QuantuMobile-AFK.exe` 를 더블클릭합니다. 자바 설치가 필요 없습니다.
+   - **맥·리눅스 (또는 자바가 있는 윈도우)**: `QuantuMobileLauncher-AFK-Host.jar` 를 받아 `java -jar QuantuMobileLauncher-AFK-Host.jar` 로 실행합니다. (Java 17 이상)
+2. 창에 **연결 코드**(예: `ABCD-EFGH-JKLM`)가 나옵니다. 창을 닫으면 PC 쪽 AFK도 꺼지니 켜 둔 채로 두세요.
 3. 앱 → AFK 탭 → **PC 연결 → PC 추가** 에 **연결 코드만** 넣습니다.
 4. 서버 추가/수정 창의 **실행 위치**에서 그 PC를 고릅니다.
 
