@@ -46,6 +46,7 @@ class AfkClient(
 
             events.note("서버 버전 확인 중")
             val version = ServerPing.query(realHost, realPort, connectTimeoutMs)
+            version.favicon?.let(events::serverIcon)
             val ids = PacketIds.forProtocol(version.protocol) ?: return@withContext AfkDisconnect(
                 "지원하지 않는 서버 버전이에요: ${version.name.ifEmpty { "프로토콜 ${version.protocol}" }} " +
                     "(1.20.2 이상 정식 버전만 지원)",

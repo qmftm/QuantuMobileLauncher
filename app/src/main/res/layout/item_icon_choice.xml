@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One choice in the AFK server icon picker. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingVertical="8dp">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/image"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_icon_tile"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Quantum.Avatar"
+        app:strokeColor="@color/brand"
+        app:strokeWidth="0dp" />
+
+    <TextView
+        android:id="@+id/label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="@color/text_secondary" />
+</LinearLayout>

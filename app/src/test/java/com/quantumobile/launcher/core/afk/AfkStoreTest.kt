@@ -17,7 +17,7 @@ class AfkStoreTest {
     @Test
     fun serversAndSwitchesSurviveARestart() {
         val a = AfkServer(name = "Lobby", host = "play.example.com", accountId = "acc1")
-        val b = AfkServer(name = "Farm", host = "10.0.0.5", port = 25566, accountId = "acc2")
+        val b = AfkServer(name = "Farm", host = "10.0.0.5", port = 25566, accountId = "acc2", icon = "preset:diamond")
         AfkStore(file()).apply {
             upsert(a)
             upsert(b)
@@ -26,6 +26,8 @@ class AfkStoreTest {
 
         val reloaded = AfkStore(file()).servers.value
         assertEquals(listOf(a, b.copy(enabled = true)), reloaded)
+        assertNull(reloaded[0].icon) // default: the server's own icon
+        assertEquals("preset:diamond", reloaded[1].icon)
     }
 
     @Test

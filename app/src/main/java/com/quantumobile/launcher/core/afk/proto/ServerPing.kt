@@ -7,7 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
 /** What the server list ping says about a server. */
-data class ServerVersion(val protocol: Int, val name: String)
+class ServerVersion(val protocol: Int, val name: String, /** PNG from the status "favicon", if any. */ val favicon: ByteArray? = null)
 
 /** Server list ping (status state), used to learn which protocol version the server speaks. */
 object ServerPing {
@@ -29,7 +29,10 @@ object ServerPing {
         val version = root["version"] as? JsonObject ?: throw ProtocolException("Server did not report its version")
         val protocol = runCatching { version["protocol"]!!.jsonPrimitive.int }.getOrNull()
             ?: throw ProtocolException("Server did not report its protocol version")
-        return ServerVersion(protocol, version["name"]?.jsonPrimitive?.contentOrNull.orEmpty())
+        val favicon = root["favicon"]?.jsonPrimitive?.contentOrNull
+            ?.substringAfter("base64,", "")?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { java.util.Base64.getMimeDecoder().decode(it) }.getOrNull() }
+        return ServerVersion(protocol, version["name"]?.jsonPrimitive?.contentOrNull.orEmpty(), favicon)
     }
 
     fun handshake(protocol: Int, host: String, port: Int, nextState: Int) =

@@ -36,8 +36,10 @@ class AfkClientTest {
     private class Recorder : AfkEvents {
         val connected = CopyOnWriteArrayList<String>()
         val notes = CopyOnWriteArrayList<String>()
+        val icons = CopyOnWriteArrayList<ByteArray>()
         override fun connected(version: String) { connected += version }
         override fun note(message: String) { notes += message }
+        override fun serverIcon(png: ByteArray) { icons += png }
     }
 
     /** Fast sneaking so the test sees a full press/release cycle. */
@@ -72,7 +74,7 @@ class AfkClientTest {
         private fun status(c: McConnection) {
             c.receive() // handshake
             c.receive() // status request
-            c.send(PacketWriter(0).string("""{"version":{"name":"$versionName","protocol":$protocol},"players":{"max":20,"online":0}}"""))
+            c.send(PacketWriter(0).string("""{"version":{"name":"$versionName","protocol":$protocol},"players":{"max":20,"online":0},"favicon":"data:image/png;base64,iVBORw0KGgo="}"""))
         }
 
         /** Reads packets until [id], recording sneaks on the way (they can arrive at any time). */
@@ -195,6 +197,8 @@ class AfkClientTest {
         assertEquals("Alex", server.loginName.get())
         assertEquals(listOf("Alex:${server.serverHash}"), joined) // joined the session with the same hash the server computed
         assertEquals(listOf("1.21.4"), events.connected)
+        // The status ping's favicon is passed on, decoded (these bytes are the PNG signature).
+        assertEquals(listOf(0x89, 0x50, 0x4E, 0x47), events.icons.single().take(4).map { it.toInt() and 0xFF })
         assertTrue(server.respawned)
         assertTrue(events.notes.any { "리스폰" in it })
         // Sneak goes through player_input on 1.21.2+: pressed, then released.

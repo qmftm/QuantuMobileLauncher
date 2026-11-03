@@ -32,6 +32,13 @@ data class Row(
     val actions: List<RowAction> = emptyList(),
     /** Shows a spinner instead of the buttons while something is being done for this row. */
     val busy: Boolean = false,
+    /** A local image file for the icon (takes precedence over [icon]); [iconStamp] changes when the file does. */
+    val iconFile: String? = null,
+    val iconStamp: Long = 0,
+    /** Show [icon] in its own colours, filling the tile (e.g. pixel art), instead of tinted with padding. */
+    val iconRaw: Boolean = false,
+    /** Small coloured dot on the icon's corner (e.g. connection state). */
+    val statusColor: Int? = null,
     /** Lines the subtitle may wrap to (it may contain '\n'). */
     val subtitleLines: Int = 1,
 )
@@ -75,7 +82,20 @@ class SimpleListAdapter(
         b.root.setOnClickListener { onClick(row) }
         b.root.setOnLongClickListener { if (showMore) onMore(row, b.more); showMore }
 
-        if (row.iconUrl != null && scope != null) {
+        b.statusDot.isVisible = row.statusColor != null
+        row.statusColor?.let { b.statusDot.backgroundTintList = android.content.res.ColorStateList.valueOf(it) }
+
+        val fileBitmap = row.iconFile?.let { android.graphics.BitmapFactory.decodeFile(it) }
+        if (fileBitmap != null) {
+            b.icon.setPadding(0, 0, 0, 0)
+            b.icon.imageTintList = null
+            b.icon.setImageDrawable(AfkIcons.pixelated(ctx, fileBitmap))
+        } else if (row.iconRaw) {
+            val pad = (4 * ctx.resources.displayMetrics.density).toInt()
+            b.icon.setPadding(pad, pad, pad, pad)
+            b.icon.imageTintList = null
+            b.icon.setImageResource(row.icon)
+        } else if (row.iconUrl != null && scope != null) {
             b.icon.setPadding(0, 0, 0, 0)
             b.icon.imageTintList = null
             RemoteImage.load(b.icon, row.iconUrl, scope, R.drawable.ic_extension, maxAgeHours = 24 * 7)

@@ -36,3 +36,15 @@ class TextComponentTest {
         assertEquals("Kicked: spam", TextComponent.fromNbt(PacketReader(out.toByteArray())))
     }
 }
+
+class ServerPingTest {
+    @Test
+    fun readsVersionAndFavicon() {
+        val v = ServerPing.parse("""{"version":{"name":"Paper 26.3","protocol":777},"favicon":"data:image/png;base64,iVBORw0K\nGgo="}""")
+        assertEquals(777, v.protocol)
+        assertEquals("Paper 26.3", v.name)
+        assertEquals(8, v.favicon!!.size)
+        org.junit.Assert.assertNull(ServerPing.parse("""{"version":{"name":"x","protocol":1}}""").favicon)
+        org.junit.Assert.assertNull(ServerPing.parse("""{"version":{"name":"x","protocol":1},"favicon":"garbage"}""").favicon)
+    }
+}

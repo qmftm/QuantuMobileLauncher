@@ -17,11 +17,15 @@ data class AfkServer(
     /** [com.quantumobile.launcher.core.auth.Account.id] of the account to join with. */
     val accountId: String,
     val enabled: Boolean = false,
+    /** Row icon: null = the server's own icon (from its status ping), "preset:<name>", or [ICON_CUSTOM] (a picked image). */
+    val icon: String? = null,
 ) {
     val address get() = if (port == DEFAULT_PORT) host else "$host:$port"
 
     companion object {
         const val DEFAULT_PORT = 25565
+        const val ICON_CUSTOM = "custom"
+        const val ICON_PRESET = "preset:"
 
         /** Splits "host" or "host:port" (the format players share). Returns null for an empty or malformed address. */
         fun parseAddress(input: String, defaultPort: Int = DEFAULT_PORT): Pair<String, Int>? {

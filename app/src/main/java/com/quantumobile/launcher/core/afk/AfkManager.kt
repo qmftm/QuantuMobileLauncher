@@ -20,6 +20,8 @@ class AfkManager(
     private val account: suspend (String) -> Account,
     val network: StateFlow<Boolean>,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Called with a server's list icon each time its bot pings it. */
+    private val onServerIcon: (String, ByteArray) -> Unit = { _, _ -> },
 ) {
     private class Running(val server: AfkServer, val job: Job, val token: Any)
 
@@ -66,7 +68,10 @@ class AfkManager(
         for ((id, server) in wanted) {
             if (id in running) continue
             val token = Any()
-            val bot = AfkBot(server, connector, account, network, onStatus = { s -> publish(id, token, s) }, clock = clock)
+            val bot = AfkBot(
+                server, connector, account, network,
+                onStatus = { s -> publish(id, token, s) }, onIcon = { png -> onServerIcon(id, png) }, clock = clock,
+            )
             // Registered before it starts, so its first status update is not taken for a stale one.
             val job = scope.launch(start = CoroutineStart.LAZY) { bot.run() }
             running[id] = Running(server, job, token)

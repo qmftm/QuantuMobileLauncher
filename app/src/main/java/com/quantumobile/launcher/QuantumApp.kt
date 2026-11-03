@@ -12,6 +12,12 @@ import com.quantumobile.launcher.core.MissingRuntimeException
 import com.quantumobile.launcher.core.Settings
 import com.quantumobile.launcher.core.afk.AfkFatalException
 import com.quantumobile.launcher.core.afk.AfkManager
+import com.quantumobile.launcher.core.afk.AfkServer
+import com.quantumobile.launcher.core.afk.proto.ServerPing
+import com.quantumobile.launcher.core.afk.proto.SrvLookup
+import com.quantumobile.launcher.ui.AfkIcons
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.quantumobile.launcher.core.afk.AfkStore
 import com.quantumobile.launcher.core.afk.proto.AfkClient
 import com.quantumobile.launcher.core.auth.Account
@@ -57,6 +63,7 @@ class QuantumApp : Application() {
             connector = AfkClient(dnsServers = { network.dnsServers() }),
             account = ::afkAccount,
             network = network.online,
+            onServerIcon = { id, png -> runCatching { AfkIcons.saveServerIcon(this, id, png) } },
         )
     }
     private val accountRefresh = Mutex()
@@ -196,6 +203,18 @@ class QuantumApp : Application() {
     fun startAfk() {
         afk.start()
         if (afk.servers.value.any { it.enabled }) AfkService.start(this)
+    }
+
+    /** Pings [server] once to save its list icon (for servers that have not been switched on yet). */
+    fun fetchAfkServerIcon(server: AfkServer, onDone: () -> Unit = {}) {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching {
+                val srv = if (server.port == AfkServer.DEFAULT_PORT) SrvLookup.resolve(server.host, network.dnsServers()) else null
+                ServerPing.query(srv?.host ?: server.host, srv?.port ?: server.port, 8_000).favicon
+                    ?.let { AfkIcons.saveServerIcon(this@QuantumApp, server.id, it) }
+            }
+            withContext(Dispatchers.Main) { onDone() }
+        }
     }
 
     /** The account an AFK bot joins with, refreshed first if its Microsoft token is about to expire. */

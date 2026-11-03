@@ -26,6 +26,7 @@ class AfkBot(
     private val account: suspend (String) -> Account,
     private val network: StateFlow<Boolean>,
     private val onStatus: (AfkStatus) -> Unit,
+    private val onIcon: (ByteArray) -> Unit = {},
     private val backoff: Backoff = Backoff(),
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
@@ -46,6 +47,8 @@ class AfkBot(
         }
 
         override fun note(message: String) = set(status.copy(message = message))
+
+        override fun serverIcon(png: ByteArray) = onIcon(png)
     }
 
     suspend fun run() {

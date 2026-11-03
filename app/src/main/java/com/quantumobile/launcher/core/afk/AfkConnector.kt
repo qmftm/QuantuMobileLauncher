@@ -9,6 +9,9 @@ interface AfkEvents {
 
     /** Something worth showing next to the status (e.g. "respawned"). */
     fun note(message: String)
+
+    /** The server's list icon (64×64 PNG) from its status ping, when it has one. */
+    fun serverIcon(png: ByteArray) {}
 }
 
 /** How a connection ended. [retry] is false when reconnecting cannot help (unsupported version, wrong account type). */

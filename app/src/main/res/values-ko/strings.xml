@@ -280,4 +280,24 @@
     <string name="afk_battery_pref">배터리 최적화 제외</string>
     <string name="afk_battery_on">허용됨: 화면이 꺼져도 봇이 동작해요</string>
     <string name="afk_battery_off">제한됨: 눌러서 허용하세요. 안 하면 연결이 끊길 수 있어요</string>
+    <!-- AFK server icons -->
+    <string name="afk_icon">아이콘</string>
+    <string name="afk_icon_change">변경</string>
+    <string name="afk_icon_pick">아이콘 고르기</string>
+    <string name="afk_icon_server">서버 아이콘</string>
+    <string name="afk_icon_custom">내 이미지</string>
+    <string name="afk_icon_add">직접 추가</string>
+    <string name="afk_icon_import_failed">이미지를 불러오지 못했어요</string>
+    <string name="afk_icon_grass">잔디</string>
+    <string name="afk_icon_stone">돌</string>
+    <string name="afk_icon_diamond">다이아</string>
+    <string name="afk_icon_sword">검</string>
+    <string name="afk_icon_pickaxe">곡괭이</string>
+    <string name="afk_icon_heart">하트</string>
+    <string name="afk_icon_apple">사과</string>
+    <string name="afk_icon_tree">나무</string>
+    <string name="afk_icon_house">집</string>
+    <string name="afk_icon_fire">불</string>
+    <string name="afk_icon_chest">상자</string>
+    <string name="afk_icon_moon">밤</string>
 </resources>
