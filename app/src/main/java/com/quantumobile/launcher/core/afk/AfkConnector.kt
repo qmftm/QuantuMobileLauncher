@@ -1,0 +1,23 @@
+package com.quantumobile.launcher.core.afk
+
+import com.quantumobile.launcher.core.auth.Account
+
+/** Callbacks from a running connection to the bot that owns it. */
+interface AfkEvents {
+    /** The player is in the world (play state reached). [version] is the server's version name. */
+    fun connected(version: String)
+
+    /** Something worth showing next to the status (e.g. "respawned"). */
+    fun note(message: String)
+}
+
+/** How a connection ended. [retry] is false when reconnecting cannot help (unsupported version, wrong account type). */
+data class AfkDisconnect(val reason: String, val retry: Boolean = true)
+
+/** Runs one connection to a server until it ends. Cancelling the coroutine closes the connection. */
+fun interface AfkConnector {
+    suspend fun run(host: String, port: Int, account: Account, events: AfkEvents): AfkDisconnect
+}
+
+/** An error that reconnecting will not fix (missing account, expired login, wrong account type). */
+open class AfkFatalException(message: String) : java.io.IOException(message)
