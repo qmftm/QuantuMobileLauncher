@@ -240,4 +240,42 @@
     <string name="game_crashed_title">게임이 갑자기 꺼졌어요</string>
     <string name="game_crashed_message">지난 게임 실행이 정상적으로 끝나지 않았어요. 게임 로그에서 원인을 확인하고, 도움이 필요하면 공유해 주세요.</string>
     <string name="android_unsupported_badge">안드로이드 미지원 가능</string>
+
+    <!-- AFK bot -->
+    <string name="nav_afk">잠수</string>
+    <string name="channel_afk">잠수 봇</string>
+    <plurals name="afk_running">
+        <item quantity="other">%1$d개 서버 잠수 중</item>
+    </plurals>
+    <string name="afk_stop_all">모두 중지</string>
+    <string name="afk_off">꺼짐</string>
+    <string name="afk_connecting">접속 중</string>
+    <string name="afk_connected">접속됨</string>
+    <string name="afk_waiting">재접속 대기</string>
+    <string name="afk_waiting_seconds">재접속 대기 (%1$d초)</string>
+    <string name="afk_error">오류</string>
+    <string name="afk_account_missing">이 서버에 쓰던 계정이 삭제됐어요. 서버를 수정해서 계정을 다시 골라 주세요</string>
+    <string name="afk_login_expired">마이크로소프트 로그인이 만료됐어요. 계정 탭에서 다시 로그인해 주세요</string>
+    <string name="afk_empty">서버를 추가하면 게임을 켜지 않고도 접속해 있을 수 있어요.\n봇은 가끔 웅크리기만 해서 잠수 추방을 막아요.</string>
+    <string name="afk_add_server">서버 추가</string>
+    <string name="afk_edit_server">서버 수정</string>
+    <string name="afk_edit">수정</string>
+    <string name="afk_later">나중에</string>
+    <string name="afk_no_account">계정 없음</string>
+    <string name="afk_need_account">먼저 계정을 추가해 주세요 (마이크로소프트 또는 오프라인)</string>
+    <string name="afk_server_name">이름</string>
+    <string name="afk_server_address">주소</string>
+    <string name="afk_server_address_help">예: play.example.com 또는 1.2.3.4:25566</string>
+    <string name="afk_server_port">포트</string>
+    <string name="afk_bad_port">포트는 1~65535 사이여야 해요</string>
+    <string name="afk_bad_address">서버 주소를 입력해 주세요</string>
+    <string name="afk_battery_title">잠수 봇을 계속 켜 둘까요?</string>
+    <string name="afk_battery_message">화면이 꺼지면 안드로이드가 연결을 끊을 수 있어요. 런처가 배터리 제한 없이 백그라운드에서 돌 수 있게 허용해 주세요.</string>
+    <string name="afk_battery_allow">허용</string>
+    <string name="cat_afk">잠수 봇</string>
+    <string name="afk_autostart">재부팅 후 자동 시작</string>
+    <string name="afk_autostart_summary">폰을 켜면 켜져 있던 서버에 다시 접속해요</string>
+    <string name="afk_battery_pref">배터리 최적화 제외</string>
+    <string name="afk_battery_on">허용됨: 화면이 꺼져도 봇이 동작해요</string>
+    <string name="afk_battery_off">제한됨: 눌러서 허용하세요. 안 하면 연결이 끊길 수 있어요</string>
 </resources>

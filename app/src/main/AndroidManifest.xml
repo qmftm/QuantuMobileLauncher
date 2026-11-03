@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- AFK bot: ask to be exempt from battery optimisation. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -58,6 +60,17 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Runs the Minecraft Java process while the launcher is in the background" />
+        </service>
+
+        <!-- AFK bots (light server connections, no game) for hours with the screen off. specialUse, not dataSync:
+             dataSync is limited to 6 hours a day on Android 15 and cannot be started at boot. -->
+        <service
+            android:name=".service.AfkService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps user-chosen Minecraft server connections open (AFK) while the screen is off" />
         </service>
 
         <activity

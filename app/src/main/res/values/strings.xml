@@ -240,4 +240,43 @@
     <string name="game_crashed_title">The game closed unexpectedly</string>
     <string name="game_crashed_message">The last game session ended without finishing normally. Open the game log to see what happened, and share it if you need help.</string>
     <string name="android_unsupported_badge">May not work on Android</string>
+
+    <!-- AFK bot -->
+    <string name="nav_afk">AFK</string>
+    <string name="channel_afk">AFK bot</string>
+    <plurals name="afk_running">
+        <item quantity="one">AFK on %1$d server</item>
+        <item quantity="other">AFK on %1$d servers</item>
+    </plurals>
+    <string name="afk_stop_all">Stop all</string>
+    <string name="afk_off">Off</string>
+    <string name="afk_connecting">Connecting</string>
+    <string name="afk_connected">Connected</string>
+    <string name="afk_waiting">Waiting to reconnect</string>
+    <string name="afk_waiting_seconds">Reconnecting in %1$d s</string>
+    <string name="afk_error">Error</string>
+    <string name="afk_account_missing">The account for this server was removed. Edit the server and pick an account.</string>
+    <string name="afk_login_expired">The Microsoft sign-in expired. Sign in again in Accounts.</string>
+    <string name="afk_empty">Add a server to stay online on it without starting the game.\nThe bot only sneaks now and then, so you are not kicked for being idle.</string>
+    <string name="afk_add_server">Add server</string>
+    <string name="afk_edit_server">Edit server</string>
+    <string name="afk_edit">Edit</string>
+    <string name="afk_later">Later</string>
+    <string name="afk_no_account">No account</string>
+    <string name="afk_need_account">Add an account first (Microsoft or offline).</string>
+    <string name="afk_server_name">Name</string>
+    <string name="afk_server_address">Address</string>
+    <string name="afk_server_address_help">e.g. play.example.com or 1.2.3.4:25566</string>
+    <string name="afk_server_port">Port</string>
+    <string name="afk_bad_port">Port must be 1–65535</string>
+    <string name="afk_bad_address">Enter a server address</string>
+    <string name="afk_battery_title">Keep the AFK bot running?</string>
+    <string name="afk_battery_message">Android may cut the connection with the screen off. Allow the launcher to run in the background without battery restrictions.</string>
+    <string name="afk_battery_allow">Allow</string>
+    <string name="cat_afk">AFK bot</string>
+    <string name="afk_autostart">Start after reboot</string>
+    <string name="afk_autostart_summary">Turn servers that were on back on when the phone starts</string>
+    <string name="afk_battery_pref">Battery optimisation exemption</string>
+    <string name="afk_battery_on">Allowed: the bot can run with the screen off</string>
+    <string name="afk_battery_off">Restricted: tap to allow, otherwise Android may cut the connection</string>
 </resources>
