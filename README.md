@@ -1,6 +1,4 @@
-# QuantuMobileLauncher
-
-<p align="center"><img src="docs/screenshots/icon.png" width="240" alt="QuantuMobileLauncher" /></p>
+<p align="center"><img src="docs/screenshots/banner.png" alt="QuantuMobileLauncher" /></p>
 
 [![Android CI](https://github.com/qmftm/QuantuMobileLauncher/actions/workflows/android.yml/badge.svg)](https://github.com/qmftm/QuantuMobileLauncher/actions/workflows/android.yml)
 [![Latest release](https://img.shields.io/github/v/release/qmftm/QuantuMobileLauncher)](https://github.com/qmftm/QuantuMobileLauncher/releases/latest)
