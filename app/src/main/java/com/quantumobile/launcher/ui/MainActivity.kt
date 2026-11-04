@@ -15,14 +15,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
-        binding.toolbar.inflateMenu(R.menu.main_toolbar)
-        binding.toolbar.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.action_accounts -> { navigateTo(R.id.nav_accounts); true }
-                R.id.action_skins -> { startActivity(android.content.Intent(this, com.quantumobile.launcher.ui.skin.SkinLibraryActivity::class.java)); true }
-                else -> false
-            }
-        }
 
         binding.bottomNav.setOnItemSelectedListener { item ->
             binding.toolbar.navigationIcon = null // leaving Accounts by tapping a tab
@@ -43,6 +35,19 @@ class MainActivity : AppCompatActivity() {
         val app = application as com.quantumobile.launcher.QuantumApp
         if (savedInstanceState == null) app.prefetchComponents()
         app.startAfk() // servers left on keep (or start again) idling after the app or phone restarted
+    }
+
+    // The toolbar is the activity's action bar, so its buttons come from the options menu: a menu inflated straight
+    // into the toolbar would be cleared when the action bar fills it (and the icons would never show).
+    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
+        menuInflater.inflate(R.menu.main_toolbar, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean = when (item.itemId) {
+        R.id.action_accounts -> { navigateTo(R.id.nav_accounts); true }
+        R.id.action_skins -> { startActivity(android.content.Intent(this, com.quantumobile.launcher.ui.skin.SkinLibraryActivity::class.java)); true }
+        else -> super.onOptionsItemSelected(item)
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
