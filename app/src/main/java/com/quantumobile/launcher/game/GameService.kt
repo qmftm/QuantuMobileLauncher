@@ -23,6 +23,16 @@ class GameService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * The user swiped the launcher/game card away in the recents screen: that means "close it", so the game must not
+     * keep running unseen in the background (Home still does, on purpose). The JVM owns this process, so end it.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        wakeLock?.takeIf { it.isHeld }?.release()
+        android.os.Process.killProcess(android.os.Process.myPid())
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_QUIT) {
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
