@@ -51,6 +51,7 @@ class QuantumApp : Application() {
     val paths by lazy { LauncherPaths.from(this).also { it.ensureDirs() } }
     val settings by lazy { Settings(this) }
     val accounts by lazy { AccountStore(paths.accountsFile) }
+    val skins by lazy { com.quantumobile.launcher.core.skin.SkinStore(java.io.File(paths.internalRoot, "skins")) }
     val instances by lazy { InstanceStore(paths.instancesFile) }
     val versions by lazy { VersionRepository(paths) }
     val runtimes by lazy { RuntimeManager(paths.runtimes) }

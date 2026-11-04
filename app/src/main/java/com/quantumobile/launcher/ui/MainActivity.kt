@@ -17,7 +17,11 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         binding.toolbar.inflateMenu(R.menu.main_toolbar)
         binding.toolbar.setOnMenuItemClickListener {
-            if (it.itemId == R.id.action_accounts) { navigateTo(R.id.nav_accounts); true } else false
+            when (it.itemId) {
+                R.id.action_accounts -> { navigateTo(R.id.nav_accounts); true }
+                R.id.action_skins -> { startActivity(android.content.Intent(this, com.quantumobile.launcher.ui.skin.SkinLibraryActivity::class.java)); true }
+                else -> false
+            }
         }
 
         binding.bottomNav.setOnItemSelectedListener { item ->

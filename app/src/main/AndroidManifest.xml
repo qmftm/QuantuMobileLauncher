@@ -47,6 +47,15 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.skin.SkinLibraryActivity"
+            android:exported="false"
+            android:label="@string/skin_title" />
+
+        <activity
+            android:name=".ui.skin.SkinPreviewActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.LogActivity"
             android:exported="false"
             android:label="@string/game_log" />
