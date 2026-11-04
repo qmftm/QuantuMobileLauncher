@@ -216,7 +216,7 @@ class DownloadFragment : Fragment() {
                 else Snackbar.make(binding.root, getString(R.string.modrinth_error, e.message), Snackbar.LENGTH_SHORT).show()
             } finally {
                 loading = false
-                binding.loading.isVisible = false
+                _binding?.loading?.isVisible = false // view may be gone by the time a cancelled search unwinds
             }
         }
     }
