@@ -46,9 +46,23 @@ class LiveAfkServerTest {
                 if (w != lastWorld) { lastWorld = w; log("world $w") }
             }
         }
-        val account = Account.offline(System.getenv("QML_AFK_NAME") ?: "AfkBot")
+        // QML_AFK_SIGNED=1: act as a Microsoft account with a self-made chat key (the key's Mojang signature is
+        // fake), to see whether a real server accepts our chat session update and message signatures.
+        val signed = System.getenv("QML_AFK_SIGNED") == "1"
+        val name = System.getenv("QML_AFK_NAME") ?: "AfkBot"
+        val account = if (signed) {
+            Account(type = com.quantumobile.launcher.core.auth.AccountType.MICROSOFT, username = name, uuid = Account.offlineUuid(name))
+        } else Account.offline(name)
+        val client = if (signed) {
+            val pair = java.security.KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.genKeyPair()
+            val certificate = PlayerCertificate(
+                System.currentTimeMillis() + 48 * 3_600_000L, System.currentTimeMillis() + 24 * 3_600_000L,
+                pair.public.encoded, ByteArray(512), pair.private,
+            )
+            AfkClient(certificates = { certificate })
+        } else AfkClient()
         val ended: AfkDisconnect? = withTimeoutOrNull(seconds * 1000) {
-            AfkClient().run(host, port, account, events)
+            client.run(host, port, account, events)
         }
         log("ended: ${ended ?: "still connected after ${seconds}s"}")
         assertEquals(1, connected.size)
