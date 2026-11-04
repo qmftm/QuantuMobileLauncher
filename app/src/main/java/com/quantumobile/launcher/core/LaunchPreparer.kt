@@ -9,6 +9,7 @@ import com.quantumobile.launcher.core.instance.Instance
 import com.quantumobile.launcher.core.lwjgl.LwjglInstaller
 import com.quantumobile.launcher.core.lwjgl.LwjglPackage
 import com.quantumobile.launcher.core.mc.GameInstaller
+import com.quantumobile.launcher.core.mc.JnaNatives
 import com.quantumobile.launcher.core.mc.LaunchArgs
 import com.quantumobile.launcher.core.mc.LaunchSpec
 import com.quantumobile.launcher.core.mc.ProgressListener
@@ -80,6 +81,14 @@ class LaunchPreparer(private val app: QuantumApp) {
             add(paths.versionJar(version.jarId).absolutePath)
         }
 
+        // An Android build of the game's exact JNA version (its jar only carries glibc natives, which crash on load).
+        val jnaDir = if (!sdl) null else try {
+            listener.onProgress("JNA", 0, 1)
+            JnaNatives(paths.libraries, File(paths.internalRoot, "jna-android")).ensure(version, "arm64-v8a")
+        } catch (e: java.io.IOException) {
+            throw LaunchException("Could not download the Android JNA library for ${version.id}: ${e.message}")
+        }
+
         val scale = settings.resolutionPercent / 100f
         val width = (screenWidth * scale).toInt()
         val height = (screenHeight * scale).toInt()
@@ -121,8 +130,8 @@ class LaunchPreparer(private val app: QuantumApp) {
                 nativesDir?.let {
                     add("-Dorg.lwjgl.openal.libname=${File(it, "libopenal.so").absolutePath}")
                     add("-Dorg.lwjgl.freetype.libname=${File(it, "libfreetype.so").absolutePath}")
-                    // (no jna.boot.library.path: the bundled JNA 6 native does not match the game's JNA 7)
                 }
+                jnaDir?.let { add("-Djna.boot.library.path=${it.absolutePath}") }
             } else if (nativesDir != null) {
                 add("-Dorg.lwjgl.librarypath=${nativesDir.absolutePath}")
                 add("-Dorg.lwjgl.freetype.libname=${File(nativesDir, "libfreetype.so").absolutePath}")
