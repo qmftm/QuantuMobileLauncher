@@ -225,20 +225,20 @@ class AfkClientTest {
             assertEquals(65, c.expect(ids.playChatAckOut).varInt())
 
             // Chat and commands typed in the app.
+            sendFromBot?.invoke()
+            var index = 0
+            val sender = uuid
+            val chat = c.expect(ids.playChatOut)
+            // The first message made the bot announce its chat key (it arrives just before that message).
             var sessionId: UUID? = null
             if (signingKey != null) {
-                // The bot announces its chat key right after login, before anything is signed.
-                val session = sessionPacket.getAndSet(null) ?: c.expect(ids.playChatSessionOut)
+                val session = sessionPacket.getAndSet(null) ?: error("no chat session update before the first chat")
                 sessionId = session.uuid()
                 assertEquals(signingExpiresAt, session.long())
                 assertTrue(session.byteArray().contentEquals(signingKey.encoded))
                 assertTrue(session.byteArray().contentEquals(signingKeySignature))
                 assertEquals(0, session.remaining)
             }
-            sendFromBot?.invoke()
-            var index = 0
-            val sender = uuid
-            val chat = c.expect(ids.playChatOut)
             assertEquals("안녕하세요 server", chat.string()); val chatTime = chat.long(); val chatSalt = chat.long()
             if (signingKey == null) {
                 assertFalse(chat.bool()) // no signature

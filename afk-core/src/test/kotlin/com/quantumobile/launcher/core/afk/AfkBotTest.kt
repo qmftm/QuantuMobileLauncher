@@ -60,6 +60,9 @@ class AfkBotTest {
         advanceTimeBy(180_000) // → 5 min
         assertEquals(6, calls)
         assertEquals(currentTime - 1 + 300_000, statuses.last().retryAt)
+        advanceTimeBy(300_000) // → 10 min, and it stays there
+        assertEquals(7, calls)
+        assertEquals(currentTime - 1 + 600_000, statuses.last().retryAt)
         assertTrue(statuses.last().message!!.contains("연결할 수 없어요"))
         job.cancel()
     }

@@ -8,11 +8,11 @@ import kotlin.random.Random
 class AfkTimingTest {
 
     @Test
-    fun backoffGoesFromTenSecondsUpToFiveMinutes() {
+    fun backoffGoesFromTenSecondsUpToTenMinutes() {
         val b = Backoff()
         assertEquals(
-            listOf(10_000L, 20_000L, 40_000L, 60_000L, 180_000L, 300_000L, 300_000L, 300_000L),
-            List(8) { b.nextDelayMs() },
+            listOf(10_000L, 20_000L, 40_000L, 60_000L, 180_000L, 300_000L, 600_000L, 600_000L, 600_000L),
+            List(9) { b.nextDelayMs() },
         )
     }
 
@@ -22,13 +22,14 @@ class AfkTimingTest {
         assertEquals("1분", Backoff.describe(60_000))
         assertEquals("3분", Backoff.describe(180_000))
         assertEquals("4분 30초", Backoff.describe(270_000))
+        assertEquals("10분", Backoff.describe(600_000))
         assertEquals("0초", Backoff.describe(-5))
     }
 
     @Test
     fun backoffStartsOverAfterReset() {
         val b = Backoff()
-        repeat(7) { b.nextDelayMs() }
+        repeat(9) { b.nextDelayMs() }
         b.reset()
         assertEquals(10_000L, b.nextDelayMs())
         assertEquals(20_000L, b.nextDelayMs())
@@ -37,7 +38,7 @@ class AfkTimingTest {
     @Test
     fun backoffNeverOverflowsAfterManyFailures() {
         val b = Backoff()
-        repeat(10_000) { assertTrue(b.nextDelayMs() in 10_000L..300_000L) }
+        repeat(10_000) { assertTrue(b.nextDelayMs() in 10_000L..600_000L) }
     }
 
     @Test

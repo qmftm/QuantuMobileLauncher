@@ -98,7 +98,12 @@ jobs:
             echo
             echo "---"
             echo
-            cat .github/release-common.md
+            if [ "$SNAPSHOT" = "true" ]; then
+              # Snapshots carry no iPhone build: leave out the line about it.
+              grep -v 'QuantuMobile-iOS' .github/release-common.md
+            else
+              cat .github/release-common.md
+            fi
           } > release-body.md
       - uses: softprops/action-gh-release@v2
         with:

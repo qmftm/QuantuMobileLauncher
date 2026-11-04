@@ -14,7 +14,7 @@ class AfkTiming(
 }
 
 /**
- * Reconnect delay: 10 s, 20 s, 40 s, 60 s, then 3 min and 5 min (the last step repeats until a join succeeds).
+ * Reconnect delay: 10 s, 20 s, 40 s, 60 s, then 3, 5 and 10 min (the last step repeats until a join succeeds).
  * Short waits cover a quick restart; the long ones keep a server that stays down from being hammered.
  * [reset] after a successful join.
  */
@@ -30,7 +30,7 @@ class Backoff(private val stepsMs: List<Long> = DEFAULT_STEPS_MS) {
     fun reset() { attempt = 0 }
 
     companion object {
-        val DEFAULT_STEPS_MS = listOf(10_000L, 20_000L, 40_000L, 60_000L, 180_000L, 300_000L)
+        val DEFAULT_STEPS_MS = listOf(10_000L, 20_000L, 40_000L, 60_000L, 180_000L, 300_000L, 600_000L)
 
         /** "10초", "3분", "4분 30초". */
         fun describe(ms: Long): String {

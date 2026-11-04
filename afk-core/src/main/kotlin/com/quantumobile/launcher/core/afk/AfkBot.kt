@@ -16,7 +16,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 /**
- * Keeps one server joined: connect, idle until the connection ends, wait (10 s → 5 min), repeat.
+ * Keeps one server joined: connect, idle until the connection ends, wait (10 s → 10 min), repeat.
  * Runs until cancelled (switch turned off) or until an error that retrying cannot fix.
  */
 class AfkBot(

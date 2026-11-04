@@ -234,6 +234,7 @@ class AfkClient(
             } finally {
                 watchdog.cancel()
                 sneakJob?.cancel()
+                outboxJob?.cancel()
                 events.chatSender(null)
             }
         }
@@ -350,8 +351,8 @@ class AfkClient(
                     dead = false
                     events.connected(version.name)
                     onJoined()
+                    scope?.startOutbox()
                     events.chatSender(::sendChat)
-                    startChatSession()
                     runCatching { readLoginInfo(r) }
                 }
                 ids.playRespawn -> runCatching { readSpawnInfo(r) }
@@ -434,40 +435,59 @@ class AfkClient(
         // ---- chat signing (Microsoft accounts) ----
 
         @Volatile private var signer: ChatSigner? = null
+        private var keyFailed = false
 
         /**
-         * Gets (or reuses) the account's chat key in the background and tells the server about it, so chat can be
-         * signed. Servers that require signed chat (enforce-secure-profile) reject anything else. If the key cannot
-         * be had, chat is sent unsigned, which every other server accepts.
+         * Typed chat of a Microsoft account goes through this queue: the first message makes the bot fetch the
+         * account's chat key (nothing is requested until someone actually chats) and announce it to the server, then
+         * everything is signed. One consumer keeps the messages in order. If the key cannot be had, chat is sent
+         * unsigned, which servers that do not require signatures accept.
          */
-        private fun startChatSession() {
-            if (account.type != AccountType.MICROSOFT) return
-            val scope = scope ?: return
-            scope.launch {
-                try {
-                    val certificate = certificateFor(account)
-                    val chatSigner = ChatSigner(uuidOf(account.uuid), UUID.randomUUID(), certificate)
-                    synchronized(this@Session) {
-                        conn.send(
-                            PacketWriter(ids.playChatSessionOut).uuid(chatSigner.sessionId)
-                                .long(certificate.expiresAt).bytes(certificate.publicKey).bytes(certificate.keySignature),
-                        )
-                        signer = chatSigner
-                    }
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    events.log(AfkLogKind.WARN, "채팅 서명 키를 받지 못해 서명 없이 채팅해요 (${e.message ?: e.javaClass.simpleName})")
+        private val outbox = kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+        private var outboxJob: Job? = null
+
+        private fun CoroutineScope.startOutbox() {
+            if (account.type != AccountType.MICROSOFT || outboxJob != null) return
+            outboxJob = launch {
+                for (text in outbox) {
+                    prepareChatKey()
+                    if (!deliver(text)) events.log(AfkLogKind.WARN, "채팅을 보내지 못했어요: $text")
                 }
             }
         }
 
-        /** Sends chat or a "/command", signed when the chat key is ready. Commands with message arguments use the signed-command form. */
-        @Synchronized
+        private suspend fun prepareChatKey() {
+            if (signer != null || keyFailed) return
+            try {
+                val certificate = certificateFor(account)
+                val chatSigner = ChatSigner(uuidOf(account.uuid), UUID.randomUUID(), certificate)
+                synchronized(this) {
+                    conn.send(
+                        PacketWriter(ids.playChatSessionOut).uuid(chatSigner.sessionId)
+                            .long(certificate.expiresAt).bytes(certificate.publicKey).bytes(certificate.keySignature),
+                    )
+                    signer = chatSigner
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                keyFailed = true
+                events.log(AfkLogKind.WARN, "채팅 서명 키를 받지 못해 서명 없이 채팅해요 (${e.message ?: e.javaClass.simpleName})")
+            }
+        }
+
+        /** Queues (Microsoft accounts) or sends (offline accounts) chat or a "/command". */
         fun sendChat(input: String): Boolean {
             if (state != State.PLAY || !joined) return false
             val text = input.trim().take(256)
             if (text.isEmpty()) return false
+            return if (account.type == AccountType.MICROSOFT && outboxJob != null) outbox.trySend(text).isSuccess else deliver(text)
+        }
+
+        /** Sends chat or a "/command", signed when the chat key is ready. Commands with message arguments use the signed-command form. */
+        @Synchronized
+        private fun deliver(text: String): Boolean {
+            if (state != State.PLAY) return false
             return runCatching {
                 val now = System.currentTimeMillis()
                 val salt = random.nextLong()
