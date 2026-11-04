@@ -27,8 +27,16 @@ import java.util.Base64
  * is stored in app-private storage; [poll] asks every PC for its servers.
  */
 class AfkRemote(private val context: Context) {
-    /** What one PC last said: its servers, or why it could not be reached. */
-    data class HostState(val servers: List<RemoteServer>? = null, val error: String? = null, val name: String? = null)
+    /**
+     * What one PC last said: its servers, or why it could not be reached. After a failed poll [servers] keeps the
+     * last answer for a short while ([error] set, [failures] counting), so a Wi-Fi blip does not make the PC vanish.
+     */
+    data class HostState(
+        val servers: List<RemoteServer>? = null,
+        val error: String? = null,
+        val name: String? = null,
+        val failures: Int = 0,
+    )
 
     private val file = File(context.filesDir, "afk-hosts.json")
     private val _hosts = MutableStateFlow(load())
@@ -103,13 +111,22 @@ class AfkRemote(private val context: Context) {
                     servers.forEach { syncIcon(host, it) }
                     HostState(servers = servers)
                 } catch (e: BadCodeException) {
-                    HostState(error = e.message)
+                    HostState(error = e.message) // the code is wrong: not a blip
                 } catch (e: Exception) {
-                    HostState(error = describe(e))
+                    if (e is kotlinx.coroutines.CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
+                    failed(host.id, describe(e))
                 }
                 setState(host.id, state)
             }
         }.awaitAll()
+    }
+
+    /** A failed poll: keep the last known servers for [KEEP_AFTER_FAILURES] misses, then show the PC as offline. */
+    private fun failed(hostId: String, error: String): HostState {
+        val prev = _states.value[hostId]
+        val misses = (prev?.failures ?: 0) + 1
+        val keep = prev?.servers?.takeIf { misses < KEEP_AFTER_FAILURES }
+        return HostState(servers = keep, error = error, failures = misses)
     }
 
     private fun setState(hostId: String, state: HostState) = _states.update { it + (hostId to state) }
@@ -141,6 +158,9 @@ class AfkRemote(private val context: Context) {
     }
 
     companion object {
+        /** Polls are ~3 s apart, so a PC is shown offline after this many misses in a row. */
+        const val KEEP_AFTER_FAILURES = 4
+
         fun describe(e: Throwable): String = when (e) {
             is kotlinx.coroutines.TimeoutCancellationException -> "PC가 응답하지 않아요"
             is java.net.ConnectException, is java.net.NoRouteToHostException ->

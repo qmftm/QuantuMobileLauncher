@@ -329,6 +329,7 @@ PC에서 AFK 호스트를 실행하면 서버를 PC에서 돌릴 수 있어요. 
     <string name="afk_pc_offline">연결 안 됨 · %1$s</string>
     <string name="afk_pc_remove_confirm">%1$s 연결을 지울까요? PC에서 돌던 서버는 PC에 그대로 남아요.</string>
     <string name="afk_pc_offline_badge">PC 오프라인</string>
+    <string name="afk_pc_reconnecting">PC와 연결을 다시 확인하는 중… (마지막 상태)</string>
     <string name="afk_pc_tokens_title">로그인 정보를 PC로 보낼까요?</string>
     <string name="afk_pc_tokens_message">마이크로소프트 계정으로 PC에서 접속하려면 이 계정의 로그인 정보(토큰)를 PC로 보내야 해요. 전송은 연결 코드로 암호화되고, PC에서 서버를 지우면 함께 지워져요. 믿을 수 있는 내 PC에서만 쓰세요.</string>
     <string name="afk_pc_tokens_ok">보내기</string>

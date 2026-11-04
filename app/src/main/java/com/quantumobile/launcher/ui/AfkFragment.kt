@@ -159,8 +159,8 @@ class AfkFragment : Fragment() {
                     id = "$REMOTE${host.id}:${rs.server.id}",
                     title = rs.server.name,
                     subtitle = "${rs.server.address} · ${rs.accountName} · ${getString(R.string.afk_pc_row, host.name)}\n" +
-                        status.describe(ctx, now),
-                    subtitleLines = 3,
+                        status.describe(ctx, now) + if (state.error != null) "\n" + getString(R.string.afk_pc_reconnecting) else "",
+                    subtitleLines = 4,
                     badge = status.label(ctx),
                     icon = (AfkIcons.preset(rs.server.icon) ?: AfkIcons.fallback).res,
                     iconRaw = true,

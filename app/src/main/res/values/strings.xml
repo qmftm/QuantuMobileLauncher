@@ -330,6 +330,7 @@ Run the AFK host on a PC to keep servers joined from there, even with the phone 
     <string name="afk_pc_offline">Not connected · %1$s</string>
     <string name="afk_pc_remove_confirm">Forget %1$s? Servers on that PC stay there.</string>
     <string name="afk_pc_offline_badge">PC offline</string>
+    <string name="afk_pc_reconnecting">Checking the PC connection again… (last known state)</string>
     <string name="afk_pc_tokens_title">Send the sign-in to the PC?</string>
     <string name="afk_pc_tokens_message">To join with a Microsoft account from the PC, this account\'s sign-in tokens must be sent to it. They travel encrypted with the pairing code and are deleted when you remove the server from the PC. Only use a PC you trust.</string>
     <string name="afk_pc_tokens_ok">Send</string>
