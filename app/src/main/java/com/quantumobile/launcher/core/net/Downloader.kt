@@ -23,6 +23,11 @@ data class DownloadTask(
     val sha1: String? = null,
     val size: Long = -1,
     val sha256: String? = null,
+    /**
+     * Content-addressed files (game assets are named after their hash): when one is already there with the right
+     * size, trust it instead of hashing it again. Hashing thousands of files made every launch start slowly.
+     */
+    val trustIfSizeMatches: Boolean = false,
 )
 
 class Downloader(private val client: OkHttpClient = Http.client) {
@@ -46,7 +51,7 @@ class Downloader(private val client: OkHttpClient = Http.client) {
     }
 
     suspend fun download(task: DownloadTask) = withContext(Dispatchers.IO) {
-        if (isValid(task.dest, task.sha1, task.size, task.sha256)) return@withContext
+        if (alreadyThere(task)) return@withContext
         var lastError: Exception? = null
         repeat(MAX_ATTEMPTS) { attempt ->
             coroutineContext.ensureActive()
@@ -60,6 +65,10 @@ class Downloader(private val client: OkHttpClient = Http.client) {
         }
         throw IOException("Failed to download ${task.url}", lastError)
     }
+
+    private fun alreadyThere(task: DownloadTask): Boolean =
+        if (task.trustIfSizeMatches && task.size >= 0) task.dest.isFile && task.dest.length() == task.size
+        else isValid(task.dest, task.sha1, task.size, task.sha256)
 
     private fun fetch(task: DownloadTask) {
         task.dest.parentFile?.mkdirs()

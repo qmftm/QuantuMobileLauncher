@@ -56,6 +56,7 @@ class GameInstaller(
                 dest = File(paths.assets, "objects/${obj.objectPath}"),
                 sha1 = obj.hash,
                 size = obj.size,
+                trustIfSizeMatches = true, // thousands of files: only newly downloaded ones are hashed
             )
         }
         downloader.downloadAll(tasks, parallelism = 16) { d, t -> listener.onProgress("Assets", d, t) }
