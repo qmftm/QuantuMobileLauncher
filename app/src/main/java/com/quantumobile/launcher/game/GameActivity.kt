@@ -101,7 +101,11 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     private fun toggleKeyboard() {
         val imm = getSystemService(InputMethodManager::class.java)
+        // After the keyboard was closed the surface still has focus, so requestFocus() alone would not reconnect the
+        // keyboard to it and typing would be lost: drop focus and restart the input connection first.
+        binding.surface.clearFocus()
         binding.surface.requestFocus()
+        imm.restartInput(binding.surface)
         imm.showSoftInput(binding.surface, InputMethodManager.SHOW_FORCED)
     }
 

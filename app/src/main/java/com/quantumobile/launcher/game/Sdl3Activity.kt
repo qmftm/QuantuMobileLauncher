@@ -8,6 +8,7 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import com.quantumobile.launcher.QuantumApp
 import com.quantumobile.launcher.core.GameLaunch
+import org.libsdl.app.QuantuSdlInput
 import org.libsdl.app.SDLActivity
 import org.lwjgl.glfw.CallbackBridge
 
@@ -90,6 +91,8 @@ class Sdl3Activity : SDLActivity() {
         val shown = androidx.core.view.ViewCompat.getRootWindowInsets(window.decorView)
             ?.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime()) == true
         android.util.Log.w("QM", "keyboard button: ime shown=$shown")
+        // Reset SDL's text field each time so the next show reconnects the keyboard to it (otherwise typing is lost).
+        QuantuSdlInput.resetTextField()
         if (shown) imm.hideSoftInputFromWindow(window.decorView.windowToken, 0)
         else showTextInput(android.text.InputType.TYPE_CLASS_TEXT, 0, 0, 1, 1)
     }
