@@ -33,12 +33,21 @@ import javax.crypto.Cipher
  */
 class AfkClient(
     private val session: SessionJoiner = MojangSession,
+    private val certificates: CertificateFetcher = MojangCertificates,
     private val dnsServers: () -> List<InetAddress> = { emptyList() },
     private val timing: AfkTiming = AfkTiming(),
     private val connectTimeoutMs: Int = 15_000,
     private val readTimeoutMs: Int = 35_000,
     private val joinTimeoutMs: Long = 60_000,
 ) : AfkConnector {
+
+    /** Chat-signing keys per account, reused across reconnects (Mojang rate-limits new ones). */
+    private val certificateCache = java.util.concurrent.ConcurrentHashMap<String, PlayerCertificate>()
+
+    private suspend fun certificateFor(account: Account): PlayerCertificate {
+        certificateCache[account.uuid]?.takeIf { it.usable() }?.let { return it }
+        return certificates.fetch(account).also { certificateCache[account.uuid] = it }
+    }
 
     override suspend fun run(host: String, port: Int, account: Account, events: AfkEvents): AfkDisconnect =
         withContext(Dispatchers.IO) {
@@ -194,7 +203,11 @@ class AfkClient(
         @Volatile private var joined = false
         @Volatile private var stalled = false
 
+        /** Scope of this connection, for the chat-key request that must not block the packet loop. */
+        @Volatile private var scope: CoroutineScope? = null
+
         suspend fun run(): AfkDisconnect = coroutineScope {
+            scope = this
             // If the server never lets us into the world (e.g. a newer version whose packets we misread and it waits
             // for an answer we never send), give up with a clear reason instead of sitting there forever.
             val watchdog = launch {
@@ -338,6 +351,7 @@ class AfkClient(
                     events.connected(version.name)
                     onJoined()
                     events.chatSender(::sendChat)
+                    startChatSession()
                     runCatching { readLoginInfo(r) }
                 }
                 ids.playRespawn -> runCatching { readSpawnInfo(r) }
@@ -417,24 +431,69 @@ class AfkClient(
             return this
         }
 
-        /** Sends chat or a "/command" without a signature. Commands with message arguments use the signed-command form. */
+        // ---- chat signing (Microsoft accounts) ----
+
+        @Volatile private var signer: ChatSigner? = null
+
+        /**
+         * Gets (or reuses) the account's chat key in the background and tells the server about it, so chat can be
+         * signed. Servers that require signed chat (enforce-secure-profile) reject anything else. If the key cannot
+         * be had, chat is sent unsigned, which every other server accepts.
+         */
+        private fun startChatSession() {
+            if (account.type != AccountType.MICROSOFT) return
+            val scope = scope ?: return
+            scope.launch {
+                try {
+                    val certificate = certificateFor(account)
+                    val chatSigner = ChatSigner(uuidOf(account.uuid), UUID.randomUUID(), certificate)
+                    synchronized(this@Session) {
+                        conn.send(
+                            PacketWriter(ids.playChatSessionOut).uuid(chatSigner.sessionId)
+                                .long(certificate.expiresAt).bytes(certificate.publicKey).bytes(certificate.keySignature),
+                        )
+                        signer = chatSigner
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    events.log(AfkLogKind.WARN, "채팅 서명 키를 받지 못해 서명 없이 채팅해요 (${e.message ?: e.javaClass.simpleName})")
+                }
+            }
+        }
+
+        /** Sends chat or a "/command", signed when the chat key is ready. Commands with message arguments use the signed-command form. */
         @Synchronized
         fun sendChat(input: String): Boolean {
             if (state != State.PLAY || !joined) return false
             val text = input.trim().take(256)
             if (text.isEmpty()) return false
             return runCatching {
+                val now = System.currentTimeMillis()
+                val salt = random.nextLong()
                 if (text.startsWith("/")) {
                     val command = text.drop(1)
                     val root = command.substringBefore(' ').lowercase()
-                    if (protocol >= 766 && root !in SIGNABLE_COMMANDS) {
+                    if (protocol >= 766 && root !in SignableCommands.roots) {
                         conn.send(PacketWriter(ids.playCommandOut).string(command))
                     } else {
                         val id = if (protocol >= 766) ids.playSignedCommandOut else ids.playCommandOut
-                        conn.send(PacketWriter(id).string(command).long(System.currentTimeMillis()).long(random.nextLong()).varInt(0).lastSeen())
+                        val out = PacketWriter(id).string(command).long(now).long(salt)
+                        val args = SignableCommands.arguments(command)
+                        val chatSigner = signer
+                        if (chatSigner == null || args.isEmpty()) {
+                            out.varInt(0)
+                        } else {
+                            out.varInt(args.size)
+                            for ((name, value) in args) out.string(name).raw(chatSigner.sign(value, now, salt))
+                        }
+                        conn.send(out.lastSeen())
                     }
                 } else {
-                    conn.send(PacketWriter(ids.playChatOut).string(text).long(System.currentTimeMillis()).long(random.nextLong()).bool(false).lastSeen())
+                    val out = PacketWriter(ids.playChatOut).string(text).long(now).long(salt)
+                    val chatSigner = signer
+                    if (chatSigner == null) out.bool(false) else out.bool(true).raw(chatSigner.sign(text, now, salt))
+                    conn.send(out.lastSeen())
                 }
             }.isSuccess
         }
@@ -491,8 +550,6 @@ class AfkClient(
 
     companion object {
         const val DEFAULT_PORT = 25565
-        /** Vanilla commands whose arguments are chat messages; sent as signed commands (with no signatures). */
-        private val SIGNABLE_COMMANDS = setOf("msg", "tell", "w", "say", "me", "teammsg", "tm")
         private const val PLAYER_INPUT_SINCE = 768 // 1.21.2: sneak moved from entity_action to player_input
         private const val INPUT_SHIFT = 0x20
         private const val TELEPORT_CONFIRM_HAS_POSITION = 777 // 26.3

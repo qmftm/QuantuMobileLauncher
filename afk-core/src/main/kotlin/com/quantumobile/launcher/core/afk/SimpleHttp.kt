@@ -11,8 +11,9 @@ object SimpleHttp {
         val isSuccess get() = code in 200..299
     }
 
-    suspend fun post(url: String, body: String, contentType: String = "application/json"): Response =
-        request("POST", url, body, contentType)
+    suspend fun post(
+        url: String, body: String, contentType: String = "application/json", headers: Map<String, String> = emptyMap(),
+    ): Response = request("POST", url, body, contentType, headers)
 
     suspend fun get(url: String, headers: Map<String, String> = emptyMap()): Response = request("GET", url, null, null, headers)
 

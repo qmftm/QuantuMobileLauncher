@@ -56,6 +56,10 @@ class AfkClientTest {
         val versionName: String,
         val online: Boolean,
         val compression: Int,
+        /** Set when the bot should have a chat key: the server then checks the session update and every signature. */
+        val signingKey: java.security.PublicKey? = null,
+        val signingExpiresAt: Long = 0,
+        val signingKeySignature: ByteArray = ByteArray(0),
     ) {
         val socket = ServerSocket(0, 5, InetAddress.getLoopbackAddress())
         val port get() = socket.localPort
@@ -63,6 +67,8 @@ class AfkClientTest {
         val failure = AtomicReference<Throwable?>(null)
         val loginName = AtomicReference<String?>(null)
         val sneaks: MutableList<Boolean> = Collections.synchronizedList(mutableListOf())
+        /** The bot's chat-key announcement, if it arrived while the server was waiting for something else. */
+        private val sessionPacket = AtomicReference<PacketReader?>(null)
         var respawned = false
         var serverHash: String? = null
         /** Called once the bot is in the world, to make it send chat (from the test). */
@@ -93,6 +99,7 @@ class AfkClientTest {
                 if (ids != null && protocol < 768 && p.id == ids.playEntityActionOut) {
                     p.body.varInt(); sneaks += p.body.varInt() == 0; continue
                 }
+                if (ids != null && p.id == ids.playChatSessionOut && id != p.id) { sessionPacket.set(p.body); continue }
                 if (p.id == id) return p.body
                 // Anything else (e.g. player_loaded) is fine to skip.
             }
@@ -133,10 +140,12 @@ class AfkClientTest {
                 assertEquals(1, echo.varInt()); assertEquals("minecraft", echo.string())
             }
             val pack = UUID.randomUUID()
-            c.send(PacketWriter(ids.configResourcePack).uuid(pack).string("https://example.invalid/p.zip").string("").bool(true).bool(false))
+            // 1.20.3 added the pack's UUID to the request and the answers.
+            c.send(PacketWriter(ids.configResourcePack).also { if (protocol >= 765) it.uuid(pack) }.string("https://example.invalid/p.zip").string("").bool(true).bool(false))
             for (expected in listOf(3, 0)) {
                 val r = c.expect(ids.configResourcePackOut)
-                assertEquals(pack, r.uuid()); assertEquals(expected, r.varInt())
+                if (protocol >= 765) assertEquals(pack, r.uuid())
+                assertEquals(expected, r.varInt())
             }
             c.send(PacketWriter(ids.configKeepAlive).long(42))
             assertEquals(42L, c.expect(ids.configKeepAliveOut).long())
@@ -216,10 +225,27 @@ class AfkClientTest {
             assertEquals(65, c.expect(ids.playChatAckOut).varInt())
 
             // Chat and commands typed in the app.
+            var sessionId: UUID? = null
+            if (signingKey != null) {
+                // The bot announces its chat key right after login, before anything is signed.
+                val session = sessionPacket.getAndSet(null) ?: c.expect(ids.playChatSessionOut)
+                sessionId = session.uuid()
+                assertEquals(signingExpiresAt, session.long())
+                assertTrue(session.byteArray().contentEquals(signingKey.encoded))
+                assertTrue(session.byteArray().contentEquals(signingKeySignature))
+                assertEquals(0, session.remaining)
+            }
             sendFromBot?.invoke()
+            var index = 0
+            val sender = uuid
             val chat = c.expect(ids.playChatOut)
-            assertEquals("안녕하세요 server", chat.string()); chat.long(); chat.long()
-            assertFalse(chat.bool()) // no signature
+            assertEquals("안녕하세요 server", chat.string()); val chatTime = chat.long(); val chatSalt = chat.long()
+            if (signingKey == null) {
+                assertFalse(chat.bool()) // no signature
+            } else {
+                assertTrue(chat.bool())
+                assertTrue("chat signature", verifies(signingKey, chat.bytes(256), sender, sessionId!!, index++, chatSalt, chatTime, "안녕하세요 server"))
+            }
             assertEquals(0, chat.varInt()) // nothing left to acknowledge
             chat.bytes(3); if (protocol >= 770) chat.byte()
             assertEquals(0, chat.remaining)
@@ -228,8 +254,15 @@ class AfkClientTest {
             if (protocol < 766) { plugin.long(); plugin.long(); assertEquals(0, plugin.varInt()); plugin.varInt(); plugin.bytes(3) }
             assertEquals(0, plugin.remaining)
             val msg = c.expect(if (protocol >= 766) ids.playSignedCommandOut else ids.playCommandOut)
-            assertEquals("msg Alex hi", msg.string()); msg.long(); msg.long()
-            assertEquals(0, msg.varInt()) // no argument signatures
+            assertEquals("msg Alex hi", msg.string()); val msgTime = msg.long(); val msgSalt = msg.long()
+            if (signingKey == null) {
+                assertEquals(0, msg.varInt()) // no argument signatures
+            } else {
+                assertEquals(1, msg.varInt())
+                assertEquals("message", msg.string())
+                // Only the message ("hi") is signed, as the next link of the chain.
+                assertTrue("command signature", verifies(signingKey, msg.bytes(256), sender, sessionId!!, index++, msgSalt, msgTime, "hi"))
+            }
             msg.varInt(); msg.bytes(3); if (protocol >= 770) msg.byte()
             assertEquals(0, msg.remaining)
 
@@ -246,17 +279,42 @@ class AfkClientTest {
             Thread.sleep(200)
         }
 
+        /** Re-implements what a vanilla server checks, from the byte layout alone (not using the client's code). */
+        private fun verifies(
+            key: java.security.PublicKey, signature: ByteArray, sender: UUID, session: UUID, index: Int,
+            salt: Long, timestampMs: Long, text: String,
+        ): Boolean {
+            val bytes = java.io.ByteArrayOutputStream()
+            java.io.DataOutputStream(bytes).apply {
+                writeInt(1)
+                writeLong(sender.mostSignificantBits); writeLong(sender.leastSignificantBits)
+                writeLong(session.mostSignificantBits); writeLong(session.leastSignificantBits)
+                writeInt(index)
+                writeLong(salt)
+                writeLong(timestampMs / 1000)
+                val t = text.toByteArray(Charsets.UTF_8)
+                writeInt(t.size); write(t)
+                writeInt(0) // no earlier messages marked as seen
+            }
+            return java.security.Signature.getInstance("SHA256withRSA").run {
+                initVerify(key); update(bytes.toByteArray()); verify(signature)
+            }
+        }
+
         private fun floatBytes(f: Float) = java.nio.ByteBuffer.allocate(4).putFloat(f).array()
     }
 
-    private fun run(server: FakeServer, account: Account, joined: MutableList<String> = mutableListOf()): Pair<AfkDisconnect, Recorder> {
+    private fun run(
+        server: FakeServer, account: Account, joined: MutableList<String> = mutableListOf(),
+        certificates: CertificateFetcher = CertificateFetcher { throw java.io.IOException("no key in this test") },
+    ): Pair<AfkDisconnect, Recorder> {
         val events = Recorder()
         server.sendFromBot = {
             val send = events.sender!!
             assertTrue(send("안녕하세요 server")); assertTrue(send("/spawn")); assertTrue(send("/msg Alex hi"))
             assertFalse(send("   ")) // nothing to send
         }
-        val client = AfkClient(session = { acc, hash -> joined += "${acc.username}:$hash" }, timing = fast)
+        val client = AfkClient(session = { acc, hash -> joined += "${acc.username}:$hash" }, certificates = certificates, timing = fast)
         val result = runBlocking { withTimeout(20_000) { client.run("127.0.0.1", server.port, account, events) } }
         return result to events
     }
@@ -322,6 +380,49 @@ class AfkClientTest {
         assertEquals(listOf("26.3"), events.connected)
         assertChat(events)
         assertWorld(events)
+    }
+
+    private fun signedChatOn(protocol: Int, name: String, compression: Int) {
+        val pair = java.security.KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.genKeyPair()
+        val certificate = PlayerCertificate(
+            expiresAt = System.currentTimeMillis() + 48 * 3_600_000L,
+            refreshAfter = System.currentTimeMillis() + 24 * 3_600_000L,
+            publicKey = pair.public.encoded,
+            keySignature = ByteArray(512) { (it * 7).toByte() },
+            privateKey = pair.private,
+        )
+        val server = FakeServer(
+            protocol, name, online = true, compression = compression,
+            signingKey = pair.public, signingExpiresAt = certificate.expiresAt, signingKeySignature = certificate.keySignature,
+        )
+        val t = server.start()
+        val (result, events) = try {
+            run(server, microsoft, certificates = { certificate })
+        } catch (e: Throwable) {
+            t.join(2_000)
+            throw server.failure.get() ?: e // the server's assertion explains a dropped connection
+        }
+        t.join(5_000)
+        server.failure.get()?.let { throw it }
+        assertEquals("bye", result.reason)
+        // The key material never shows up in the log.
+        assertTrue(events.logs.none { "RSA" in it || "PRIVATE" in it })
+    }
+
+    @Test fun signedChat_1_20_2() = signedChatOn(764, "1.20.2", -1)
+    @Test fun signedChat_1_20_6() = signedChatOn(766, "1.20.6", 64)
+    @Test fun signedChat_1_21_4() = signedChatOn(769, "1.21.4", 256)
+    @Test fun signedChat_26_3() = signedChatOn(777, "26.3", 256)
+
+    @Test
+    fun chatStaysUnsignedWhenTheKeyCannotBeFetched() {
+        val server = FakeServer(769, "1.21.4", online = true, compression = -1) // expects "no signature"
+        val t = server.start()
+        val (result, events) = run(server, microsoft) // the default test fetcher fails
+        t.join(5_000)
+        server.failure.get()?.let { throw it }
+        assertEquals("bye", result.reason)
+        assertTrue(events.logs.any { it.startsWith("WARN ") && "서명 없이" in it && "no key in this test" in it })
     }
 
     private fun assertWorld(events: Recorder, positioned: Boolean = true) {

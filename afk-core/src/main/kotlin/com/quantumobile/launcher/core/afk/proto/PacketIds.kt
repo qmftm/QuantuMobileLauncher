@@ -56,6 +56,12 @@ class PacketIds(
     val playSignedCommandOut: Int,
     val playChatAckOut: Int,
 ) {
+    /**
+     * Serverbound "chat session update" (the chat-signing public key). In every version it sits right after the chat
+     * message packet (checked against the vanilla packet reports for 1.21.1 – 26.3).
+     */
+    val playChatSessionOut: Int get() = playChatOut + 1
+
     companion object {
         /** Oldest protocol with a configuration state (1.20.2); older servers are not supported. */
         const val OLDEST = 764
