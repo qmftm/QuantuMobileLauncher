@@ -342,7 +342,13 @@ class AfkFragment : Fragment() {
             .setView(b.root)
             .setPositiveButton(R.string.save, null)
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
+            .create()
+        // No keyboard on open: tapping a field shows it, and it must not cover the pickers below.
+        dialog.window?.setSoftInputMode(
+            android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN or
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE,
+        )
+        dialog.show()
         val saveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
         saveButton.setOnClickListener {
             b.addressLayout.error = null
