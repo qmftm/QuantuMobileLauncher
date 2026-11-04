@@ -2,6 +2,8 @@ name: Release
 
 # Runs for pushed "v*" tags, or for any branch push whose commit message contains "[release]"
 # (the tag is then created from versionName in app/build.gradle.kts).
+# "[snapshot]" instead publishes a test build: tag v<versionName>-snapshot.<run number>, marked pre-release (not
+# "latest"), APK + AFK host only (the slow iPhone build runs for real releases).
 on:
   push:
     tags:
@@ -15,17 +17,28 @@ permissions:
 
 jobs:
   release:
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]') || contains(github.event.head_commit.message, '[snapshot]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Determine version
         id: version
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "snapshot=false" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=v$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+            VER="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)"
+            if [[ "$COMMIT_MESSAGE" == *"[snapshot]"* && "$COMMIT_MESSAGE" != *"[release]"* ]]; then
+              # A test build: v1.5.1-snapshot.<run number>, marked pre-release and never "latest".
+              echo "tag=v${VER}-snapshot.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+              echo "snapshot=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "tag=v${VER}" >> "$GITHUB_OUTPUT"
+              echo "snapshot=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
       - uses: actions/setup-java@v4
         with:
@@ -66,12 +79,18 @@ jobs:
         env:
           TAG: ${{ steps.version.outputs.tag }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          SNAPSHOT: ${{ steps.version.outputs.snapshot }}
         run: |
+          BASE="${TAG%%-snapshot*}"
           {
+            if [ "$SNAPSHOT" = "true" ]; then
+              echo "> ⚠️ **스냅샷(테스트) 빌드**입니다. 아직 정식 버전이 아니며 불안정할 수 있어요. 문제가 있으면 정식 릴리스(최신 버전)를 쓰세요."
+              echo
+            fi
             echo "## 이번 버전 ($TAG) 변경사항"
             echo
-            if [ -f "release-notes/$TAG.md" ]; then
-              cat "release-notes/$TAG.md"
+            if [ -f "release-notes/$BASE.md" ]; then
+              cat "release-notes/$BASE.md"
             else
               # No notes file: use the body of the release commit message (everything after the first line).
               printf '%s\n' "$COMMIT_MESSAGE" | tail -n +3
@@ -86,8 +105,8 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
           name: QuantuMobileLauncher ${{ steps.version.outputs.tag }}
-          prerelease: false
-          make_latest: true
+          prerelease: ${{ steps.version.outputs.snapshot == 'true' }}
+          make_latest: ${{ steps.version.outputs.snapshot != 'true' }}
           files: |
             dist/*.apk
             dist/*.jar
@@ -98,7 +117,7 @@ jobs:
   # "start with the computer" registers). No Java install needed. Zipped and attached to the same release.
   windows-host:
     needs: release
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]') || contains(github.event.head_commit.message, '[snapshot]')
     runs-on: windows-latest
     defaults:
       run:
@@ -107,11 +126,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Determine version
         id: version
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "snapshot=false" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=v$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+            VER="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)"
+            if [[ "$COMMIT_MESSAGE" == *"[snapshot]"* && "$COMMIT_MESSAGE" != *"[release]"* ]]; then
+              # A test build: v1.5.1-snapshot.<run number>, marked pre-release and never "latest".
+              echo "tag=v${VER}-snapshot.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+              echo "snapshot=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "tag=v${VER}" >> "$GITHUB_OUTPUT"
+              echo "snapshot=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
       - uses: actions/setup-java@v4
         with:
@@ -123,7 +153,7 @@ jobs:
         run: ./gradlew :afk-host:jar
       - name: Package Windows app
         run: |
-          VERSION="${{ steps.version.outputs.tag }}"; VERSION="${VERSION#v}"
+          VERSION="${{ steps.version.outputs.tag }}"; VERSION="${VERSION#v}"; VERSION="${VERSION%%-*}"
           mkdir -p pkg/in && cp afk-host/build/libs/afk-host.jar pkg/in/
           jlink --add-modules java.base,java.desktop,java.instrument,jdk.httpserver,jdk.unsupported,jdk.crypto.ec,jdk.charsets \
             --strip-debug --no-header-files --no-man-pages --output pkg/runtime
@@ -162,11 +192,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Determine version
         id: version
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "snapshot=false" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=v$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+            VER="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)"
+            if [[ "$COMMIT_MESSAGE" == *"[snapshot]"* && "$COMMIT_MESSAGE" != *"[release]"* ]]; then
+              # A test build: v1.5.1-snapshot.<run number>, marked pre-release and never "latest".
+              echo "tag=v${VER}-snapshot.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+              echo "snapshot=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "tag=v${VER}" >> "$GITHUB_OUTPUT"
+              echo "snapshot=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
       - name: Fetch Amethyst-iOS at the pinned commit
         run: |
