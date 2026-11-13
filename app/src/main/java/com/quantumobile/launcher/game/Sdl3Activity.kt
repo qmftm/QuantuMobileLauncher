@@ -121,6 +121,14 @@ class Sdl3Activity : SDLActivity() {
         super.onPause()
     }
 
+    override fun onDestroy() {
+        // Finishing (not a rebuild by the system) means the user closed the game, e.g. swiped it away in the recents
+        // screen: it must not keep running in the background. SDL's onDestroy sends the quit event first.
+        val closing = isFinishing
+        super.onDestroy()
+        if (closing && GameSession.started) GameService.quitGame(applicationContext, askGame = false)
+    }
+
     /** Called by SDL on its main thread once the surface exists. Blocks until the JVM returns. */
     override fun main() {
         val l = launch ?: return
@@ -129,7 +137,9 @@ class Sdl3Activity : SDLActivity() {
         val done = java.util.concurrent.CountDownLatch(1)
         GameRunner.start(applicationContext, l) { rc, showLog ->
             if (showLog) GameRunner.showLog(applicationContext, rc)
-            mSurface?.postDelayed({ kotlin.system.exitProcess(rc) }, 600) ?: kotlin.system.exitProcess(rc)
+            // The game is over: take the background notification/service down with it, then end the process.
+            mSurface?.postDelayed({ GameService.quitGame(applicationContext, askGame = false, graceMs = 0) }, 600)
+                ?: GameService.quitGame(applicationContext, askGame = false, graceMs = 0)
             done.countDown()
         }
         done.await()

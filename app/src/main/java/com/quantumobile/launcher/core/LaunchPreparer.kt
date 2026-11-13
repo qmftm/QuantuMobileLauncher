@@ -213,6 +213,11 @@ class LaunchPreparer(private val app: QuantumApp) {
             env += "MG_DIR_PATH=${mgDir.absolutePath}"
             env += "SDL_VIDEODRIVER=android"
             env += "SDL_AUDIODRIVER=android"
+            // Keep the game loop running while the app is in the background: a paused loop stops answering the server's
+            // keep-alives and the player is kicked after ~30 s. The patched SDL parks the GL context off-screen meanwhile
+            // and silences the game's OpenAL device (QM_OPENAL_LIB: the library LWJGL loaded).
+            env += "SDL_ANDROID_BLOCK_ON_PAUSE=0"
+            lwjgl?.let { env += "QM_OPENAL_LIB=${File(LwjglInstaller(paths).nativesDir(it.abi), "libopenal.so").absolutePath}" }
         }
 
         paths.logs.mkdirs()

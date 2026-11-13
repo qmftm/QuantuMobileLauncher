@@ -14,7 +14,6 @@ import com.quantumobile.launcher.core.GameLaunch
 import com.quantumobile.launcher.databinding.ActivityGameBinding
 import net.kdt.pojavlaunch.utils.JREUtils
 import org.lwjgl.glfw.CallbackBridge
-import kotlin.system.exitProcess
 
 /**
  * Hosts the running game. Lives in the separate `:game` process because the JVM owns the process
@@ -80,7 +79,8 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
         GameSession.started = true
         GameRunner.start(applicationContext, launch) { rc, showLog ->
             if (showLog) GameRunner.showLog(applicationContext, rc)
-            binding.root.postDelayed({ exitProcess(rc) }, 600)
+            // The game is over: take the background notification/service down with it, then end the process.
+            binding.root.postDelayed({ GameService.quitGame(applicationContext, askGame = false, graceMs = 0) }, 600)
         }
     }
 
@@ -125,6 +125,13 @@ class GameActivity : AppCompatActivity(), SurfaceHolder.Callback {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) hideSystemBars() else binding.controls.releaseAll()
+    }
+
+    override fun onDestroy() {
+        // Finishing means the user closed the game (e.g. swiped it away in the recents screen): no background leftovers.
+        val closing = isFinishing
+        super.onDestroy()
+        if (closing && GameSession.started) GameService.quitGame(applicationContext, askGame = false, graceMs = 0)
     }
 
     override fun onPause() {

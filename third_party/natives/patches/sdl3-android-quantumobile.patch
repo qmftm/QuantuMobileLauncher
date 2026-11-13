@@ -12,7 +12,7 @@ index 3e61b8a..7cdfc0f 100644
  #else
  static bool SDL_MainIsReady = true;
 diff --git a/src/core/android/SDL_android.c b/src/core/android/SDL_android.c
-index c4f517d..ac0231f 100644
+index c4f517d..e11c4f6 100644
 --- a/src/core/android/SDL_android.c
 +++ b/src/core/android/SDL_android.c
 @@ -1261,6 +1261,7 @@ JNIEXPORT void JNICALL SDL_JAVA_CONTROLLER_INTERFACE(nativeRemoveHaptic)(
@@ -52,7 +52,20 @@ index c4f517d..ac0231f 100644
      if (Android_Window) {
          Android_OnKeyDown(keycode);
      }
-@@ -1581,6 +1590,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeFocusChanged)(
+@@ -1399,8 +1408,10 @@ JNIEXPORT jboolean JNICALL SDL_JAVA_INTERFACE(onNativeSoftReturnKey)(
+ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeKeyboardFocusLost)(
+     JNIEnv *env, jclass jcls)
+ {
+-    // Calling SDL_StopTextInput will take care of hiding the keyboard and cleaning up the DummyText widget
+-    SDL_StopTextInput(Android_Window);
++    // QuantuMobile: only hide the keyboard. SDL_StopTextInput would also mark text input inactive without telling the game,
++    // which still believes its text field is being edited and never restarts it: everything typed after the keyboard
++    // is opened again would then be dropped by SDL_SendKeyboardText.
++    Android_JNI_HideScreenKeyboard();
+ }
+ 
+ // Touch
+@@ -1581,6 +1592,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeFocusChanged)(
  {
      SDL_LockMutex(Android_ActivityMutex);
  
@@ -119,10 +132,110 @@ index ce942bf..5970b63 100644
          }
      }
 diff --git a/src/video/android/SDL_androidevents.c b/src/video/android/SDL_androidevents.c
-index 4bdd717..1269d90 100644
+index 4bdd717..ec2bff1 100644
 --- a/src/video/android/SDL_androidevents.c
 +++ b/src/video/android/SDL_androidevents.c
-@@ -112,6 +112,7 @@ static void Android_ResumeAudio(void)
+@@ -31,6 +31,11 @@
+ #include "../../audio/aaudio/SDL_aaudio.h"
+ #include "../../audio/openslES/SDL_openslES.h"
+ 
++#include <dlfcn.h>
++#ifdef SDL_VIDEO_OPENGL_EGL
++#include "../SDL_egl_c.h"
++#endif
++
+ 
+ #ifdef SDL_VIDEO_OPENGL_EGL
+ static void android_egl_context_restore(SDL_Window *window)
+@@ -54,6 +59,87 @@ static void android_egl_context_restore(SDL_Window *window)
+     }
+ }
+ 
++// QuantuMobile: with SDL_ANDROID_BLOCK_ON_PAUSE=0 the game loop keeps running while the app is in the background (so the
++// server connection stays alive). The window surface goes away then, so the GL context is parked on a small off-screen
++// surface: the game can keep issuing GL calls, nothing is shown, and the context returns to the window on resume.
++static EGLSurface qm_bg_surface = EGL_NO_SURFACE;
++static bool qm_bg_active = false;
++
++bool Android_QM_RenderingInBackground(void)
++{
++    return qm_bg_active;
++}
++
++// Pauses/resumes the game's OpenAL device (the game does not use SDL audio) so it is silent in the background.
++static void qm_openal_pause(bool pause)
++{
++    const char *lib = SDL_getenv("QM_OPENAL_LIB");
++    void *handle = (lib && *lib) ? dlopen(lib, RTLD_NOW | RTLD_NOLOAD) : NULL;
++    if (handle) {
++        void *(*get_context)(void) = (void *(*)(void))dlsym(handle, "alcGetCurrentContext");
++        void *(*get_device)(void *) = (void *(*)(void *))dlsym(handle, "alcGetContextsDevice");
++        void (*toggle)(void *) = (void (*)(void *))dlsym(handle, pause ? "alcDevicePauseSOFT" : "alcDeviceResumeSOFT");
++        void *context = get_context ? get_context() : NULL;
++        void *device = (context && get_device) ? get_device(context) : NULL;
++        if (device && toggle) {
++            toggle(device);
++        }
++        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM background: OpenAL %s device=%p", pause ? "pause" : "resume", device);
++        dlclose(handle);
++    }
++}
++
++static bool qm_egl_park_context(SDL_Window *window)
++{
++    SDL_VideoDevice *_this = SDL_GetVideoDevice();
++    SDL_WindowData *data = window->internal;
++    SDL_GLContext context = SDL_GL_GetCurrentContext();
++    int interval = 0;
++
++    if (!_this || !_this->egl_data || !context) {
++        return false;
++    }
++    if (qm_bg_surface == EGL_NO_SURFACE) {
++        qm_bg_surface = SDL_EGL_CreateOffscreenSurface(_this, 16, 16);
++    }
++    if (qm_bg_surface == EGL_NO_SURFACE) {
++        return false;
++    }
++    if (SDL_GL_GetSwapInterval(&interval)) {
++        data->has_swap_interval = 1;
++        data->swap_interval = interval;
++    }
++    if (!_this->egl_data->eglMakeCurrent(_this->egl_data->egl_display, qm_bg_surface, qm_bg_surface, (EGLContext)context)) {
++        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM background: could not park the GL context (eglError=0x%x)", (unsigned)_this->egl_data->eglGetError());
++        return false;
++    }
++    data->egl_context = (EGLContext)context;
++    data->backup_done = true; // the window surface is free to be destroyed
++    qm_bg_active = true;
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM background: GL context %p parked off-screen, game keeps running", (void *)context);
++    return true;
++}
++
++static bool qm_egl_unpark_context(SDL_Window *window)
++{
++    SDL_VideoDevice *_this = SDL_GetVideoDevice();
++    SDL_WindowData *data = window->internal;
++    bool ok = false;
++
++    qm_bg_active = false;
++    if (_this && _this->egl_data && data->egl_surface != EGL_NO_SURFACE) {
++        ok = _this->egl_data->eglMakeCurrent(_this->egl_data->egl_display, data->egl_surface, data->egl_surface, data->egl_context) ? true : false;
++    }
++    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "QM background: GL context %p back on the window surface %p -> %s", (void *)data->egl_context, (void *)data->egl_surface, ok ? "ok" : "FAILED");
++    if (ok) {
++        data->backup_done = false;
++        if (data->has_swap_interval) {
++            SDL_GL_SetSwapInterval(data->swap_interval);
++        }
++    }
++    return ok;
++}
++
+ static void android_egl_context_backup(SDL_Window *window)
+ {
+     if (window) {
+@@ -112,6 +198,7 @@ static void Android_ResumeAudio(void)
  
  static void Android_OnPause(void)
  {
@@ -130,7 +243,27 @@ index 4bdd717..1269d90 100644
      SDL_OnApplicationWillEnterBackground();
      SDL_OnApplicationDidEnterBackground();
  
-@@ -138,6 +139,7 @@ static void Android_OnPause(void)
+@@ -123,7 +210,9 @@ static void Android_OnPause(void)
+ #ifdef SDL_VIDEO_OPENGL_EGL
+     if (Android_Window && !Android_Window->external_graphics_context) {
+         Android_LockActivityMutex();
+-        android_egl_context_backup(Android_Window);
++        if (Android_BlockOnPause || !qm_egl_park_context(Android_Window)) {
++            android_egl_context_backup(Android_Window);
++        }
+         Android_UnlockActivityMutex();
+     }
+ #endif
+@@ -131,6 +220,8 @@ static void Android_OnPause(void)
+     if (Android_BlockOnPause) {
+         // We're blocking, also pause audio
+         Android_PauseAudio();
++    } else {
++        qm_openal_pause(true);
+     }
+ 
+     Android_Paused = true;
+@@ -138,17 +229,23 @@ static void Android_OnPause(void)
  
  static void Android_OnResume(void)
  {
@@ -138,6 +271,48 @@ index 4bdd717..1269d90 100644
      Android_Paused = false;
  
      SDL_OnApplicationWillEnterForeground();
+ 
+     Android_ResumeAudio();
++    if (!Android_BlockOnPause) {
++        qm_openal_pause(false);
++    }
+ 
+ #ifdef SDL_VIDEO_OPENGL_EGL
+     // Restore the GL Context from here, as this operation is thread dependent
+     if (Android_Window && !Android_Window->external_graphics_context && !SDL_HasEvent(SDL_EVENT_QUIT)) {
+         Android_LockActivityMutex();
+-        android_egl_context_restore(Android_Window);
++        if (!qm_bg_active || !qm_egl_unpark_context(Android_Window)) {
++            android_egl_context_restore(Android_Window);
++        }
+         Android_UnlockActivityMutex();
+     }
+ #endif
+diff --git a/src/video/android/SDL_androidevents.h b/src/video/android/SDL_androidevents.h
+index 7328f2c..caad48a 100644
+--- a/src/video/android/SDL_androidevents.h
++++ b/src/video/android/SDL_androidevents.h
+@@ -24,3 +24,4 @@ extern void Android_InitEvents(void);
+ extern void Android_PumpEvents(Sint64 timeoutNS);
+ extern bool Android_WaitActiveAndLockActivity(void);
+ extern void Android_QuitEvents(void);
++extern bool Android_QM_RenderingInBackground(void); // QuantuMobile: game loop running with the app in the background
+diff --git a/src/video/android/SDL_androidgl.c b/src/video/android/SDL_androidgl.c
+index fb98d03..e5e7cab 100644
+--- a/src/video/android/SDL_androidgl.c
++++ b/src/video/android/SDL_androidgl.c
+@@ -64,6 +64,11 @@ bool Android_GLES_SwapWindow(SDL_VideoDevice *_this, SDL_Window *window)
+ {
+     bool result;
+ 
++    // QuantuMobile: in the background the context sits on an off-screen surface and there is nothing to present.
++    if (Android_QM_RenderingInBackground() || !window->internal || window->internal->egl_surface == EGL_NO_SURFACE) {
++        return true;
++    }
++
+     Android_LockActivityMutex();
+ 
+     /* The following two calls existed in the original Java code
 diff --git a/src/video/android/SDL_androidwindow.c b/src/video/android/SDL_androidwindow.c
 index 4652b5f..0437b75 100644
 --- a/src/video/android/SDL_androidwindow.c
