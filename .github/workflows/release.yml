@@ -3,7 +3,7 @@ name: Release
 # Runs for pushed "v*" tags, or for any branch push whose commit message contains "[release]"
 # (the tag is then created from versionName in app/build.gradle.kts).
 # "[snapshot]" instead publishes a test build: tag v<versionName>-snapshot.<run number>, marked pre-release (not
-# "latest"), with the same files as a real release (APK, AFK host, iPhone app).
+# "latest"), APK + AFK host only (the slow iPhone build runs for real releases).
 on:
   push:
     tags:
@@ -98,7 +98,12 @@ jobs:
             echo
             echo "---"
             echo
-            cat .github/release-common.md
+            if [ "$SNAPSHOT" = "true" ]; then
+              # Snapshots carry no iPhone build: leave out the line about it.
+              grep -v 'QuantuMobile-iOS' .github/release-common.md
+            else
+              cat .github/release-common.md
+            fi
           } > release-body.md
       - uses: softprops/action-gh-release@v2
         with:
@@ -185,7 +190,7 @@ jobs:
   # iPhone app (Amethyst-iOS with QuantuMobile branding and 26.x support), attached to the same release.
   ios:
     needs: release
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]') || contains(github.event.head_commit.message, '[snapshot]')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
