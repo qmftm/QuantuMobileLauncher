@@ -54,6 +54,11 @@ private fun useUtf8IfConsoleCannotShowKorean() {
 object HostLog {
     private var file: java.io.PrintStream? = null
     var console = true
+    private val recent = ArrayDeque<String>()
+
+    /** The last lines printed (the window shows them). */
+    @Synchronized
+    fun recent(n: Int = 200): List<String> = recent.takeLast(n)
 
     fun open(dir: File): File {
         val f = File(dir, "host.log")
@@ -68,6 +73,8 @@ object HostLog {
     fun line(msg: String) {
         if (console) println(msg)
         file?.println(msg)
+        recent.addLast(msg)
+        while (recent.size > 400) recent.removeFirst()
     }
 }
 
@@ -101,8 +108,10 @@ fun main(args: Array<String>) {
         )
     // Options: --port N, --name NAME, --new-code (forget the old pairing code; paired phones must re-enter it),
     // --lan-only (no Cloudflare tunnel and no address posting: same Wi-Fi only),
-    // --background (no console window: log to host.log, control from the tray icon), --autostart on|off.
+    // --background (no console window: log to host.log, control from the tray icon), --console (no window: text only),
+    // --autostart on|off.
     var lanOnly = false
+    var consoleOnly = false
     var autostartWanted: Boolean? = null
     var i = 0
     while (i < args.size) {
@@ -111,9 +120,10 @@ fun main(args: Array<String>) {
             "--name" -> config = config.copy(name = args.getOrNull(++i) ?: config.name)
             "--new-code" -> config = config.copy(code = RemoteProtocol.newCode())
             "--lan-only" -> lanOnly = true
+            "--console" -> consoleOnly = true
             "--autostart" -> autostartWanted = when (args.getOrNull(++i)?.lowercase()) { "on", "true", "1" -> true; "off", "false", "0" -> false; else -> null }
             "--help", "-h" -> {
-                println("사용법: java -jar afk-host.jar [--port 25580] [--name 이름] [--new-code] [--lan-only] [--background] [--autostart on|off]")
+                println("사용법: java -jar afk-host.jar [--port 25580] [--name 이름] [--new-code] [--lan-only] [--background] [--console] [--autostart on|off]")
                 return
             }
         }
@@ -153,7 +163,10 @@ fun main(args: Array<String>) {
 
     autostart.refresh()
     val title = "QuantuMobile AFK 호스트 $version"
-    val tray = HostTray(title, config.code, logFile, dir, autostart)
+    HostModel.tunnelEnabled = !lanOnly
+    val ui = HostUi(title, version, config, dir, logFile, service, autostart)
+    val showWindow = !background && !consoleOnly && !java.awt.GraphicsEnvironment.isHeadless() // a window needs a desktop, a tray icon is optional
+    val tray = HostTray(title, config.code, logFile, dir, autostart, onOpenWindow = if (!java.awt.GraphicsEnvironment.isHeadless() && !consoleOnly) ({ ui.openWindow() }) else null)
     val trayShown = tray.show()
 
     HostLog.line("========================================================")
@@ -167,10 +180,12 @@ fun main(args: Array<String>) {
         val auto = runCatching { autostart.isEnabled() }.getOrDefault(false)
         HostLog.line(" 컴퓨터 켤 때 자동 실행: ${if (auto) "켜짐" else "꺼짐"} (작업 표시줄 오른쪽 아래 AFK 아이콘 → 메뉴)")
     }
-    if (!background) HostLog.line(" 끄려면 이 창을 닫거나 Ctrl+C")
+    if (!background) HostLog.line(if (showWindow) " 창의 X 는 트레이로 숨기기, 완전히 끄려면 창의 \"종료\" 버튼" else " 끄려면 이 창을 닫거나 Ctrl+C")
     HostLog.line("========================================================")
     // Windowless and never run before: nobody has seen the code yet.
     if (background && firstRun && trayShown) tray.showCode()
+    log("호스트를 시작했어요 (v$version)")
+    if (showWindow) ui.openWindow()
 
     if (!lanOnly) startRemoteAccess(scope, config, dir)
 
@@ -216,6 +231,7 @@ private fun handle(ex: HttpExchange, key: ByteArray, service: HostService) {
         val body = ex.requestBody.use { String(it.readNBytes(4 * 1024 * 1024), Charsets.UTF_8) }
         val (code, text) = try {
             val req = RemoteProtocol.decodeRequest(key, body)
+            HostModel.contacted()
             200 to RemoteProtocol.encodeResponse(key, runBlocking { service.handle(req) })
         } catch (e: BadCodeException) {
             log("연결 코드가 틀린 요청을 거절했어요 (${ex.remoteAddress.address.hostAddress})")
@@ -260,6 +276,7 @@ private fun startRemoteAccess(scope: CoroutineScope, config: HostConfig, dir: Fi
     post()
     CloudflareTunnel(config.port, File(dir, "bin"), ::log, onUrl = { url ->
         tunnelUrl = url
+        HostModel.tunnelUrl = url
         log("외부 주소 준비됨: $url  (다른 와이파이·LTE에서도 연결돼요)")
         post()
     }).start()
@@ -270,15 +287,6 @@ private fun startRemoteAccess(scope: CoroutineScope, config: HostConfig, dir: Fi
         }
     }
 }
-
-/** IPv4 addresses of this PC on its local networks, for the phone to connect to. */
-private fun lanAddresses(): List<String> = runCatching {
-    NetworkInterface.getNetworkInterfaces().toList()
-        .filter { it.isUp && !it.isLoopback && !it.isVirtual }
-        .flatMap { it.inetAddresses.toList() }
-        .filterIsInstance<Inet4Address>()
-        .map { it.hostAddress }
-}.getOrDefault(emptyList())
 
 /** DNS servers for SRV lookups: /etc/resolv.conf where it exists, otherwise public resolvers. */
 private fun systemDnsServers(): List<InetAddress> {

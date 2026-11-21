@@ -133,6 +133,12 @@ class HostService(
         else -> null
     }?.takeIf { it.isFile }
 
+    /** The server's icon image (PNG), for the PC window. */
+    fun iconBytes(id: String): ByteArray? {
+        val server = manager.servers.value.firstOrNull { it.id == id } ?: return null
+        return iconFile(server)?.let { runCatching { it.readBytes() }.getOrNull() }
+    }
+
     private fun serverIconFile(id: String) = File(iconDir, "$id-server.png")
     private fun customIconFile(id: String) = File(iconDir, "$id.png")
 

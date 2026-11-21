@@ -31,6 +31,8 @@ class HostTray(
     private val logFile: File,
     private val dir: File,
     private val autostart: Autostart,
+    /** Opens the host window; when null the tray has no window to open. */
+    private val onOpenWindow: (() -> Unit)? = null,
 ) {
     private var icon: TrayIcon? = null
     private var active = false
@@ -48,7 +50,11 @@ class HostTray(
 
     private fun install(): Boolean {
         val menu = PopupMenu()
-        menu.add(MenuItem(title).apply { isEnabled = false })
+        if (onOpenWindow != null) {
+            menu.add(MenuItem("창 열기").apply { font = font.deriveFont(java.awt.Font.BOLD); addActionListener { onOpenWindow.invoke() } })
+        } else {
+            menu.add(MenuItem(title).apply { isEnabled = false })
+        }
         menu.addSeparator()
         menu.add(MenuItem("연결 코드 보기 (복사)").apply { addActionListener { showCode() } })
         menu.add(MenuItem("로그 보기").apply { addActionListener { open(logFile) } })
@@ -69,7 +75,7 @@ class HostTray(
         })
         val t = TrayIcon(image(false), title, menu).apply {
             isImageAutoSize = true
-            addActionListener { showCode() } // double click (Windows) / click
+            addActionListener { if (onOpenWindow != null) onOpenWindow.invoke() else showCode() } // double click (Windows) / click
         }
         SystemTray.getSystemTray().add(t)
         icon = t
@@ -138,26 +144,18 @@ class HostTray(
             }
         }
 
-        /** Drawn icon: a dark rounded square with "AFK" and a status dot (green = a bot is connected). */
+        /** The app's cube with a status dot (green = a bot is connected). */
         fun image(active: Boolean, size: Int = 64): BufferedImage {
             val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
             val g = img.createGraphics()
+            com.quantumobile.afkhost.ui.Logo.paint(g, 0f, 0f, size * 0.92f)
+            val d = (size * 0.34f).toInt()
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
-            val s = size.toFloat()
-            g.color = Color(0x26, 0x32, 0x38)
-            g.fillRoundRect(0, 0, size, size, size / 4, size / 4)
-            g.color = Color.WHITE
-            g.font = Font(Font.SANS_SERIF, Font.BOLD, (s * 0.36f).toInt())
-            val fm = g.fontMetrics
-            val text = "AFK"
-            g.drawString(text, (size - fm.stringWidth(text)) / 2, (size * 0.52f + fm.ascent * 0.35f).toInt())
-            val d = (s * 0.34f).toInt()
-            g.color = if (active) Color(0x43, 0xA0, 0x47) else Color(0x9E, 0x9E, 0x9E)
+            g.color = Color(0x0E0B1F)
             g.fillOval(size - d - 1, size - d - 1, d, d)
-            g.stroke = BasicStroke(s * 0.05f)
-            g.color = Color(0x26, 0x32, 0x38)
-            g.drawOval(size - d - 1, size - d - 1, d, d)
+            g.color = if (active) Color(0x43D17A) else Color(0x7C77A3)
+            val inset = (size * 0.05f).toInt().coerceAtLeast(1)
+            g.fillOval(size - d - 1 + inset, size - d - 1 + inset, d - 2 * inset, d - 2 * inset)
             g.dispose()
             return img
         }

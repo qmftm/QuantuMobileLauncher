@@ -163,20 +163,23 @@ jobs:
           jlink --add-modules java.base,java.desktop,java.instrument,jdk.httpserver,jdk.unsupported,jdk.crypto.ec,jdk.charsets \
             --strip-debug --no-header-files --no-man-pages --output pkg/runtime
           printf '%s\n' 'win-console=false' 'arguments=--background' > pkg/background.properties
+          printf '%s\n' 'win-console=true' 'arguments=--console' > pkg/console.properties
           jpackage --type app-image --name QuantuMobile-AFK --input pkg/in --main-jar afk-host.jar \
-            --runtime-image pkg/runtime --win-console --app-version "$VERSION" \
+            --runtime-image pkg/runtime --app-version "$VERSION" \
             --add-launcher QuantuMobile-AFK-Background=pkg/background.properties \
+            --add-launcher QuantuMobile-AFK-Console=pkg/console.properties \
             --description "QuantuMobile AFK host" --vendor "QuantuMobileLauncher" --dest pkg/out
           printf '%s\r\n' \
             'QuantuMobile AFK 호스트 (윈도우)' '' \
             '1. 이 폴더를 원하는 곳에 둡니다 (압축을 푼 그대로).' \
             '2. QuantuMobile-AFK.exe 를 더블클릭합니다. 자바를 따로 설치할 필요가 없습니다.' \
-            '3. 창에 나온 연결 코드를 앱의 AFK 탭 > PC 연결 > PC 추가 에 넣습니다.' \
-            '4. 창을 닫으면 PC 쪽 AFK도 꺼집니다. 켜 둔 채로 두세요.' '' \
-            '창 없이 돌리기 / 컴퓨터 켤 때 자동 실행:' \
-            '- QuantuMobile-AFK-Background.exe 는 창 없이 실행되고, 작업 표시줄 오른쪽 아래(숨겨진 아이콘 ^)에 AFK 아이콘만 뜹니다.' \
-            '- AFK 아이콘을 우클릭 > "컴퓨터 켤 때 자동 실행" 을 체크하면 다음부터 로그인할 때 창 없이 자동으로 켜집니다.' \
-            '- 같은 메뉴에서 연결 코드 보기, 로그 보기, 종료를 할 수 있습니다. 폴더를 옮기면 프로그램을 한 번 다시 실행해 주세요.' '' \
+            '3. 열린 창의 연결 코드를 앱의 AFK 탭 > PC 연결 > PC 추가 에 넣습니다 (코드를 누르면 복사돼요).' \
+            '4. 창의 X 를 누르면 작업 표시줄 오른쪽 아래(트레이)로 숨고 계속 돕니다. 완전히 끄려면 창의 "종료" 버튼이나 트레이 아이콘 우클릭 > 종료.' '' \
+            '컴퓨터 켤 때 자동 실행:' \
+            '- 창 아래쪽 "컴퓨터 켤 때 자동 실행" 스위치를 켜면, 다음부터 로그인할 때 창 없이 트레이에서 자동으로 켜집니다.' \
+            '- QuantuMobile-AFK-Background.exe 는 창 없이 트레이에만 뜨는 실행 파일이고, 자동 실행이 이걸 씁니다. 트레이 아이콘을 더블클릭하면 창이 열립니다.' \
+            '- QuantuMobile-AFK-Console.exe 는 예전처럼 검은 콘솔 창으로 돌리고 싶을 때 씁니다.' \
+            '- 폴더를 옮기면 프로그램을 한 번 다시 실행해 주세요.' '' \
             '방화벽 허용 창이 뜨면 허용을 눌러 주세요 (같은 와이파이에서 연결할 때 필요).' \
             > "pkg/out/QuantuMobile-AFK/README.txt"
       - name: Zip
